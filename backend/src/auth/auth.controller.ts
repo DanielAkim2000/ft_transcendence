@@ -1,15 +1,21 @@
-import { Controller, Get, Query, Redirect } from '@nestjs/common';
+import { Controller, Get, Logger, Query, Req, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { UserEntity } from '../users/entities/users.entity';
 
 @Controller('auth')
 export class AuthController {
-  @Get('login')
-  @Redirect(
-    `https://api.intra.42.fr/oauth/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${process.env.REDIRECT_URI}&response_type=code&scope=public`,
-  )
+  private readonly logger = new Logger(AuthController.name);
+  @Get('42/login')
+  @UseGuards(AuthGuard('42'))
   login() {}
 
-  @Get('callback')
-  callback(@Query('code') code: string) {
-    return `code: ${code}`;
+  @Get('42/callback')
+  @UseGuards(AuthGuard('42'))
+  callback(
+    @Query('code') code: string,
+    @Req() req: Request & { user: UserEntity },
+  ) {
+    this.logger.log(code);
+    return req.user;
   }
 }

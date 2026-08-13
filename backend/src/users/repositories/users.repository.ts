@@ -1,20 +1,36 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Role, Status, UserEntity } from '../entities/users.entity';
 import { User } from '../../generated/prisma/client';
+import { Profile42Dto } from '../../auth/dtos/profile42.dto';
 
 @Injectable()
 export class UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findUserByIntraId(intraId: string): Promise<UserEntity | null> {
+  async findUserByLogin(login: string): Promise<UserEntity> {
     const user = await this.prisma.user.findUnique({
       where: {
-        login42: intraId,
+        login42: login,
       },
     });
     if (!user) {
-      return null;
+      throw new UnauthorizedException('User not found');
+    }
+    return this.mapUser(user);
+  }
+
+  async createUserFrom42Profile(profile: Profile42Dto): Promise<UserEntity> {
+    const user = await this.prisma.user.create({
+      data: {
+        login42: profile._json.login,
+        email: profile._json.email,
+        displayname: profile._json.first_name + ' ' + profile._json.last_name,
+        avatarUrl: profile._json.image?.link,
+      },
+    });
+    if (!user) {
+      throw new UnauthorizedException('Failed to create user from 42 profile');
     }
     return this.mapUser(user);
   }

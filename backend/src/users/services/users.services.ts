@@ -1,28 +1,76 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { UserRepository } from '../repositories/users.repository';
-import { UserEntity } from '../entities/users.entity';
+import { RefreshToken, UserEntity } from '../entities/users.entity';
 import { Profile42Dto } from '../../auth/dtos/profile42.dto';
+import { RegisterDto } from '../../auth/dtos/register.dto';
+import * as bcrypt from 'bcrypt';
+import { Prisma } from '../../generated/prisma/client';
 
 @Injectable()
 export class UsersService {
-  private readonly logger = new Logger(UsersService.name);
   constructor(private readonly userRepository: UserRepository) {}
 
-  async findUserByLogin(login: string): Promise<UserEntity> {
+  findUserById(id: string): Promise<UserEntity | null> {
+    return this.userRepository.findUserById(id);
+  }
+
+  findUserByEmail(email: string): Promise<UserEntity | null> {
+    return this.userRepository.findUserByEmail(email);
+  }
+
+  findUserByLogin(login: string): Promise<UserEntity | null> {
+    return this.userRepository.findUserByLogin(login);
+  }
+
+  createUserFrom42Profile(profile: Profile42Dto): Promise<UserEntity> {
+    return this.userRepository.createUserFrom42Profile(profile);
+  }
+
+  async createUserFromRegisterInfo(
+    registerDto: RegisterDto,
+  ): Promise<UserEntity> {
     try {
-      return await this.userRepository.findUserByLogin(login);
+      const passwordHash = await bcrypt.hash(registerDto.password, 10);
+      const user = new UserEntity({
+        email: registerDto.email,
+        displayname: registerDto.username,
+        passwordHash,
+      });
+      return await this.userRepository.createUserFromRegisterInfo(user);
     } catch (error) {
-      this.logger.error('Failed to find user by login', error);
-      throw new UnauthorizedException('Failed to find user by login');
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('Email already in use');
+      }
+      throw error;
     }
   }
 
-  async createUserFrom42Profile(profile: Profile42Dto): Promise<UserEntity> {
-    try {
-      return await this.userRepository.createUserFrom42Profile(profile);
-    } catch (error) {
-      this.logger.error('Failed to create user from 42 profile', error);
-      throw new UnauthorizedException('Failed to create user from 42 profile');
-    }
+  updateUser(user: UserEntity): Promise<UserEntity> {
+    return this.userRepository.updateUser(user);
+  }
+
+  addRefreshToken(
+    userId: string,
+    tokenHash: string,
+    expiresAt: Date,
+  ): Promise<void> {
+    return this.userRepository.addRefreshToken(userId, tokenHash, expiresAt);
+  }
+
+  async revokeRefreshToken(
+    userId: string,
+    tokenHash: string,
+  ): Promise<boolean> {
+    return this.userRepository.deleteRefreshToken(userId, tokenHash);
+  }
+
+  findRefreshToken(
+    userId: string,
+    tokenHash: string,
+  ): Promise<RefreshToken | null> {
+    return this.userRepository.findRefreshToken(userId, tokenHash);
   }
 }

@@ -1,0 +1,110 @@
+{
+  "common": {
+    "brand": "ft_transcendence",
+    "or": "ou",
+    "loading": "Chargement…",
+    "logout": "Se déconnecter",
+    "loggingOut": "Déconnexion…",
+    "back": "Retour"
+  },
+  "auth": {
+    "login": {
+      "title": "Connexion",
+      "description": "Entre dans l’arène. Email ou compte 42.",
+      "email": "Email",
+      "emailPlaceholder": "toi@student.42.fr",
+      "password": "Mot de passe",
+      "passwordPlaceholder": "••••••••",
+      "submit": "Se connecter",
+      "submitting": "Connexion…",
+      "with42": "Se connecter avec 42",
+      "failed": "Connexion impossible. Réessaie.",
+      "noAccount": "Pas encore de compte ?",
+      "registerLink": "S’inscrire"
+    },
+    "register": {
+      "title": "Créer un compte",
+      "description": "Choisis un pseudo et rejoins la partie.",
+      "username": "Pseudo",
+      "usernamePlaceholder": "pong_master",
+      "email": "Email",
+      "emailPlaceholder": "toi@student.42.fr",
+      "password": "Mot de passe",
+      "passwordPlaceholder": "••••••••",
+      "submit": "Créer mon compte",
+      "submitting": "Création…",
+      "failed": "Inscription impossible. Réessaie.",
+      "hasAccount": "Déjà un compte ?",
+      "loginLink": "Se connecter"
+    },
+    "twoFactor": {
+      "title": "Authentification à deux facteurs",
+      "description": "Entre le code à 6 chiffres de ton application d’authentification.",
+      "code": "Code de vérification",
+      "codePlaceholder": "123456",
+      "submit": "Vérifier",
+      "submitting": "Vérification…",
+      "failed": "Code invalide. Réessaie."
+    },
+    "validation": {
+      "emailInvalid": "Email invalide.",
+      "passwordMin": "Le mot de passe doit contenir au moins 8 caractères.",
+      "passwordMax": "Le mot de passe doit contenir au plus 32 caractères.",
+      "passwordLower": "Le mot de passe doit contenir une minuscule.",
+      "passwordUpper": "Le mot de passe doit contenir une majuscule.",
+      "passwordNumber": "Le mot de passe doit contenir un chiffre.",
+      "passwordSymbol": "Le mot de passe doit contenir un caractère spécial.",
+      "usernameMin": "Le pseudo doit contenir au moins 3 caractères.",
+      "usernameMax": "Le pseudo doit contenir au plus 32 caractères.",
+      "codeInvalid": "Le code doit contenir exactement 6 chiffres."
+    }
+  },
+  "home": {
+    "title": "Dashboard",
+    "loggedInAs": "Connecté en tant que {{name}}"
+  },
+  "nav": {
+    "menu": "Menu",
+    "home": "Accueil",
+    "settings": "Paramètres",
+    "twoFactor": "Auth à deux facteurs"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "description": "Personnalise l’apparence et la langue de l’application.",
+    "theme": {
+      "title": "Thème",
+      "description": "Choisis le mode d’affichage.",
+      "light": "Clair",
+      "dark": "Sombre",
+      "system": "Système"
+    },
+    "language": {
+      "title": "Langue",
+      "description": "Choisis la langue de l’interface.",
+      "en": "English",
+      "fr": "Français",
+      "es": "Español"
+    },
+    "twoFactor": {
+      "title": "Authentification à deux facteurs",
+      "description": "Protège ton compte avec une application d’authentification.",
+      "statusTitle": "Statut",
+      "statusEnabled": "La 2FA est actuellement activée.",
+      "statusDisabled": "La 2FA est actuellement désactivée.",
+      "setupHint": "Génère un QR code, scanne-le dans ton app, puis entre un code pour activer la 2FA.",
+      "setup": "Générer le QR code",
+      "setupLoading": "Génération…",
+      "setupFailed": "Impossible de configurer la 2FA.",
+      "qrAlt": "QR code d’authentification",
+      "secretLabel": "Secret manuel",
+      "code": "Code authenticator",
+      "enable": "Activer la 2FA",
+      "disable": "Désactiver la 2FA",
+      "toggling": "Mise à jour…",
+      "toggleFailed": "Impossible de mettre à jour la 2FA.",
+      "enabledSuccess": "La 2FA est maintenant activée.",
+      "disabledSuccess": "La 2FA est maintenant désactivée."
+    }
+  }
+}

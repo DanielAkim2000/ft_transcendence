@@ -19,6 +19,8 @@ import {
 } from "@/features/users/usersApi";
 import { getInitials, resolveAvatarUrl } from "@/lib/user";
 import { getErrorMessage } from "@/lib/get-error-message";
+import { toast } from "@/lib/toast";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useState } from "react";
 
 export const Profile = () => {
@@ -31,6 +33,7 @@ export const Profile = () => {
     useAcceptFriendRequestMutation();
   const [removeFriend, { isLoading: isRemoving }] = useRemoveFriendMutation();
   const [actionError, setActionError] = useState<string | null>(null);
+  const [justSentId, setJustSentId] = useState<string | null>(null);
 
   if (!id || isLoading) {
     return <p className="text-muted-foreground">{t("common.loading")}</p>;
@@ -77,37 +80,73 @@ export const Profile = () => {
               {t("profile.edit")}
             </Button>
           ) : friendshipStatus === "friends" ? (
-            <Button
-              variant="outline"
-              disabled={isBusy}
-              onClick={async () => {
+            <ConfirmDialog
+              title={t("confirm.removeFriendTitle")}
+              description={t("confirm.removeFriendDescription", {
+                name: user.displayname,
+              })}
+              confirmLabel={t("friends.remove")}
+              loading={isBusy}
+              onConfirm={async () => {
                 setActionError(null);
                 try {
                   await removeFriend(user.id).unwrap();
                 } catch (err) {
-                  setActionError(getErrorMessage(err, t("friends.actionFailed")));
+                  setActionError(
+                    getErrorMessage(err, t("friends.actionFailed")),
+                  );
                 }
               }}
             >
-              {t("friends.remove")}
-            </Button>
+              <Button variant="outline" disabled={isBusy}>
+                {t("friends.remove")}
+              </Button>
+            </ConfirmDialog>
           ) : friendshipStatus === "pending_in" ? (
-            <Button
-              disabled={isBusy}
-              onClick={async () => {
-                setActionError(null);
-                try {
-                  await acceptRequest(user.id).unwrap();
-                } catch (err) {
-                  setActionError(getErrorMessage(err, t("friends.actionFailed")));
-                }
-              }}
-            >
-              {t("friends.accept")}
-            </Button>
-          ) : friendshipStatus === "pending_out" ? (
+            <>
+              <Button
+                disabled={isBusy}
+                onClick={async () => {
+                  setActionError(null);
+                  try {
+                    await acceptRequest(user.id).unwrap();
+                  } catch (err) {
+                    setActionError(
+                      getErrorMessage(err, t("friends.actionFailed")),
+                    );
+                  }
+                }}
+              >
+                {t("friends.accept")}
+              </Button>
+              <ConfirmDialog
+                title={t("confirm.declineTitle")}
+                description={t("confirm.declineDescription", {
+                  name: user.displayname,
+                })}
+                confirmLabel={t("friends.decline")}
+                loading={isBusy}
+                onConfirm={async () => {
+                  setActionError(null);
+                  try {
+                    await removeFriend(user.id).unwrap();
+                  } catch (err) {
+                    setActionError(
+                      getErrorMessage(err, t("friends.actionFailed")),
+                    );
+                  }
+                }}
+              >
+                <Button variant="outline" disabled={isBusy}>
+                  {t("friends.decline")}
+                </Button>
+              </ConfirmDialog>
+            </>
+          ) : friendshipStatus === "pending_out" || justSentId === user.id ? (
             <Button variant="outline" disabled>
-              {t("friends.pendingOut")}
+              {justSentId === user.id
+                ? t("friends.inviteSent")
+                : t("friends.inviteAlreadySent")}
             </Button>
           ) : (
             <Button
@@ -116,8 +155,12 @@ export const Profile = () => {
                 setActionError(null);
                 try {
                   await sendRequest(user.id).unwrap();
+                  setJustSentId(user.id);
+                  toast(t("friends.inviteSentToast"));
                 } catch (err) {
-                  setActionError(getErrorMessage(err, t("friends.actionFailed")));
+                  setActionError(
+                    getErrorMessage(err, t("friends.actionFailed")),
+                  );
                 }
               }}
             >

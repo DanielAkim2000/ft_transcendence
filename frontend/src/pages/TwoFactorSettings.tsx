@@ -26,6 +26,7 @@ import {
 } from "@/features/auth/authApi";
 import { createTwoFactorSchema } from "@/features/auth/two-factor.schema";
 import { getErrorMessage } from "@/lib/get-error-message";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export const TwoFactorSettings = () => {
   const { t } = useTranslation();
@@ -204,17 +205,34 @@ export const TwoFactorSettings = () => {
           </form>
         </CardContent>
         <CardFooter>
-          <Button
-            type="submit"
-            form="toggle-2fa-form"
-            disabled={isToggling || form.state.isSubmitting}
-          >
-            {isToggling || form.state.isSubmitting
-              ? t("settings.twoFactor.toggling")
-              : isEnabled
-                ? t("settings.twoFactor.disable")
+          {isEnabled ? (
+            <ConfirmDialog
+              title={t("confirm.disable2faTitle")}
+              description={t("confirm.disable2faDescription")}
+              confirmLabel={t("settings.twoFactor.disable")}
+              loading={isToggling || form.state.isSubmitting}
+              onConfirm={() => form.handleSubmit()}
+            >
+              <Button
+                type="button"
+                disabled={isToggling || form.state.isSubmitting}
+              >
+                {isToggling || form.state.isSubmitting
+                  ? t("settings.twoFactor.toggling")
+                  : t("settings.twoFactor.disable")}
+              </Button>
+            </ConfirmDialog>
+          ) : (
+            <Button
+              type="submit"
+              form="toggle-2fa-form"
+              disabled={isToggling || form.state.isSubmitting}
+            >
+              {isToggling || form.state.isSubmitting
+                ? t("settings.twoFactor.toggling")
                 : t("settings.twoFactor.enable")}
-          </Button>
+            </Button>
+          )}
         </CardFooter>
       </Card>
     </div>

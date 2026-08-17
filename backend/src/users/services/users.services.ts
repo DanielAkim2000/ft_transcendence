@@ -80,10 +80,7 @@ export class UsersService {
     return this.userRepository.updateUser(user);
   }
 
-  async updateAvatar(
-    user: UserEntity,
-    filename: string,
-  ): Promise<UserEntity> {
+  async updateAvatar(user: UserEntity, filename: string): Promise<UserEntity> {
     const previous = user.avatarUrl;
     user.avatarUrl = `/uploads/avatars/${filename}`;
     const updated = await this.userRepository.updateUser(user);
@@ -159,6 +156,10 @@ export class UsersService {
 
   listPendingRequests(userId: string): Promise<UserEntity[]> {
     return this.userRepository.listIncomingRequests(userId);
+  }
+
+  listOutgoingRequests(userId: string): Promise<UserEntity[]> {
+    return this.userRepository.listOutgoingRequests(userId);
   }
 
   async getFriendshipStatus(

@@ -18,7 +18,7 @@ import { diskStorage } from 'multer';
 import { extname, join } from 'node:path';
 import { mkdirSync } from 'node:fs';
 import type { Request } from 'express';
-import { AccessTokenGuard } from '../../auth/guards/access-token.guard';
+import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { UsersService } from './services/users.services';
 import { UserEntity } from './entities/users.entity';
 import { UpdateProfileDto } from './dtos/update-profile.dto';
@@ -51,6 +51,13 @@ export class UsersController {
     @Req() req: Request & { user: UserEntity },
   ): Promise<UserEntity[]> {
     return this.usersService.listPendingRequests(req.user.id);
+  }
+
+  @Get('me/friends/outgoing')
+  listOutgoing(
+    @Req() req: Request & { user: UserEntity },
+  ): Promise<UserEntity[]> {
+    return this.usersService.listOutgoingRequests(req.user.id);
   }
 
   @Post('me/friends/:userId')
@@ -125,7 +132,8 @@ export class UsersController {
     @Param('id') id: string,
   ): Promise<{
     user: UserEntity;
-    friendshipStatus: 'none' | 'pending_out' | 'pending_in' | 'friends' | 'self';
+    friendshipStatus:
+      'none' | 'pending_out' | 'pending_in' | 'friends' | 'self';
   }> {
     const user = await this.usersService.getProfile(id);
     const friendshipStatus = await this.usersService.getFriendshipStatus(

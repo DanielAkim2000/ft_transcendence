@@ -237,6 +237,16 @@ export class UserRepository {
     return rows.map((row) => this.mapUser(row.requester));
   }
 
+  async listOutgoingRequests(userId: string): Promise<UserEntity[]> {
+    const rows = await this.prisma.friendship.findMany({
+      where: { requesterId: userId, status: 'PENDING' },
+      include: {
+        addressee: { include: { refreshTokens: true } },
+      },
+    });
+    return rows.map((row) => this.mapUser(row.addressee));
+  }
+
   private mapUser(user: User & { refreshTokens: RefreshToken[] }): UserEntity {
     let status: Status = Status.OFFLINE;
     switch (user.status) {

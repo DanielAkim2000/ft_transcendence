@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   useAcceptFriendRequestMutation,
   useListFriendsQuery,
+  useListOutgoingFriendsQuery,
   useListPendingFriendsQuery,
   useRemoveFriendMutation,
   useSearchUsersQuery,
@@ -15,6 +16,8 @@ import {
 import type { User } from "@/features/auth/authApi";
 import { getInitials, resolveAvatarUrl } from "@/lib/user";
 import { getErrorMessage } from "@/lib/get-error-message";
+import { toast } from "@/lib/toast";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 function UserRow({
   user,
@@ -56,6 +59,7 @@ export const Friends = () => {
   const { data: friends = [], isLoading: friendsLoading } = useListFriendsQuery();
   const { data: pending = [], isLoading: pendingLoading } =
     useListPendingFriendsQuery();
+  const { data: outgoing = [] } = useListOutgoingFriendsQuery();
   const { data: results = [], isFetching: searchLoading } = useSearchUsersQuery(
     query.trim() || undefined,
   );
@@ -63,6 +67,7 @@ export const Friends = () => {
   const [acceptRequest] = useAcceptFriendRequestMutation();
   const [removeFriend] = useRemoveFriendMutation();
   const [actionError, setActionError] = useState<string | null>(null);
+  const [justSentIds, setJustSentIds] = useState<Set<string>>(new Set());
 
   const run = async (fn: () => Promise<unknown>) => {
     setActionError(null);
@@ -75,6 +80,7 @@ export const Friends = () => {
 
   const friendIds = new Set(friends.map((u) => u.id));
   const pendingIds = new Set(pending.map((u) => u.id));
+  const outgoingIds = new Set(outgoing.map((u) => u.id));
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
@@ -113,13 +119,18 @@ export const Friends = () => {
                     >
                       {t("friends.accept")}
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => run(() => removeFriend(user.id).unwrap())}
+                    <ConfirmDialog
+                      title={t("confirm.declineTitle")}
+                      description={t("confirm.declineDescription", {
+                        name: user.displayname,
+                      })}
+                      confirmLabel={t("friends.decline")}
+                      onConfirm={() => run(() => removeFriend(user.id).unwrap())}
                     >
-                      {t("friends.decline")}
-                    </Button>
+                      <Button size="sm" variant="outline">
+                        {t("friends.decline")}
+                      </Button>
+                    </ConfirmDialog>
                   </>
                 }
               />
@@ -143,13 +154,18 @@ export const Friends = () => {
                 key={user.id}
                 user={user}
                 actions={
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => run(() => removeFriend(user.id).unwrap())}
+                  <ConfirmDialog
+                    title={t("confirm.removeFriendTitle")}
+                    description={t("confirm.removeFriendDescription", {
+                      name: user.displayname,
+                    })}
+                    confirmLabel={t("friends.remove")}
+                    onConfirm={() => run(() => removeFriend(user.id).unwrap())}
                   >
-                    {t("friends.remove")}
-                  </Button>
+                    <Button size="sm" variant="outline">
+                      {t("friends.remove")}
+                    </Button>
+                  </ConfirmDialog>
                 }
               />
             ))}
@@ -180,16 +196,46 @@ export const Friends = () => {
                       {t("friends.already")}
                     </span>
                   ) : pendingIds.has(user.id) ? (
-                    <Button
-                      size="sm"
-                      onClick={() => run(() => acceptRequest(user.id).unwrap())}
-                    >
-                      {t("friends.accept")}
+                    <>
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          run(() => acceptRequest(user.id).unwrap())
+                        }
+                      >
+                        {t("friends.accept")}
+                      </Button>
+                      <ConfirmDialog
+                        title={t("confirm.declineTitle")}
+                        description={t("confirm.declineDescription", {
+                          name: user.displayname,
+                        })}
+                        confirmLabel={t("friends.decline")}
+                        onConfirm={() =>
+                          run(() => removeFriend(user.id).unwrap())
+                        }
+                      >
+                        <Button size="sm" variant="outline">
+                          {t("friends.decline")}
+                        </Button>
+                      </ConfirmDialog>
+                    </>
+                  ) : outgoingIds.has(user.id) || justSentIds.has(user.id) ? (
+                    <Button size="sm" variant="outline" disabled>
+                      {justSentIds.has(user.id)
+                        ? t("friends.inviteSent")
+                        : t("friends.inviteAlreadySent")}
                     </Button>
                   ) : (
                     <Button
                       size="sm"
-                      onClick={() => run(() => sendRequest(user.id).unwrap())}
+                      onClick={() =>
+                        run(async () => {
+                          await sendRequest(user.id).unwrap();
+                          setJustSentIds((prev) => new Set(prev).add(user.id));
+                          toast(t("friends.inviteSentToast"));
+                        })
+                      }
                     >
                       {t("friends.add")}
                     </Button>

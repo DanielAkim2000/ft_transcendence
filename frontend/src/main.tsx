@@ -8,6 +8,7 @@ import { StoreProvider } from "./app/store-provider.tsx";
 import { AuthBootstrap } from "./features/auth/AuthBootstrap.tsx";
 import { I18nSync } from "./i18n/I18nSync.tsx";
 import { ThemeSync } from "./features/settings/ThemeSync.tsx";
+import { AppToaster } from "@/components/app-toaster";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -17,6 +18,7 @@ createRoot(document.getElementById("root")!).render(
           <BrowserRouter>
             <AuthBootstrap>
               <App />
+              <AppToaster />
             </AuthBootstrap>
           </BrowserRouter>
         </I18nSync>

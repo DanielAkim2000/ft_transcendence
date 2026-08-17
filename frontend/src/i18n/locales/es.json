@@ -5,7 +5,19 @@
     "loading": "Cargando…",
     "logout": "Cerrar sesión",
     "loggingOut": "Cerrando sesión…",
-    "back": "Volver"
+    "back": "Volver",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar"
+  },
+  "confirm": {
+    "logoutTitle": "¿Cerrar sesión?",
+    "logoutDescription": "Tendrás que volver a iniciar sesión para acceder a tu cuenta.",
+    "removeFriendTitle": "¿Eliminar amigo?",
+    "removeFriendDescription": "¿Quitar a {{name}} de tu lista de amigos? Podrás enviar una nueva solicitud más tarde.",
+    "declineTitle": "¿Rechazar solicitud?",
+    "declineDescription": "¿Rechazar la solicitud de amistad de {{name}}?",
+    "disable2faTitle": "¿Desactivar la 2FA?",
+    "disable2faDescription": "Tu cuenta solo estará protegida por tu contraseña hasta que vuelvas a activar la autenticación en dos pasos."
   },
   "auth": {
     "login": {
@@ -141,7 +153,9 @@
     "accept": "Aceptar",
     "decline": "Rechazar",
     "remove": "Eliminar",
-    "pendingOut": "Solicitud enviada",
+    "inviteSent": "Invitación enviada",
+    "inviteAlreadySent": "Invitación ya enviada",
+    "inviteSentToast": "Invitación enviada",
     "already": "Amigo",
     "actionFailed": "No se pudo actualizar la amistad."
   }

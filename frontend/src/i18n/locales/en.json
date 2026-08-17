@@ -5,7 +5,19 @@
     "loading": "Loading…",
     "logout": "Log out",
     "loggingOut": "Logging out…",
-    "back": "Back"
+    "back": "Back",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
+  },
+  "confirm": {
+    "logoutTitle": "Log out?",
+    "logoutDescription": "You will need to sign in again to access your account.",
+    "removeFriendTitle": "Remove friend?",
+    "removeFriendDescription": "Remove {{name}} from your friends list? You can send a new request later.",
+    "declineTitle": "Decline request?",
+    "declineDescription": "Decline the friend request from {{name}}?",
+    "disable2faTitle": "Disable 2FA?",
+    "disable2faDescription": "Your account will only be protected by your password until you enable two-factor authentication again."
   },
   "auth": {
     "login": {
@@ -141,7 +153,9 @@
     "accept": "Accept",
     "decline": "Decline",
     "remove": "Remove",
-    "pendingOut": "Request sent",
+    "inviteSent": "Invitation sent",
+    "inviteAlreadySent": "Invitation already sent",
+    "inviteSentToast": "Invitation sent",
     "already": "Friend",
     "actionFailed": "Could not update friendship."
   }

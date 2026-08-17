@@ -56,6 +56,10 @@ export const usersApi = api.injectEndpoints({
       query: () => "/users/me/friends/pending",
       providesTags: [TAG_TYPES.FRIENDS],
     }),
+    listOutgoingFriends: builder.query<User[], void>({
+      query: () => "/users/me/friends/outgoing",
+      providesTags: [TAG_TYPES.FRIENDS],
+    }),
     sendFriendRequest: builder.mutation<User, string>({
       query: (userId) => ({
         url: `/users/me/friends/${userId}`,
@@ -87,6 +91,7 @@ export const {
   useUploadAvatarMutation,
   useListFriendsQuery,
   useListPendingFriendsQuery,
+  useListOutgoingFriendsQuery,
   useSendFriendRequestMutation,
   useAcceptFriendRequestMutation,
   useRemoveFriendMutation,

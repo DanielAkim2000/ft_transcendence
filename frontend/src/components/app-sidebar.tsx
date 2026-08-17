@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useLogoutMutation, useMeQuery } from "@/features/auth/authApi";
 import { getInitials, resolveAvatarUrl } from "@/lib/user";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export function AppSidebar() {
   const { t } = useTranslation();
@@ -120,16 +121,23 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip={t("common.logout")}
-              onClick={handleLogout}
-              disabled={isLoggingOut}
+            <ConfirmDialog
+              title={t("confirm.logoutTitle")}
+              description={t("confirm.logoutDescription")}
+              confirmLabel={t("common.logout")}
+              loading={isLoggingOut}
+              onConfirm={handleLogout}
             >
-              <LogOutIcon />
-              <span>
-                {isLoggingOut ? t("common.loggingOut") : t("common.logout")}
-              </span>
-            </SidebarMenuButton>
+              <SidebarMenuButton
+                tooltip={t("common.logout")}
+                disabled={isLoggingOut}
+              >
+                <LogOutIcon />
+                <span>
+                  {isLoggingOut ? t("common.loggingOut") : t("common.logout")}
+                </span>
+              </SidebarMenuButton>
+            </ConfirmDialog>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

@@ -5,7 +5,19 @@
     "loading": "Chargement…",
     "logout": "Se déconnecter",
     "loggingOut": "Déconnexion…",
-    "back": "Retour"
+    "back": "Retour",
+    "cancel": "Annuler",
+    "confirm": "Confirmer"
+  },
+  "confirm": {
+    "logoutTitle": "Se déconnecter ?",
+    "logoutDescription": "Tu devras te reconnecter pour accéder à ton compte.",
+    "removeFriendTitle": "Retirer cet ami ?",
+    "removeFriendDescription": "Retirer {{name}} de ta liste d’amis ? Tu pourras renvoyer une invitation plus tard.",
+    "declineTitle": "Refuser la demande ?",
+    "declineDescription": "Refuser la demande d’ami de {{name}} ?",
+    "disable2faTitle": "Désactiver la 2FA ?",
+    "disable2faDescription": "Ton compte ne sera plus protégé que par ton mot de passe, jusqu’à ce que tu réactives l’authentification à deux facteurs."
   },
   "auth": {
     "login": {
@@ -141,7 +153,9 @@
     "accept": "Accepter",
     "decline": "Refuser",
     "remove": "Retirer",
-    "pendingOut": "Demande envoyée",
+    "inviteSent": "Invitation envoyée",
+    "inviteAlreadySent": "Invitation déjà envoyée",
+    "inviteSentToast": "Invitation envoyée",
     "already": "Ami",
     "actionFailed": "Impossible de mettre à jour l’amitié."
   }

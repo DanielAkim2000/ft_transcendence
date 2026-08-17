@@ -1,0 +1,16 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Docker secrets (keep examples)
+secrets/*
+!secrets/*.example
+!secrets/.gitkeep
+
+# OS
+.DS_Store
+
+# IDE
+.idea
+.vscode

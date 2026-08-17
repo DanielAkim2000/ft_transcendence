@@ -146,6 +146,97 @@ export class UserRepository {
     });
   }
 
+  async searchUsers(
+    excludeUserId: string,
+    query?: string,
+  ): Promise<UserEntity[]> {
+    const users = await this.prisma.user.findMany({
+      where: {
+        id: { not: excludeUserId },
+        ...(query?.trim()
+          ? {
+              OR: [
+                {
+                  displayname: {
+                    contains: query.trim(),
+                    mode: 'insensitive' as const,
+                  },
+                },
+                {
+                  email: {
+                    contains: query.trim(),
+                    mode: 'insensitive' as const,
+                  },
+                },
+              ],
+            }
+          : {}),
+      },
+      include: {
+        refreshTokens: {
+          orderBy: { createdAt: 'desc' as const },
+        },
+      },
+      take: 20,
+      orderBy: { displayname: 'asc' },
+    });
+    return users.map((user) => this.mapUser(user));
+  }
+
+  async findFriendshipBetween(userIdA: string, userIdB: string) {
+    return this.prisma.friendship.findFirst({
+      where: {
+        OR: [
+          { requesterId: userIdA, addresseeId: userIdB },
+          { requesterId: userIdB, addresseeId: userIdA },
+        ],
+      },
+    });
+  }
+
+  async createFriendRequest(requesterId: string, addresseeId: string) {
+    return this.prisma.friendship.create({
+      data: { requesterId, addresseeId, status: 'PENDING' },
+    });
+  }
+
+  async acceptFriendship(id: string) {
+    return this.prisma.friendship.update({
+      where: { id },
+      data: { status: 'ACCEPTED' },
+    });
+  }
+
+  async deleteFriendship(id: string) {
+    await this.prisma.friendship.delete({ where: { id } });
+  }
+
+  async listAcceptedFriends(userId: string): Promise<UserEntity[]> {
+    const rows = await this.prisma.friendship.findMany({
+      where: {
+        status: 'ACCEPTED',
+        OR: [{ requesterId: userId }, { addresseeId: userId }],
+      },
+      include: {
+        requester: { include: { refreshTokens: true } },
+        addressee: { include: { refreshTokens: true } },
+      },
+    });
+    return rows.map((row) =>
+      this.mapUser(row.requesterId === userId ? row.addressee : row.requester),
+    );
+  }
+
+  async listIncomingRequests(userId: string): Promise<UserEntity[]> {
+    const rows = await this.prisma.friendship.findMany({
+      where: { addresseeId: userId, status: 'PENDING' },
+      include: {
+        requester: { include: { refreshTokens: true } },
+      },
+    });
+    return rows.map((row) => this.mapUser(row.requester));
+  }
+
   private mapUser(user: User & { refreshTokens: RefreshToken[] }): UserEntity {
     let status: Status = Status.OFFLINE;
     switch (user.status) {

@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { UserEntity } from '../users/entities/users.entity';
+import { UserEntity, Role } from '../users/entities/users.entity';
 import { FOURTY_TWO_STRATEGY } from './constants/injection-tokens';
 import { AuthService } from './auth.service';
 import { RefreshTokenGuard } from './guards/refresh-token.guard';
@@ -18,6 +18,7 @@ import { RegisterDto } from './dtos/register.dto';
 import { LoginDto } from './dtos/login.dto';
 import { TwoFactorCodeDto } from './dtos/two-factor-code.dto';
 import { PreAuthTokenGuard } from './guards/pre-auth-token.guard';
+import { AuthRoles } from './decorators/auth-roles.decorator';
 import { ConfigService } from '@nestjs/config';
 import ms, { StringValue as msStringValue } from 'ms';
 import type { Request, Response } from 'express';
@@ -30,7 +31,6 @@ type SwitchResult =
     }
   | {
       twoFactorEnabled: true;
-      preAuthToken: string;
     };
 
 @Controller('auth')
@@ -72,9 +72,9 @@ export class AuthController {
       };
     }
     const preAuthToken = await this.authService.createPreAuthToken(user);
+    this.setPreAuthCookie(res, preAuthToken);
     return {
       twoFactorEnabled: true,
-      preAuthToken: preAuthToken,
     };
   }
 
@@ -98,10 +98,9 @@ export class AuthController {
     if (req.user.twoFactorEnabled === false) {
       const tokens = await this.authService.createTokens(req.user);
       await this.setRefreshCookie(req.user, res, tokens.refreshToken);
-      callbackUrl.searchParams.set('accessToken', tokens.accessToken);
     } else {
       const preAuthToken = await this.authService.createPreAuthToken(req.user);
-      callbackUrl.searchParams.set('preAuthToken', preAuthToken);
+      this.setPreAuthCookie(res, preAuthToken);
     }
 
     res.redirect(callbackUrl.toString());
@@ -145,12 +144,24 @@ export class AuthController {
     res.clearCookie('refreshToken', {
       path: '/auth',
     });
+    res.clearCookie('preAuthToken', {
+      path: '/auth',
+    });
   }
 
   @Get('me')
   @UseGuards(AccessTokenGuard)
   me(@Req() req: Request & { user: UserEntity }): UserEntity {
     return req.user;
+  }
+
+  @Get('admin')
+  @AuthRoles(Role.ADMIN)
+  adminOnly(@Req() req: Request & { user: UserEntity }): {
+    ok: true;
+    role: Role;
+  } {
+    return { ok: true, role: req.user.role };
   }
 
   @Post('2fa/verify')
@@ -166,10 +177,17 @@ export class AuthController {
     await this.authService.verify2fa(req.user, dto.code);
     const tokens = await this.authService.createTokens(req.user);
     await this.setRefreshCookie(req.user, res, tokens.refreshToken);
+    res.clearCookie('preAuthToken', { path: '/auth' });
     return {
       user: req.user,
       accessToken: tokens.accessToken,
     };
+  }
+
+  @Get('2fa/pending')
+  @UseGuards(PreAuthTokenGuard)
+  pending2fa(): { pending: true } {
+    return { pending: true };
   }
 
   @Post('2fa/setup')
@@ -205,6 +223,27 @@ export class AuthController {
       );
     }
     res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/auth',
+      maxAge: ms(expirationTime),
+    });
+    res.clearCookie('preAuthToken', {
+      path: '/auth',
+    });
+  }
+
+  private setPreAuthCookie(res: Response, preAuthToken: string): void {
+    const expirationTime = this.configService.get<msStringValue>(
+      'JWT_PRE_AUTH_TOKEN_EXPIRATION_TIME',
+    );
+    if (!expirationTime) {
+      throw new UnauthorizedException(
+        'Pre-auth token expiration time is not set',
+      );
+    }
+    res.cookie('preAuthToken', preAuthToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

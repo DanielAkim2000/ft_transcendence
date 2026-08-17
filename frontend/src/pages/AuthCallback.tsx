@@ -1,33 +1,44 @@
 import { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
-import { setAccessToken, setPreAuthToken } from "@/features/auth/authSlice";
-import { useAppDispatch } from "@/store/hooks";
+import { setTwoFactorRequired } from "@/features/auth/authSlice";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useLazyCheck2faPendingQuery } from "@/features/auth/authApi";
 
 export const AuthCallback = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const accessToken = useAppSelector((s) => s.auth.accessToken);
+  const [check2faPending] = useLazyCheck2faPendingQuery();
 
   useEffect(() => {
-    const accessToken = searchParams.get("accessToken");
-    const preAuthToken = searchParams.get("preAuthToken");
+    let cancelled = false;
 
-    if (accessToken) {
-      dispatch(setAccessToken({ accessToken }));
-      navigate("/", { replace: true });
-      return;
-    }
+    (async () => {
+      // AuthBootstrap already attempted /auth/refresh via the httpOnly cookie.
+      if (accessToken) {
+        navigate("/", { replace: true });
+        return;
+      }
 
-    if (preAuthToken) {
-      dispatch(setPreAuthToken({ preAuthToken }));
-      navigate("/login", { replace: true });
-      return;
-    }
+      try {
+        await check2faPending().unwrap();
+        if (!cancelled) {
+          dispatch(setTwoFactorRequired());
+          navigate("/login", { replace: true });
+        }
+      } catch {
+        if (!cancelled) {
+          navigate("/login", { replace: true });
+        }
+      }
+    })();
 
-    navigate("/login", { replace: true });
-  }, [dispatch, navigate, searchParams]);
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, check2faPending, dispatch, navigate]);
 
   return (
     <div className="flex min-h-svh items-center justify-center px-4">

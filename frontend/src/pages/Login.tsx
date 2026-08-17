@@ -289,7 +289,10 @@ function TwoFactorForm() {
           variant="outline"
           size="lg"
           className="h-10 w-full"
-          onClick={() => dispatch(clearCredentials())}
+          onClick={() => {
+            dispatch(clearCredentials());
+            navigate("/login", { replace: true });
+          }}
         >
           {t("common.back")}
         </Button>
@@ -311,7 +314,7 @@ function TwoFactorForm() {
 
 export const Login = () => {
   const accessToken = useAppSelector((s) => s.auth.accessToken);
-  const preAuthToken = useAppSelector((s) => s.auth.preAuthToken);
+  const twoFactorRequired = useAppSelector((s) => s.auth.twoFactorRequired);
 
   if (accessToken) {
     return <Navigate to="/" replace />;
@@ -319,7 +322,7 @@ export const Login = () => {
 
   return (
     <AuthShell>
-      {preAuthToken ? <TwoFactorForm /> : <LoginCredentialsForm />}
+      {twoFactorRequired ? <TwoFactorForm /> : <LoginCredentialsForm />}
     </AuthShell>
   );
 };

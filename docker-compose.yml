@@ -1,0 +1,89 @@
+name: ft_transcendence
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ft_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ft_user}
+      POSTGRES_DB: ${POSTGRES_DB:-ft_transcendence}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-ft_user} -d ${POSTGRES_DB:-ft_transcendence}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ft_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    secrets:
+      - postgres_password
+      - jwt_access_token_secret
+      - jwt_refresh_token_secret
+      - jwt_pre_auth_token_secret
+      - client_secret
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ft_user}
+      POSTGRES_DB: ${POSTGRES_DB:-ft_transcendence}
+      PORT: ${BACKEND_PORT:-5000}
+      NODE_ENV: ${NODE_ENV:-production}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      CLIENT_ID: ${CLIENT_ID}
+      REDIRECT_URI: ${REDIRECT_URI:-http://localhost:5000/auth/42/callback}
+      JWT_ACCESS_TOKEN_EXPIRATION_TIME: ${JWT_ACCESS_TOKEN_EXPIRATION_TIME:-1h}
+      JWT_REFRESH_TOKEN_EXPIRATION_TIME: ${JWT_REFRESH_TOKEN_EXPIRATION_TIME:-7d}
+      JWT_PRE_AUTH_TOKEN_EXPIRATION_TIME: ${JWT_PRE_AUTH_TOKEN_EXPIRATION_TIME:-15m}
+      RUN_SEED: ${RUN_SEED:-true}
+      CI: "true"
+    ports:
+      - "${BACKEND_PORT:-5000}:${BACKEND_PORT:-5000}"
+    volumes:
+      - backend_uploads:/app/uploads
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:5000}
+    container_name: ft_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password
+  jwt_access_token_secret:
+    file: ./secrets/jwt_access_token_secret
+  jwt_refresh_token_secret:
+    file: ./secrets/jwt_refresh_token_secret
+  jwt_pre_auth_token_secret:
+    file: ./secrets/jwt_pre_auth_token_secret
+  client_secret:
+    file: ./secrets/client_secret
+
+volumes:
+  postgres_data:
+  backend_uploads:

@@ -66,6 +66,8 @@
   "nav": {
     "menu": "Menu",
     "home": "Accueil",
+    "profile": "Profil",
+    "friends": "Amis",
     "settings": "Paramètres",
     "twoFactor": "Auth à deux facteurs"
   },
@@ -106,5 +108,41 @@
       "enabledSuccess": "La 2FA est maintenant activée.",
       "disabledSuccess": "La 2FA est maintenant désactivée."
     }
+  },
+  "profile": {
+    "meTitle": "Mon profil",
+    "meDescription": "Modifie ton pseudo et ton avatar.",
+    "avatarTitle": "Avatar",
+    "avatarDescription": "JPEG, PNG ou WebP. 2 Mo max. Les initiales s’affichent s’il n’y en a pas.",
+    "avatarSuccess": "Avatar mis à jour.",
+    "avatarFailed": "Impossible d’envoyer l’avatar.",
+    "infoTitle": "Informations",
+    "displayname": "Pseudo",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "saveSuccess": "Profil mis à jour.",
+    "saveFailed": "Impossible de mettre à jour le profil.",
+    "viewPublic": "Voir le profil public",
+    "edit": "Modifier le profil",
+    "notFound": "Utilisateur introuvable.",
+    "online": "En ligne",
+    "offline": "Hors ligne"
+  },
+  "friends": {
+    "title": "Amis",
+    "description": "Gère les demandes et vois qui est là.",
+    "pendingTitle": "Demandes en attente",
+    "noPending": "Aucune demande en attente.",
+    "listTitle": "Tes amis",
+    "noFriends": "Pas encore d’amis.",
+    "searchTitle": "Trouver des joueurs",
+    "searchPlaceholder": "Recherche par nom ou email",
+    "add": "Ajouter",
+    "accept": "Accepter",
+    "decline": "Refuser",
+    "remove": "Retirer",
+    "pendingOut": "Demande envoyée",
+    "already": "Ami",
+    "actionFailed": "Impossible de mettre à jour l’amitié."
   }
 }

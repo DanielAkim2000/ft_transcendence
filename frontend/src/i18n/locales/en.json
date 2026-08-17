@@ -66,6 +66,8 @@
   "nav": {
     "menu": "Menu",
     "home": "Home",
+    "profile": "Profile",
+    "friends": "Friends",
     "settings": "Settings",
     "twoFactor": "Two-factor auth"
   },
@@ -106,5 +108,41 @@
       "enabledSuccess": "2FA is now enabled.",
       "disabledSuccess": "2FA is now disabled."
     }
+  },
+  "profile": {
+    "meTitle": "My profile",
+    "meDescription": "Update your display name and avatar.",
+    "avatarTitle": "Avatar",
+    "avatarDescription": "JPEG, PNG or WebP. 2 MB max. Initials are used if none is set.",
+    "avatarSuccess": "Avatar updated.",
+    "avatarFailed": "Could not upload the avatar.",
+    "infoTitle": "Profile information",
+    "displayname": "Display name",
+    "save": "Save",
+    "saving": "Saving…",
+    "saveSuccess": "Profile updated.",
+    "saveFailed": "Could not update the profile.",
+    "viewPublic": "View public profile",
+    "edit": "Edit profile",
+    "notFound": "User not found.",
+    "online": "Online",
+    "offline": "Offline"
+  },
+  "friends": {
+    "title": "Friends",
+    "description": "Manage requests and see who is around.",
+    "pendingTitle": "Pending requests",
+    "noPending": "No pending requests.",
+    "listTitle": "Your friends",
+    "noFriends": "No friends yet.",
+    "searchTitle": "Find users",
+    "searchPlaceholder": "Search by name or email",
+    "add": "Add friend",
+    "accept": "Accept",
+    "decline": "Decline",
+    "remove": "Remove",
+    "pendingOut": "Request sent",
+    "already": "Friend",
+    "actionFailed": "Could not update friendship."
   }
 }

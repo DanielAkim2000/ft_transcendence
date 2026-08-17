@@ -16,12 +16,6 @@ const baseQuery = fetchBaseQuery({
     if (token) {
       headers.set("Authorization", `Bearer ${token}`);
     }
-    if (!token) {
-      const preAuthToken = (getState() as RootState).auth.preAuthToken;
-      if (preAuthToken) {
-        headers.set("Authorization", `Bearer ${preAuthToken}`);
-      }
-    }
     return headers;
   },
 });
@@ -43,7 +37,8 @@ const baseQueryWithReauth: BaseQueryFn<
       url.includes("/auth/register") ||
       url.includes("/auth/2fa/verify") ||
       url.includes("/auth/2fa/toggle") ||
-      url.includes("/auth/2fa/setup")
+      url.includes("/auth/2fa/setup") ||
+      url.includes("/auth/2fa/pending")
     ) {
       return result;
     }

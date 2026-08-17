@@ -4,12 +4,12 @@ import type { PayloadAction } from "@reduxjs/toolkit";
 
 type AuthState = {
   accessToken: string | null;
-  preAuthToken: string | null;
+  twoFactorRequired: boolean;
 };
 
 const initialState: AuthState = {
   accessToken: null,
-  preAuthToken: null,
+  twoFactorRequired: false,
 };
 
 const authSlice = createSlice({
@@ -18,23 +18,20 @@ const authSlice = createSlice({
   reducers: {
     setAccessToken: (state, action: PayloadAction<{ accessToken: string }>) => {
       state.accessToken = action.payload.accessToken;
-      state.preAuthToken = null;
+      state.twoFactorRequired = false;
     },
-    setPreAuthToken: (
-      state,
-      action: PayloadAction<{ preAuthToken: string }>,
-    ) => {
-      state.preAuthToken = action.payload.preAuthToken;
+    setTwoFactorRequired: (state) => {
+      state.twoFactorRequired = true;
       state.accessToken = null;
     },
     clearCredentials: (state) => {
       state.accessToken = null;
-      state.preAuthToken = null;
+      state.twoFactorRequired = false;
     },
   },
 });
 
-export const { setAccessToken, setPreAuthToken, clearCredentials } =
+export const { setAccessToken, setTwoFactorRequired, clearCredentials } =
   authSlice.actions;
 
 export default authSlice.reducer;

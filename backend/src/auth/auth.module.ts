@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
@@ -10,10 +10,11 @@ import { AccessTokenStrategy } from './strategies/access-token.strategy';
 import { AccessTokenGuard } from './guards/access-token.guard';
 import { PreAuthTokenStrategy } from './strategies/pre-auth-token.strategy';
 import { PreAuthTokenGuard } from './guards/pre-auth-token.guard';
+import { RolesGuard } from './guards/roles.guard';
 
 @Module({
   imports: [
-    UsersModule,
+    forwardRef(() => UsersModule),
     JwtModule.registerAsync({
       useFactory: () => ({
         secret: process.env.JWT_ACCESS_TOKEN_SECRET,
@@ -30,8 +31,9 @@ import { PreAuthTokenGuard } from './guards/pre-auth-token.guard';
     AccessTokenGuard,
     PreAuthTokenStrategy,
     PreAuthTokenGuard,
+    RolesGuard,
   ],
   controllers: [AuthController],
-  exports: [AuthService, AccessTokenGuard],
+  exports: [AuthService, AccessTokenGuard, RolesGuard],
 })
 export class AuthModule {}

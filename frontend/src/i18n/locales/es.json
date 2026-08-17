@@ -66,6 +66,8 @@
   "nav": {
     "menu": "Menú",
     "home": "Inicio",
+    "profile": "Perfil",
+    "friends": "Amigos",
     "settings": "Ajustes",
     "twoFactor": "Auth en dos pasos"
   },
@@ -106,5 +108,41 @@
       "enabledSuccess": "La 2FA está ahora activada.",
       "disabledSuccess": "La 2FA está ahora desactivada."
     }
+  },
+  "profile": {
+    "meTitle": "Mi perfil",
+    "meDescription": "Actualiza tu nombre y avatar.",
+    "avatarTitle": "Avatar",
+    "avatarDescription": "JPEG, PNG o WebP. 2 MB máx. Se usan las iniciales si no hay avatar.",
+    "avatarSuccess": "Avatar actualizado.",
+    "avatarFailed": "No se pudo subir el avatar.",
+    "infoTitle": "Información",
+    "displayname": "Nombre visible",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "saveSuccess": "Perfil actualizado.",
+    "saveFailed": "No se pudo actualizar el perfil.",
+    "viewPublic": "Ver perfil público",
+    "edit": "Editar perfil",
+    "notFound": "Usuario no encontrado.",
+    "online": "En línea",
+    "offline": "Desconectado"
+  },
+  "friends": {
+    "title": "Amigos",
+    "description": "Gestiona solicitudes y mira quién está aquí.",
+    "pendingTitle": "Solicitudes pendientes",
+    "noPending": "No hay solicitudes pendientes.",
+    "listTitle": "Tus amigos",
+    "noFriends": "Aún no tienes amigos.",
+    "searchTitle": "Buscar usuarios",
+    "searchPlaceholder": "Busca por nombre o email",
+    "add": "Añadir",
+    "accept": "Aceptar",
+    "decline": "Rechazar",
+    "remove": "Eliminar",
+    "pendingOut": "Solicitud enviada",
+    "already": "Amigo",
+    "actionFailed": "No se pudo actualizar la amistad."
   }
 }

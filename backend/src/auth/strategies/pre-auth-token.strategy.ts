@@ -8,6 +8,7 @@ import {
 import { AuthService } from '../auth.service';
 import { PRE_AUTH_TOKEN_STRATEGY } from '../constants/injection-tokens';
 import { PayloadJwtDto } from '../types/payload.type';
+import type { Request } from 'express';
 
 @Injectable()
 export class PreAuthTokenStrategy extends PassportStrategy(
@@ -23,7 +24,14 @@ export class PreAuthTokenStrategy extends PassportStrategy(
     }
 
     const options: StrategyOptionsWithoutRequest = {
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        (req: Request) => {
+          const token = (req.cookies as Record<string, unknown> | undefined)
+            ?.preAuthToken;
+          return typeof token === 'string' ? token : null;
+        },
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ]),
       ignoreExpiration: false,
       secretOrKey: secret,
     };

@@ -1,5 +1,9 @@
 import { api } from "@/store/api";
-import { clearCredentials, setAccessToken, setPreAuthToken } from "./authSlice";
+import {
+  clearCredentials,
+  setAccessToken,
+  setTwoFactorRequired,
+} from "./authSlice";
 import { logger } from "@/lib/logger";
 import { TAG_TYPES } from "@/constants/tagTypes";
 
@@ -8,16 +12,9 @@ interface LoginRequest {
   password: string;
 }
 
-export enum Status {
-  ONLINE = "ONLINE",
-  OFFLINE = "OFFLINE",
-  IN_GAME = "IN_GAME",
-}
+export type Status = "ONLINE" | "OFFLINE" | "IN_GAME";
 
-export enum Role {
-  ADMIN = "ADMIN",
-  USER = "USER",
-}
+export type Role = "ADMIN" | "USER";
 
 export interface User {
   id: string;
@@ -39,9 +36,8 @@ interface LoginResponseWithoutPreAuthToken {
   user: User;
 }
 
-interface LoginResponseWithPreAuthToken {
+interface LoginResponseWithTwoFactor {
   twoFactorEnabled: true;
-  preAuthToken: string;
 }
 
 interface RegisterRequest {
@@ -77,9 +73,10 @@ export const authApi = api.injectEndpoints({
           logger(error, "error");
         }
       },
+      invalidatesTags: [TAG_TYPES.AUTH],
     }),
     login: builder.mutation<
-      LoginResponseWithoutPreAuthToken | LoginResponseWithPreAuthToken,
+      LoginResponseWithoutPreAuthToken | LoginResponseWithTwoFactor,
       LoginRequest
     >({
       query: (body) => ({
@@ -91,7 +88,7 @@ export const authApi = api.injectEndpoints({
         try {
           const { data } = await queryFulfilled;
           if (data.twoFactorEnabled) {
-            dispatch(setPreAuthToken({ preAuthToken: data.preAuthToken }));
+            dispatch(setTwoFactorRequired());
           } else if (data.twoFactorEnabled === false) {
             dispatch(setAccessToken({ accessToken: data.accessToken }));
           }
@@ -99,6 +96,8 @@ export const authApi = api.injectEndpoints({
           logger(error, "error");
         }
       },
+      invalidatesTags: (result) =>
+        result && result.twoFactorEnabled === false ? [TAG_TYPES.AUTH] : [],
     }),
     refresh: builder.mutation<{ accessToken: string }, void>({
       query: () => ({
@@ -119,12 +118,15 @@ export const authApi = api.injectEndpoints({
         url: "/auth/logout",
         method: "POST",
       }),
+      invalidatesTags: [TAG_TYPES.AUTH],
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
-          dispatch(clearCredentials());
         } catch (error) {
           logger(error, "error");
+        } finally {
+          dispatch(clearCredentials());
+          dispatch(api.util.resetApiState());
         }
       },
     }),
@@ -134,6 +136,12 @@ export const authApi = api.injectEndpoints({
         method: "GET",
       }),
       providesTags: [TAG_TYPES.AUTH],
+    }),
+    check2faPending: builder.query<{ pending: true }, void>({
+      query: () => ({
+        url: "/auth/2fa/pending",
+        method: "GET",
+      }),
     }),
     verify2fa: builder.mutation<
       { user: User; accessToken: string },
@@ -152,6 +160,7 @@ export const authApi = api.injectEndpoints({
           logger(error, "error");
         }
       },
+      invalidatesTags: [TAG_TYPES.AUTH],
     }),
     setup2fa: builder.mutation<{ secret: string; otpauthUrl: string }, void>({
       query: () => ({
@@ -176,6 +185,7 @@ export const {
   useRefreshMutation,
   useLogoutMutation,
   useMeQuery,
+  useLazyCheck2faPendingQuery,
   useVerify2faMutation,
   useSetup2faMutation,
   useToggle2faMutation,

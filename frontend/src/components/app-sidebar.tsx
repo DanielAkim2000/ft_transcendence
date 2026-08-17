@@ -1,4 +1,4 @@
-import { HomeIcon, ShieldCheckIcon, LogOutIcon, SettingsIcon } from "lucide-react";
+import { HomeIcon, ShieldCheckIcon, LogOutIcon, SettingsIcon, UserIcon, UsersIcon } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import {
@@ -20,16 +20,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { useLogoutMutation, useMeQuery } from "@/features/auth/authApi";
-
-function getInitials(name?: string | null) {
-  if (!name?.trim()) return "FT";
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
-}
+import { getInitials, resolveAvatarUrl } from "@/lib/user";
 
 export function AppSidebar() {
   const { t } = useTranslation();
@@ -43,6 +34,16 @@ export function AppSidebar() {
       title: t("nav.home"),
       url: "/",
       icon: HomeIcon,
+    },
+    {
+      title: t("nav.profile"),
+      url: "/profile/me",
+      icon: UserIcon,
+    },
+    {
+      title: t("nav.friends"),
+      url: "/friends",
+      icon: UsersIcon,
     },
     {
       title: t("nav.settings"),
@@ -70,10 +71,10 @@ export function AppSidebar() {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link to="/" />}>
+            <SidebarMenuButton size="lg" render={<Link to="/profile/me" />}>
               <Avatar className="size-8 rounded-lg">
                 <AvatarImage
-                  src={user?.avatarUrl ?? undefined}
+                  src={resolveAvatarUrl(user?.avatarUrl)}
                   alt={user?.displayname ?? t("common.brand")}
                   className="rounded-lg"
                 />

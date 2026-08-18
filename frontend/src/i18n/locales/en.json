@@ -17,7 +17,9 @@
     "declineTitle": "Decline request?",
     "declineDescription": "Decline the friend request from {{name}}?",
     "disable2faTitle": "Disable 2FA?",
-    "disable2faDescription": "Your account will only be protected by your password until you enable two-factor authentication again."
+    "disable2faDescription": "Your account will only be protected by your password until you enable two-factor authentication again.",
+    "saveProfileTitle": "Save changes?",
+    "saveProfileDescription": "Your display name will be updated on your profile."
   },
   "auth": {
     "login": {

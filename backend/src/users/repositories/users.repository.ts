@@ -84,6 +84,7 @@ export class UserRepository {
       data: {
         twoFactorEnabled: user.twoFactorEnabled,
         twoFactorSecret: user.twoFactorSecret,
+        twoFactorPendingSecret: user.twoFactorPendingSecret,
         isOnline: user.isOnline,
         status: user.status,
         role: user.role,
@@ -278,6 +279,7 @@ export class UserRepository {
       passwordHash: user.passwordHash,
       twoFactorEnabled: user.twoFactorEnabled,
       twoFactorSecret: user.twoFactorSecret,
+      twoFactorPendingSecret: user.twoFactorPendingSecret,
       isOnline: user.isOnline,
       status,
       role,

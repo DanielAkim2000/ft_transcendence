@@ -17,7 +17,9 @@
     "declineTitle": "Refuser la demande ?",
     "declineDescription": "Refuser la demande d’ami de {{name}} ?",
     "disable2faTitle": "Désactiver la 2FA ?",
-    "disable2faDescription": "Ton compte ne sera plus protégé que par ton mot de passe, jusqu’à ce que tu réactives l’authentification à deux facteurs."
+    "disable2faDescription": "Ton compte ne sera plus protégé que par ton mot de passe, jusqu’à ce que tu réactives l’authentification à deux facteurs.",
+    "saveProfileTitle": "Enregistrer les modifications ?",
+    "saveProfileDescription": "Ton pseudo sera mis à jour sur ton profil."
   },
   "auth": {
     "login": {

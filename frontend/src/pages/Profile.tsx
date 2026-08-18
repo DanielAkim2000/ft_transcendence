@@ -19,7 +19,7 @@ import {
 } from "@/features/users/usersApi";
 import { getInitials, resolveAvatarUrl } from "@/lib/user";
 import { getErrorMessage } from "@/lib/get-error-message";
-import { toast } from "@/lib/toast";
+import { toast } from "@/components/ui/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useState } from "react";
 
@@ -156,7 +156,10 @@ export const Profile = () => {
                 try {
                   await sendRequest(user.id).unwrap();
                   setJustSentId(user.id);
-                  toast(t("friends.inviteSentToast"));
+                  toast.add({
+                    title: t("friends.inviteSentToast"),
+                    type: "success",
+                  });
                 } catch (err) {
                   setActionError(
                     getErrorMessage(err, t("friends.actionFailed")),

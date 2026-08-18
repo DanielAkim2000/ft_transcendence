@@ -1,4 +1,6 @@
 import {
+  BadRequestException,
+  ConflictException,
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
@@ -140,14 +142,21 @@ export class AuthService {
   }
 
   async verify2fa(user: UserEntity, code: string): Promise<void> {
-    if (!user.twoFactorSecret) {
+    await this.assertValidTotp(user.twoFactorSecret, code);
+  }
+
+  private async assertValidTotp(
+    secret: string | null,
+    code: string,
+  ): Promise<void> {
+    if (!secret) {
       throw new UnauthorizedException(
         'Two-factor authentication is not set up',
       );
     }
 
     const result = await verify({
-      secret: user.twoFactorSecret,
+      secret,
       token: code,
       epochTolerance: 1,
     });
@@ -160,6 +169,12 @@ export class AuthService {
   async generate2faSecret(
     user: UserEntity,
   ): Promise<{ secret: string; otpauthUrl: string }> {
+    if (user.twoFactorEnabled) {
+      throw new ConflictException(
+        'Two-factor authentication is already enabled',
+      );
+    }
+
     const secret = generateSecret();
     const otpauthUrl = generateURI({
       secret,
@@ -167,17 +182,34 @@ export class AuthService {
       issuer: 'ft_transcendence',
     });
 
-    user.twoFactorSecret = secret;
+    user.twoFactorPendingSecret = secret;
     await this.usersService.updateUser(user);
 
     return { secret, otpauthUrl };
   }
 
   async toggle2fa(user: UserEntity, code: string): Promise<boolean> {
-    await this.verify2fa(user, code);
-    user.twoFactorEnabled = !user.twoFactorEnabled;
+    if (user.twoFactorEnabled) {
+      await this.assertValidTotp(user.twoFactorSecret, code);
+      user.twoFactorEnabled = false;
+      user.twoFactorSecret = null;
+      user.twoFactorPendingSecret = null;
+      await this.usersService.updateUser(user);
+      return false;
+    }
+
+    if (!user.twoFactorPendingSecret) {
+      throw new BadRequestException(
+        'Generate a QR code before enabling two-factor authentication',
+      );
+    }
+
+    await this.assertValidTotp(user.twoFactorPendingSecret, code);
+    user.twoFactorEnabled = true;
+    user.twoFactorSecret = user.twoFactorPendingSecret;
+    user.twoFactorPendingSecret = null;
     await this.usersService.updateUser(user);
-    return user.twoFactorEnabled;
+    return true;
   }
 
   async revokeRefreshToken(

@@ -226,7 +226,9 @@ export const TwoFactorSettings = () => {
             <Button
               type="submit"
               form="toggle-2fa-form"
-              disabled={isToggling || form.state.isSubmitting}
+              disabled={
+                isToggling || form.state.isSubmitting || !qrDataUrl
+              }
             >
               {isToggling || form.state.isSubmitting
                 ? t("settings.twoFactor.toggling")

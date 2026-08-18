@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { toast } from "@/components/ui/toast";
 import { useMeQuery } from "@/features/auth/authApi";
 import {
   useUpdateProfileMutation,
@@ -48,7 +50,6 @@ function ProfileMeForm({
   const [updateProfile, { isLoading: isSaving }] = useUpdateProfileMutation();
   const [uploadAvatar, { isLoading: isUploading }] = useUploadAvatarMutation();
   const [serverError, setServerError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   const schema = useMemo(
     () =>
@@ -68,10 +69,12 @@ function ProfileMeForm({
     validators: { onSubmit: schema },
     onSubmit: async ({ value }) => {
       setServerError(null);
-      setSuccess(null);
       try {
         await updateProfile(value).unwrap();
-        setSuccess(t("profile.saveSuccess"));
+        toast.add({
+          title: t("profile.saveSuccess"),
+          type: "success",
+        });
       } catch (error) {
         setServerError(getErrorMessage(error, t("profile.saveFailed")));
       }
@@ -115,7 +118,10 @@ function ProfileMeForm({
               setServerError(null);
               try {
                 await uploadAvatar(file).unwrap();
-                setSuccess(t("profile.avatarSuccess"));
+                toast.add({
+                  title: t("profile.avatarSuccess"),
+                  type: "success",
+                });
               } catch (error) {
                 setServerError(
                   getErrorMessage(error, t("profile.avatarFailed")),
@@ -135,7 +141,6 @@ function ProfileMeForm({
             id="profile-form"
             onSubmit={(e) => {
               e.preventDefault();
-              form.handleSubmit();
             }}
           >
             <FieldGroup>
@@ -168,21 +173,23 @@ function ProfileMeForm({
           {serverError ? (
             <p className="mt-3 text-sm text-destructive">{serverError}</p>
           ) : null}
-          {success ? (
-            <p className="mt-3 text-sm text-muted-foreground">{success}</p>
-          ) : null}
         </CardContent>
         <CardFooter className="justify-between">
           <Button variant="outline" render={<Link to={`/profile/${user.id}`} />}>
             {t("profile.viewPublic")}
           </Button>
-          <Button
-            type="submit"
-            form="profile-form"
-            disabled={isSaving || form.state.isSubmitting}
+          <ConfirmDialog
+            title={t("confirm.saveProfileTitle")}
+            description={t("confirm.saveProfileDescription")}
+            confirmLabel={t("profile.save")}
+            variant="default"
+            loading={isSaving}
+            onConfirm={() => form.handleSubmit()}
           >
-            {isSaving ? t("profile.saving") : t("profile.save")}
-          </Button>
+            <Button type="button" disabled={isSaving || form.state.isSubmitting}>
+              {isSaving ? t("profile.saving") : t("profile.save")}
+            </Button>
+          </ConfirmDialog>
         </CardFooter>
       </Card>
     </div>

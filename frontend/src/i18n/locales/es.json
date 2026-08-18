@@ -17,7 +17,9 @@
     "declineTitle": "¿Rechazar solicitud?",
     "declineDescription": "¿Rechazar la solicitud de amistad de {{name}}?",
     "disable2faTitle": "¿Desactivar la 2FA?",
-    "disable2faDescription": "Tu cuenta solo estará protegida por tu contraseña hasta que vuelvas a activar la autenticación en dos pasos."
+    "disable2faDescription": "Tu cuenta solo estará protegida por tu contraseña hasta que vuelvas a activar la autenticación en dos pasos.",
+    "saveProfileTitle": "¿Guardar los cambios?",
+    "saveProfileDescription": "Tu nombre visible se actualizará en tu perfil."
   },
   "auth": {
     "login": {

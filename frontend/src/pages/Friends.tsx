@@ -16,19 +16,16 @@ import {
 import type { User } from "@/features/auth/authApi";
 import { getInitials, resolveAvatarUrl } from "@/lib/user";
 import { getErrorMessage } from "@/lib/get-error-message";
-import { toast } from "@/lib/toast";
+import { toast } from "@/components/ui/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
-function UserRow({
-  user,
-  actions,
-}: {
-  user: User;
-  actions: ReactNode;
-}) {
+function UserRow({ user, actions }: { user: User; actions: ReactNode }) {
   return (
     <li className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
-      <Link to={`/profile/${user.id}`} className="flex min-w-0 items-center gap-3">
+      <Link
+        to={`/profile/${user.id}`}
+        className="flex min-w-0 items-center gap-3"
+      >
         <Avatar className="size-9 rounded-lg">
           <AvatarImage
             src={resolveAvatarUrl(user.avatarUrl)}
@@ -56,7 +53,8 @@ function UserRow({
 export const Friends = () => {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
-  const { data: friends = [], isLoading: friendsLoading } = useListFriendsQuery();
+  const { data: friends = [], isLoading: friendsLoading } =
+    useListFriendsQuery();
   const { data: pending = [], isLoading: pendingLoading } =
     useListPendingFriendsQuery();
   const { data: outgoing = [] } = useListOutgoingFriendsQuery();
@@ -104,7 +102,9 @@ export const Friends = () => {
         {pendingLoading ? (
           <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
         ) : pending.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("friends.noPending")}</p>
+          <p className="text-sm text-muted-foreground">
+            {t("friends.noPending")}
+          </p>
         ) : (
           <ul className="flex flex-col gap-2">
             {pending.map((user) => (
@@ -125,7 +125,9 @@ export const Friends = () => {
                         name: user.displayname,
                       })}
                       confirmLabel={t("friends.decline")}
-                      onConfirm={() => run(() => removeFriend(user.id).unwrap())}
+                      onConfirm={() =>
+                        run(() => removeFriend(user.id).unwrap())
+                      }
                     >
                       <Button size="sm" variant="outline">
                         {t("friends.decline")}
@@ -146,7 +148,9 @@ export const Friends = () => {
         {friendsLoading ? (
           <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
         ) : friends.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("friends.noFriends")}</p>
+          <p className="text-sm text-muted-foreground">
+            {t("friends.noFriends")}
+          </p>
         ) : (
           <ul className="flex flex-col gap-2">
             {friends.map((user) => (
@@ -233,7 +237,10 @@ export const Friends = () => {
                         run(async () => {
                           await sendRequest(user.id).unwrap();
                           setJustSentIds((prev) => new Set(prev).add(user.id));
-                          toast(t("friends.inviteSentToast"));
+                          toast.add({
+                            title: t("friends.inviteSentToast"),
+                            type: "success",
+                          });
                         })
                       }
                     >

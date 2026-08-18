@@ -75,6 +75,8 @@ export class UserEntity {
   })
   @Exclude()
   twoFactorSecret: string | null;
+  @Exclude()
+  twoFactorPendingSecret: string | null;
   @ApiProperty({
     description: 'The isOnline of the user',
     example: true,

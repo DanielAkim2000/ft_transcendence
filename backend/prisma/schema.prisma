@@ -58,6 +58,7 @@ model User {
   passwordHash     String?
   twoFactorEnabled Boolean      @default(false)
   twoFactorSecret  String?
+  twoFactorPendingSecret String?
   isOnline         Boolean      @default(false)
   status           Status       @default(OFFLINE)
   role             Role         @default(USER)

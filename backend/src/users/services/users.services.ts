@@ -7,7 +7,7 @@ import {
 import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { UserRepository } from '../repositories/users.repository';
-import { RefreshToken, UserEntity } from '../entities/users.entity';
+import { RefreshToken, Status, UserEntity } from '../entities/users.entity';
 import { Profile42Dto } from '../../auth/dtos/profile42.dto';
 import { RegisterDto } from '../../auth/dtos/register.dto';
 import { UpdateProfileDto } from '../dtos/update-profile.dto';
@@ -204,5 +204,13 @@ export class UsersService {
     tokenHash: string,
   ): Promise<RefreshToken | null> {
     return this.userRepository.findRefreshToken(userId, tokenHash);
+  }
+
+  updatePresence(
+    userId: string,
+    isOnline: boolean,
+    status: Status,
+  ): Promise<void> {
+    return this.userRepository.updatePresence(userId, isOnline, status);
   }
 }

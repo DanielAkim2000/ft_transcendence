@@ -248,6 +248,17 @@ export class UserRepository {
     return rows.map((row) => this.mapUser(row.addressee));
   }
 
+  async updatePresence(
+    userId: string,
+    isOnline: boolean,
+    status: Status,
+  ): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { isOnline, status },
+    });
+  }
+
   private mapUser(user: User & { refreshTokens: RefreshToken[] }): UserEntity {
     let status: Status = Status.OFFLINE;
     switch (user.status) {

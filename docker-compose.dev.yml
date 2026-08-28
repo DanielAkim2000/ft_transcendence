@@ -1,5 +1,16 @@
 name: ft_transcendence_dev
 
+# Dev consomme plus (Vite, hot reload, polling). Budget total ~2 Go RAM.
+x-db-limits: &db-limits
+  cpus: "0.25"
+  memory: 384M
+x-backend-limits: &backend-limits
+  cpus: "0.75"
+  memory: 768M
+x-frontend-limits: &frontend-limits
+  cpus: "0.75"
+  memory: 768M
+
 services:
   db:
     image: postgres:16-alpine
@@ -25,6 +36,9 @@ services:
       start_period: 10s
     ports:
       - "${POSTGRES_PORT:-5433}:5432"
+    deploy:
+      resources:
+        limits: *db-limits
 
   backend:
     build:
@@ -62,6 +76,9 @@ services:
       - ./backend/uploads:/app/uploads
     ports:
       - "${BACKEND_PORT:-5000}:${BACKEND_PORT:-5000}"
+    deploy:
+      resources:
+        limits: *backend-limits
 
   frontend:
     build:
@@ -74,11 +91,15 @@ services:
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:5000}
       CHOKIDAR_USEPOLLING: "true"
+      CI: "true"
     volumes:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
     ports:
       - "${FRONTEND_PORT:-5173}:5173"
+    deploy:
+      resources:
+        limits: *frontend-limits
 
 secrets:
   postgres_password:

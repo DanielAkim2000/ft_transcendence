@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { setTwoFactorRequired } from "@/features/auth/authSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { useLazyCheck2faPendingQuery } from "@/features/auth/authApi";
+import { ROUTES } from "@/constants/routes";
 
 export const AuthCallback = () => {
   const { t } = useTranslation();
@@ -18,7 +19,7 @@ export const AuthCallback = () => {
     (async () => {
       // AuthBootstrap already attempted /auth/refresh via the httpOnly cookie.
       if (accessToken) {
-        navigate("/", { replace: true });
+        navigate(ROUTES.HOME, { replace: true });
         return;
       }
 
@@ -26,11 +27,11 @@ export const AuthCallback = () => {
         await check2faPending().unwrap();
         if (!cancelled) {
           dispatch(setTwoFactorRequired());
-          navigate("/login", { replace: true });
+          navigate(ROUTES.LOGIN, { replace: true });
         }
       } catch {
         if (!cancelled) {
-          navigate("/login", { replace: true });
+          navigate(ROUTES.LOGIN, { replace: true });
         }
       }
     })();

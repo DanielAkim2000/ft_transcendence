@@ -1,4 +1,5 @@
 import { TAG_TYPES } from "@/constants/tagTypes";
+import type { RootState } from "@/store";
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 
@@ -35,3 +36,5 @@ export const { setAccessToken, setTwoFactorRequired, clearCredentials } =
   authSlice.actions;
 
 export default authSlice.reducer;
+
+export const selectAccessToken = (state: RootState) => state.auth.accessToken;

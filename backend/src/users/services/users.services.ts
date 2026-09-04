@@ -11,6 +11,7 @@ import { RefreshToken, Status, UserEntity } from '../entities/users.entity';
 import { Profile42Dto } from '../../auth/dtos/profile42.dto';
 import { RegisterDto } from '../../auth/dtos/register.dto';
 import { UpdateProfileDto } from '../dtos/update-profile.dto';
+import { UpdateSettingsDto } from '../dtos/update-settings.dto';
 import * as bcrypt from 'bcrypt';
 import { Prisma } from '../../generated/prisma/client';
 
@@ -38,8 +39,46 @@ export class UsersService {
     return user;
   }
 
-  searchUsers(excludeUserId: string, query?: string): Promise<UserEntity[]> {
-    return this.userRepository.searchUsers(excludeUserId, query);
+  /** Profil public : la presence n'est visible qu'aux amis (ou soi-même). */
+  async getProfileForViewer(
+    viewerId: string,
+    targetId: string,
+  ): Promise<{
+    user: UserEntity;
+    friendshipStatus:
+      | 'none'
+      | 'pending_out'
+      | 'pending_in'
+      | 'friends'
+      | 'self';
+  }> {
+    const user = await this.getProfile(targetId);
+    const friendshipStatus = await this.getFriendshipStatus(viewerId, targetId);
+    if (friendshipStatus !== 'friends' && friendshipStatus !== 'self') {
+      return { user: this.hidePresence(user), friendshipStatus };
+    }
+    return { user, friendshipStatus };
+  }
+
+  async searchUsers(
+    excludeUserId: string,
+    query?: string,
+  ): Promise<UserEntity[]> {
+    const [users, friends] = await Promise.all([
+      this.userRepository.searchUsers(excludeUserId, query),
+      this.userRepository.listAcceptedFriends(excludeUserId),
+    ]);
+    const friendIds = new Set(friends.map((friend) => friend.id));
+    return users.map((user) =>
+      friendIds.has(user.id) ? user : this.hidePresence(user),
+    );
+  }
+
+  /** Masque isOnline / status pour les non-amis. */
+  private hidePresence(user: UserEntity): UserEntity {
+    user.isOnline = false;
+    user.status = Status.OFFLINE;
+    return user;
   }
 
   createUserFrom42Profile(profile: Profile42Dto): Promise<UserEntity> {
@@ -76,7 +115,16 @@ export class UsersService {
     user: UserEntity,
     dto: UpdateProfileDto,
   ): Promise<UserEntity> {
-    user.displayname = dto.displayname;
+    user.displayname = dto.displayname.trim();
+    return this.userRepository.updateUser(user);
+  }
+
+  async updateSettings(
+    user: UserEntity,
+    dto: UpdateSettingsDto,
+  ): Promise<UserEntity> {
+    user.theme = dto.theme;
+    user.language = dto.language;
     return this.userRepository.updateUser(user);
   }
 

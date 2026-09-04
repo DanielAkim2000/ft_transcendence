@@ -24,6 +24,7 @@ import { createRegisterSchema } from "@/features/auth/register.schema";
 import { AuthShell } from "@/layouts/AuthShell";
 import { getErrorMessage } from "@/lib/get-error-message";
 import { useAppSelector } from "@/store/hooks";
+import { ROUTES } from "@/constants/routes";
 
 export const Register = () => {
   const { t, i18n } = useTranslation();
@@ -50,7 +51,7 @@ export const Register = () => {
       setServerError(null);
       try {
         await register(value).unwrap();
-        navigate("/", { replace: true });
+        navigate(ROUTES.HOME, { replace: true });
       } catch (error) {
         setServerError(getErrorMessage(error, t("auth.register.failed")));
       }
@@ -58,7 +59,7 @@ export const Register = () => {
   });
 
   if (accessToken) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={ROUTES.HOME} replace />;
   }
 
   return (
@@ -191,7 +192,7 @@ export const Register = () => {
           <p className="w-full text-center font-sans text-sm text-muted-foreground">
             {t("auth.register.hasAccount")}{" "}
             <Link
-              to="/login"
+              to={ROUTES.LOGIN}
               className="font-medium text-foreground underline-offset-4 hover:underline"
             >
               {t("auth.register.loginLink")}

@@ -22,6 +22,7 @@ import { getErrorMessage } from "@/lib/get-error-message";
 import { toast } from "@/components/ui/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useState } from "react";
+import { ROUTES } from "@/constants/routes";
 
 export const Profile = () => {
   const { t } = useTranslation();
@@ -47,28 +48,46 @@ export const Profile = () => {
 
   const { user, friendshipStatus } = data;
   const isBusy = isSending || isAccepting || isRemoving;
+  const canSeePresence =
+    friendshipStatus === "friends" || friendshipStatus === "self";
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
       <Card>
         <CardHeader className="flex flex-row items-center gap-4">
-          <Avatar className="size-16 rounded-lg">
-            <AvatarImage
-              src={resolveAvatarUrl(user.avatarUrl)}
-              alt={user.displayname}
-              className="rounded-lg"
-            />
-            <AvatarFallback className="rounded-lg">
-              {getInitials(user.displayname)}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative shrink-0">
+            <Avatar className="size-16 rounded-lg">
+              <AvatarImage
+                src={resolveAvatarUrl(user.avatarUrl)}
+                alt={user.displayname}
+                className="rounded-lg"
+              />
+              <AvatarFallback className="rounded-lg">
+                {getInitials(user.displayname)}
+              </AvatarFallback>
+            </Avatar>
+            {canSeePresence ? (
+              <span
+                className={`absolute right-0.5 bottom-0.5 size-3.5 rounded-full ring-2 ring-background ${
+                  user.isOnline ? "bg-emerald-500" : "bg-zinc-400"
+                }`}
+                aria-hidden
+              />
+            ) : null}
+          </div>
           <div>
             <CardTitle className="font-serif text-2xl">
               {user.displayname}
             </CardTitle>
-            <CardDescription>
-              {user.isOnline ? t("profile.online") : t("profile.offline")}
-            </CardDescription>
+            {canSeePresence ? (
+              <CardDescription
+                className={
+                  user.isOnline ? "text-emerald-600 font-medium" : undefined
+                }
+              >
+                {user.isOnline ? t("profile.online") : t("profile.offline")}
+              </CardDescription>
+            ) : null}
           </div>
         </CardHeader>
         <CardContent className="font-sans text-sm text-muted-foreground">
@@ -76,7 +95,7 @@ export const Profile = () => {
         </CardContent>
         <CardFooter className="gap-2">
           {me?.id === user.id || friendshipStatus === "self" ? (
-            <Button render={<Link to="/profile/me" />}>
+            <Button render={<Link to={ROUTES.PROFILE_ME} />}>
               {t("profile.edit")}
             </Button>
           ) : friendshipStatus === "friends" ? (

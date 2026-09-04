@@ -24,6 +24,18 @@ enum FriendshipStatus {
   ACCEPTED
 }
 
+enum ThemePreference {
+  light
+  dark
+  system
+}
+
+enum LanguagePreference {
+  en
+  fr
+  es
+}
+
 model RefreshToken {
   id        String   @id @default(cuid())
   userId    String
@@ -62,6 +74,8 @@ model User {
   isOnline         Boolean      @default(false)
   status           Status       @default(OFFLINE)
   role             Role         @default(USER)
+  theme            ThemePreference    @default(light)
+  language         LanguagePreference @default(en)
   refreshTokens    RefreshToken[]
   friendshipsSent      Friendship[] @relation("FriendshipsSent")
   friendshipsReceived  Friendship[] @relation("FriendshipsReceived")

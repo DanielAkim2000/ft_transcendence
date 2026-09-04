@@ -22,6 +22,7 @@ import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { UsersService } from './services/users.services';
 import { UserEntity } from './entities/users.entity';
 import { UpdateProfileDto } from './dtos/update-profile.dto';
+import { UpdateSettingsDto } from './dtos/update-settings.dto';
 
 const AVATAR_DIR = join(process.cwd(), 'uploads', 'avatars');
 const AVATAR_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -93,6 +94,14 @@ export class UsersController {
     return this.usersService.updateProfile(req.user, dto);
   }
 
+  @Patch('me/settings')
+  updateSettings(
+    @Req() req: Request & { user: UserEntity },
+    @Body() dto: UpdateSettingsDto,
+  ): Promise<UserEntity> {
+    return this.usersService.updateSettings(req.user, dto);
+  }
+
   @Post('me/avatar')
   @UseInterceptors(
     FileInterceptor('avatar', {
@@ -133,13 +142,12 @@ export class UsersController {
   ): Promise<{
     user: UserEntity;
     friendshipStatus:
-      'none' | 'pending_out' | 'pending_in' | 'friends' | 'self';
+      | 'none'
+      | 'pending_out'
+      | 'pending_in'
+      | 'friends'
+      | 'self';
   }> {
-    const user = await this.usersService.getProfile(id);
-    const friendshipStatus = await this.usersService.getFriendshipStatus(
-      req.user.id,
-      id,
-    );
-    return { user, friendshipStatus };
+    return this.usersService.getProfileForViewer(req.user.id, id);
   }
 }

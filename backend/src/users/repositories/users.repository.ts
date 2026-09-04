@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Role, Status, UserEntity } from '../entities/users.entity';
+import type {
+  LanguagePreference,
+  ThemePreference,
+} from '../entities/users.entity';
 import { RefreshToken, User } from '../../generated/prisma/client';
 import { Profile42Dto } from '../../auth/dtos/profile42.dto';
 import { RefreshToken as RefreshTokenEntity } from '../entities/users.entity';
@@ -92,6 +96,8 @@ export class UserRepository {
         passwordHash: user.passwordHash,
         displayname: user.displayname,
         email: user.email,
+        theme: user.theme,
+        language: user.language,
       },
       include: {
         refreshTokens: {
@@ -293,6 +299,8 @@ export class UserRepository {
       twoFactorPendingSecret: user.twoFactorPendingSecret,
       isOnline: user.isOnline,
       status,
+      theme: user.theme as ThemePreference,
+      language: user.language as LanguagePreference,
       role,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

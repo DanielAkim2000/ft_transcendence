@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { toast } from "@/components/ui/toast";
 import { useMeQuery } from "@/features/auth/authApi";
+import { ROUTES } from "@/constants/routes";
 import {
   useUpdateProfileMutation,
   useUploadAvatarMutation,
@@ -70,6 +71,7 @@ function ProfileMeForm({
     onSubmit: async ({ value }) => {
       setServerError(null);
       try {
+        value.displayname = value.displayname.trim();
         await updateProfile(value).unwrap();
         toast.add({
           title: t("profile.saveSuccess"),
@@ -175,7 +177,10 @@ function ProfileMeForm({
           ) : null}
         </CardContent>
         <CardFooter className="justify-between">
-          <Button variant="outline" render={<Link to={`/profile/${user.id}`} />}>
+          <Button
+            variant="outline"
+            render={<Link to={ROUTES.profile(user.id)} />}
+          >
             {t("profile.viewPublic")}
           </Button>
           <ConfirmDialog
@@ -186,7 +191,10 @@ function ProfileMeForm({
             loading={isSaving}
             onConfirm={() => form.handleSubmit()}
           >
-            <Button type="button" disabled={isSaving || form.state.isSubmitting}>
+            <Button
+              type="button"
+              disabled={isSaving || form.state.isSubmitting}
+            >
               {isSaving ? t("profile.saving") : t("profile.save")}
             </Button>
           </ConfirmDialog>
@@ -194,4 +202,4 @@ function ProfileMeForm({
       </Card>
     </div>
   );
-};
+}

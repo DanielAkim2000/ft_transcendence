@@ -22,6 +22,7 @@ import {
 import { useLogoutMutation, useMeQuery } from "@/features/auth/authApi";
 import { getInitials, resolveAvatarUrl } from "@/lib/user";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { ROUTES } from "@/constants/routes";
 
 export function AppSidebar() {
   const { t } = useTranslation();
@@ -33,27 +34,27 @@ export function AppSidebar() {
   const items = [
     {
       title: t("nav.home"),
-      url: "/",
+      url: ROUTES.HOME,
       icon: HomeIcon,
     },
     {
       title: t("nav.profile"),
-      url: "/profile/me",
+      url: ROUTES.PROFILE_ME,
       icon: UserIcon,
     },
     {
       title: t("nav.friends"),
-      url: "/friends",
+      url: ROUTES.FRIENDS,
       icon: UsersIcon,
     },
     {
       title: t("nav.settings"),
-      url: "/settings",
+      url: ROUTES.SETTINGS,
       icon: SettingsIcon,
     },
     {
       title: t("nav.twoFactor"),
-      url: "/settings/2fa",
+      url: ROUTES.SETTINGS_2FA,
       icon: ShieldCheckIcon,
     },
   ] as const;
@@ -64,7 +65,7 @@ export function AppSidebar() {
     } catch {
       // session déjà invalide
     }
-    navigate("/login", { replace: true });
+    navigate(ROUTES.LOGIN, { replace: true });
   };
 
   return (
@@ -72,7 +73,7 @@ export function AppSidebar() {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link to="/profile/me" />}>
+            <SidebarMenuButton size="lg" render={<Link to={ROUTES.PROFILE_ME} />}>
               <Avatar className="size-8 rounded-lg">
                 <AvatarImage
                   src={resolveAvatarUrl(user?.avatarUrl)}

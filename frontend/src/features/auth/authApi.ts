@@ -6,6 +6,12 @@ import {
 } from "./authSlice";
 import { logger } from "@/lib/logger";
 import { TAG_TYPES } from "@/constants/tagTypes";
+import { API_ROUTES } from "@/constants/apiRoutes";
+import { AUTH_ENDPOINTS } from "@/constants/queryEndpoints";
+import type {
+  LanguagePreference,
+  ThemePreference,
+} from "../settings/settingsSlice";
 
 interface LoginRequest {
   email: string;
@@ -26,6 +32,8 @@ export interface User {
   isOnline: boolean;
   status: Status;
   role: Role;
+  theme: ThemePreference;
+  language: LanguagePreference;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -56,12 +64,12 @@ interface Toggle2faRequest {
 
 export const authApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    register: builder.mutation<
+    [AUTH_ENDPOINTS.REGISTER]: builder.mutation<
       { user: User; accessToken: string },
       RegisterRequest
     >({
       query: (body) => ({
-        url: "/auth/register",
+        url: API_ROUTES.AUTH_REGISTER,
         method: "POST",
         body,
       }),
@@ -75,12 +83,12 @@ export const authApi = api.injectEndpoints({
       },
       invalidatesTags: [TAG_TYPES.AUTH],
     }),
-    login: builder.mutation<
+    [AUTH_ENDPOINTS.LOGIN]: builder.mutation<
       LoginResponseWithoutPreAuthToken | LoginResponseWithTwoFactor,
       LoginRequest
     >({
       query: (body) => ({
-        url: "/auth/login",
+        url: API_ROUTES.AUTH_LOGIN,
         method: "POST",
         body,
       }),
@@ -99,9 +107,9 @@ export const authApi = api.injectEndpoints({
       invalidatesTags: (result) =>
         result && result.twoFactorEnabled === false ? [TAG_TYPES.AUTH] : [],
     }),
-    refresh: builder.mutation<{ accessToken: string }, void>({
+    [AUTH_ENDPOINTS.REFRESH]: builder.mutation<{ accessToken: string }, void>({
       query: () => ({
-        url: "/auth/refresh",
+        url: API_ROUTES.AUTH_REFRESH,
         method: "POST",
       }),
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
@@ -113,9 +121,9 @@ export const authApi = api.injectEndpoints({
         }
       },
     }),
-    logout: builder.mutation<void, void>({
+    [AUTH_ENDPOINTS.LOGOUT]: builder.mutation<void, void>({
       query: () => ({
-        url: "/auth/logout",
+        url: API_ROUTES.AUTH_LOGOUT,
         method: "POST",
       }),
       invalidatesTags: [TAG_TYPES.AUTH],
@@ -130,25 +138,25 @@ export const authApi = api.injectEndpoints({
         }
       },
     }),
-    me: builder.query<User, void>({
+    [AUTH_ENDPOINTS.ME]: builder.query<User, void>({
       query: () => ({
-        url: "/auth/me",
+        url: API_ROUTES.AUTH_ME,
         method: "GET",
       }),
       providesTags: [TAG_TYPES.AUTH],
     }),
-    check2faPending: builder.query<{ pending: true }, void>({
+    [AUTH_ENDPOINTS.CHECK_2FA_PENDING]: builder.query<{ pending: true }, void>({
       query: () => ({
-        url: "/auth/2fa/pending",
+        url: API_ROUTES.AUTH_2FA_PENDING,
         method: "GET",
       }),
     }),
-    verify2fa: builder.mutation<
+    [AUTH_ENDPOINTS.VERIFY_2FA]: builder.mutation<
       { user: User; accessToken: string },
       Verify2faRequest
     >({
       query: (body) => ({
-        url: "/auth/2fa/verify",
+        url: API_ROUTES.AUTH_2FA_VERIFY,
         method: "POST",
         body,
       }),
@@ -162,15 +170,18 @@ export const authApi = api.injectEndpoints({
       },
       invalidatesTags: [TAG_TYPES.AUTH],
     }),
-    setup2fa: builder.mutation<{ secret: string; otpauthUrl: string }, void>({
+    [AUTH_ENDPOINTS.SETUP_2FA]: builder.mutation<
+      { secret: string; otpauthUrl: string },
+      void
+    >({
       query: () => ({
-        url: "/auth/2fa/setup",
+        url: API_ROUTES.AUTH_2FA_SETUP,
         method: "POST",
       }),
     }),
-    toggle2fa: builder.mutation<boolean, Toggle2faRequest>({
+    [AUTH_ENDPOINTS.TOGGLE_2FA]: builder.mutation<boolean, Toggle2faRequest>({
       query: (body) => ({
-        url: "/auth/2fa/toggle",
+        url: API_ROUTES.AUTH_2FA_TOGGLE,
         method: "POST",
         body,
       }),

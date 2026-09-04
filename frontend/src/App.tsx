@@ -11,22 +11,23 @@ import { Profile } from "@/pages/Profile";
 import { Friends } from "@/pages/Friends";
 import { ProtectedLayout } from "@/layouts/ProtectedLayout";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { ROUTES } from "@/constants/routes";
 
 function App() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path={ROUTES.LOGIN} element={<Login />} />
+      <Route path={ROUTES.REGISTER} element={<Register />} />
+      <Route path={ROUTES.AUTH_CALLBACK} element={<AuthCallback />} />
 
       <Route element={<ProtectedLayout />}>
         <Route element={<DashboardLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/profile/me" element={<ProfileMe />} />
-          <Route path="/profile/:id" element={<Profile />} />
-          <Route path="/friends" element={<Friends />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/settings/2fa" element={<TwoFactorSettings />} />
+          <Route path={ROUTES.HOME} element={<Home />} />
+          <Route path={ROUTES.PROFILE_ME} element={<ProfileMe />} />
+          <Route path={ROUTES.PROFILE_BY_ID} element={<Profile />} />
+          <Route path={ROUTES.FRIENDS} element={<Friends />} />
+          <Route path={ROUTES.SETTINGS} element={<Settings />} />
+          <Route path={ROUTES.SETTINGS_2FA} element={<TwoFactorSettings />} />
         </Route>
       </Route>
     </Routes>

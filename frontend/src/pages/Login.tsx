@@ -28,6 +28,8 @@ import { createLoginSchema } from "@/features/auth/login.schema";
 import { createTwoFactorSchema } from "@/features/auth/two-factor.schema";
 import { clearCredentials } from "@/features/auth/authSlice";
 import { AuthShell } from "@/layouts/AuthShell";
+import { ROUTES } from "@/constants/routes";
+import { API_ROUTES } from "@/constants/apiRoutes";
 import { getErrorMessage } from "@/lib/get-error-message";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
@@ -52,7 +54,7 @@ function LoginCredentialsForm() {
       try {
         const result = await login(value).unwrap();
         if (!result.twoFactorEnabled) {
-          navigate("/", { replace: true });
+          navigate(ROUTES.HOME, { replace: true });
         }
       } catch (error) {
         setServerError(getErrorMessage(error, t("auth.login.failed")));
@@ -61,7 +63,7 @@ function LoginCredentialsForm() {
   });
 
   const handleLoginWith42 = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL}/auth/42/login`;
+    window.location.href = `${import.meta.env.VITE_API_URL}${API_ROUTES.AUTH_42_LOGIN}`;
   };
 
   return (
@@ -182,7 +184,7 @@ function LoginCredentialsForm() {
         <p className="w-full text-center font-sans text-sm text-muted-foreground">
           {t("auth.login.noAccount")}{" "}
           <Link
-            to="/register"
+            to={ROUTES.REGISTER}
             className="font-medium text-foreground underline-offset-4 hover:underline"
           >
             {t("auth.login.registerLink")}
@@ -216,7 +218,7 @@ function TwoFactorForm() {
       setServerError(null);
       try {
         await verify2fa({ code: value.code }).unwrap();
-        navigate("/", { replace: true });
+        navigate(ROUTES.HOME, { replace: true });
       } catch (error) {
         setServerError(getErrorMessage(error, t("auth.twoFactor.failed")));
       }
@@ -291,7 +293,7 @@ function TwoFactorForm() {
           className="h-10 w-full"
           onClick={() => {
             dispatch(clearCredentials());
-            navigate("/login", { replace: true });
+            navigate(ROUTES.LOGIN, { replace: true });
           }}
         >
           {t("common.back")}
@@ -317,7 +319,7 @@ export const Login = () => {
   const twoFactorRequired = useAppSelector((s) => s.auth.twoFactorRequired);
 
   if (accessToken) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={ROUTES.HOME} replace />;
   }
 
   return (

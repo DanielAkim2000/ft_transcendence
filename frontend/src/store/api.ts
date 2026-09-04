@@ -7,6 +7,7 @@ import type {
   FetchBaseQueryError,
 } from "@reduxjs/toolkit/query";
 import { setAccessToken, clearCredentials } from "@/features/auth/authSlice";
+import { API_ROUTES, AUTH_NO_REFRESH_PATHS } from "@/constants/apiRoutes";
 
 const baseQuery = fetchBaseQuery({
   baseUrl: import.meta.env.VITE_API_URL,
@@ -30,16 +31,7 @@ const baseQueryWithReauth: BaseQueryFn<
   if (result.error && result.error.status === 401) {
     const url = typeof args === "string" ? args : args.url;
     // Pas un access token expiré : mauvais credentials / mauvais code 2FA
-    if (
-      url.includes("/auth/refresh") ||
-      url.includes("/auth/login") ||
-      url.includes("/auth/logout") ||
-      url.includes("/auth/register") ||
-      url.includes("/auth/2fa/verify") ||
-      url.includes("/auth/2fa/toggle") ||
-      url.includes("/auth/2fa/setup") ||
-      url.includes("/auth/2fa/pending")
-    ) {
+    if (AUTH_NO_REFRESH_PATHS.some((path) => url.includes(path))) {
       return result;
     }
 
@@ -50,7 +42,7 @@ const baseQueryWithReauth: BaseQueryFn<
     }
 
     const refreshResult = await baseQuery(
-      { url: "/auth/refresh", method: "POST" },
+      { url: API_ROUTES.AUTH_REFRESH, method: "POST" },
       api,
       extraOptions,
     );

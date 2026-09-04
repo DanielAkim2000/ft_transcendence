@@ -12,6 +12,9 @@ export enum Status {
   IN_GAME = 'IN_GAME',
 }
 
+export type ThemePreference = 'light' | 'dark' | 'system';
+export type LanguagePreference = 'en' | 'fr' | 'es';
+
 export class RefreshToken {
   @ApiProperty({
     description: 'The id of the refresh token',
@@ -87,6 +90,20 @@ export class UserEntity {
     example: 'ONLINE',
   })
   status: Status;
+
+  @ApiProperty({
+    description: 'Preferred UI theme',
+    example: 'system',
+    enum: ['light', 'dark', 'system'],
+  })
+  theme: ThemePreference;
+
+  @ApiProperty({
+    description: 'Preferred UI language',
+    example: 'fr',
+    enum: ['en', 'fr', 'es'],
+  })
+  language: LanguagePreference;
 
   @ApiProperty({
     description: 'The passwordHash of the user',

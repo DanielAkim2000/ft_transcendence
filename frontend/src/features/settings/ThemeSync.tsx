@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { useAppSelector } from "@/store/hooks";
+import type { ThemePreference } from "./settingsSlice";
 
-function resolveTheme(theme: "light" | "dark" | "system"): "light" | "dark" {
+function resolveTheme(theme: ThemePreference): "light" | "dark" {
   if (theme === "system") {
     return window.matchMedia("(prefers-color-scheme: dark)").matches
       ? "dark"
@@ -10,7 +11,7 @@ function resolveTheme(theme: "light" | "dark" | "system"): "light" | "dark" {
   return theme;
 }
 
-function applyTheme(theme: "light" | "dark" | "system") {
+function applyTheme(theme: ThemePreference) {
   const resolved = resolveTheme(theme);
   document.documentElement.classList.toggle("dark", resolved === "dark");
 }
@@ -18,9 +19,11 @@ function applyTheme(theme: "light" | "dark" | "system") {
 export function ThemeSync({ children }: { children: React.ReactNode }) {
   const theme = useAppSelector((s) => s.settings.theme);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     applyTheme(theme);
+  }, [theme]);
 
+  useEffect(() => {
     if (theme !== "system") return;
 
     const media = window.matchMedia("(prefers-color-scheme: dark)");

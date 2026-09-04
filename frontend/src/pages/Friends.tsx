@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, useMemo } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -18,31 +18,62 @@ import { getInitials, resolveAvatarUrl } from "@/lib/user";
 import { getErrorMessage } from "@/lib/get-error-message";
 import { toast } from "@/components/ui/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { ROUTES } from "@/constants/routes";
 
-function UserRow({ user, actions }: { user: User; actions: ReactNode }) {
+function UserRow({
+  user,
+  actions,
+  showPresence = false,
+}: {
+  user: User;
+  actions: ReactNode;
+  showPresence?: boolean;
+}) {
+  const { t } = useTranslation();
+
   return (
     <li className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
       <Link
-        to={`/profile/${user.id}`}
+        to={ROUTES.profile(user.id)}
         className="flex min-w-0 items-center gap-3"
       >
-        <Avatar className="size-9 rounded-lg">
-          <AvatarImage
-            src={resolveAvatarUrl(user.avatarUrl)}
-            alt={user.displayname}
-            className="rounded-lg"
-          />
-          <AvatarFallback className="rounded-lg text-xs">
-            {getInitials(user.displayname)}
-          </AvatarFallback>
-        </Avatar>
+        <div className="relative shrink-0">
+          <Avatar className="size-9 rounded-lg">
+            <AvatarImage
+              src={resolveAvatarUrl(user.avatarUrl)}
+              alt={user.displayname}
+              className="rounded-lg"
+            />
+            <AvatarFallback className="rounded-lg text-xs">
+              {getInitials(user.displayname)}
+            </AvatarFallback>
+          </Avatar>
+          {showPresence ? (
+            <span
+              className={`absolute right-0 bottom-0 size-2.5 rounded-full ring-2 ring-background ${
+                user.isOnline ? "bg-emerald-500" : "bg-zinc-400"
+              }`}
+              aria-hidden
+            />
+          ) : null}
+        </div>
         <div className="min-w-0">
           <p className="truncate font-heading text-sm font-medium">
             {user.displayname}
           </p>
-          <p className="truncate text-xs text-muted-foreground">
-            {user.isOnline ? "●" : "○"} {user.email}
-          </p>
+          {showPresence ? (
+            <p
+              className={`truncate text-xs font-medium ${
+                user.isOnline ? "text-emerald-600" : "text-muted-foreground"
+              }`}
+            >
+              {user.isOnline ? t("profile.online") : t("profile.offline")}
+            </p>
+          ) : (
+            <p className="truncate text-xs text-muted-foreground">
+              {user.email}
+            </p>
+          )}
         </div>
       </Link>
       <div className="flex shrink-0 gap-2">{actions}</div>
@@ -76,9 +107,15 @@ export const Friends = () => {
     }
   };
 
-  const friendIds = new Set(friends.map((u) => u.id));
-  const pendingIds = new Set(pending.map((u) => u.id));
-  const outgoingIds = new Set(outgoing.map((u) => u.id));
+  const friendIds = useMemo(() => new Set(friends.map((u) => u.id)), [friends]);
+  const pendingIds = useMemo(
+    () => new Set(pending.map((u) => u.id)),
+    [pending],
+  );
+  const outgoingIds = useMemo(
+    () => new Set(outgoing.map((u) => u.id)),
+    [outgoing],
+  );
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
@@ -157,6 +194,7 @@ export const Friends = () => {
               <UserRow
                 key={user.id}
                 user={user}
+                showPresence
                 actions={
                   <ConfirmDialog
                     title={t("confirm.removeFriendTitle")}
@@ -194,6 +232,7 @@ export const Friends = () => {
               <UserRow
                 key={user.id}
                 user={user}
+                showPresence={friendIds.has(user.id)}
                 actions={
                   friendIds.has(user.id) ? (
                     <span className="text-xs text-muted-foreground">

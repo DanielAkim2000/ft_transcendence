@@ -8,7 +8,13 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { setLanguage, setTheme } from "@/features/settings/settingsSlice";
+import {
+  setLanguage,
+  setTheme,
+  type LanguagePreference,
+  type ThemePreference,
+} from "@/features/settings/settingsSlice";
+import { useUpdateSettingsMutation } from "@/features/users/usersApi";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 export const Settings = () => {
@@ -16,6 +22,19 @@ export const Settings = () => {
   const dispatch = useAppDispatch();
   const theme = useAppSelector((s) => s.settings.theme);
   const language = useAppSelector((s) => s.settings.language);
+  const [updateSettings] = useUpdateSettingsMutation();
+
+  const persistSettings = (
+    next: Partial<{ theme: ThemePreference; language: LanguagePreference }>,
+  ) => {
+    const nextTheme = next.theme ?? theme;
+    const nextLanguage = next.language ?? language;
+
+    if (next.theme) dispatch(setTheme({ theme: next.theme }));
+    if (next.language) dispatch(setLanguage({ language: next.language }));
+
+    void updateSettings({ theme: nextTheme, language: nextLanguage });
+  };
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
@@ -38,7 +57,7 @@ export const Settings = () => {
             value={theme}
             onValueChange={(value) => {
               if (value === "light" || value === "dark" || value === "system") {
-                dispatch(setTheme({ theme: value }));
+                persistSettings({ theme: value });
               }
             }}
             className="gap-3"
@@ -74,7 +93,7 @@ export const Settings = () => {
             value={language}
             onValueChange={(value) => {
               if (value === "en" || value === "fr" || value === "es") {
-                dispatch(setLanguage({ language: value }));
+                persistSettings({ language: value });
               }
             }}
             className="gap-3"

@@ -4,7 +4,8 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { JwtModule } from '@nestjs/jwt';
-import { PresenceModule } from './socket/presence.module';
+import { PresenceModule } from './presence/presence.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { PresenceModule } from './socket/presence.module';
     PresenceModule,
     AuthModule,
     UsersModule,
+    ChatModule,
   ],
   controllers: [],
   providers: [],

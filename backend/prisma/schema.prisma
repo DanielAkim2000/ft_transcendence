@@ -79,7 +79,53 @@ model User {
   refreshTokens    RefreshToken[]
   friendshipsSent      Friendship[] @relation("FriendshipsSent")
   friendshipsReceived  Friendship[] @relation("FriendshipsReceived")
+  conversationsAsA  Conversation[] @relation("ConversationsAsA")
+  conversationsAsB  Conversation[] @relation("ConversationsAsB")
+  messages          Message[]
+  blocksSent        Block[]        @relation("BlocksSent")
+  blocksReceived    Block[]        @relation("BlocksReceived")
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
+}
+
+model Message{
+  id String @id @default(cuid())
+  conversationId String
+  senderId String
+  content String
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+}
+
+model Conversation {
+  id String @id @default(cuid())
+  userAId String
+  userBId String
+  userA User @relation("ConversationsAsA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB User @relation("ConversationsAsB", fields: [userBId], references: [id], onDelete: Cascade)
+  messages Message[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userAId])
+  @@index([userBId])
+  @@unique([userAId, userBId])
+}
+
+model Block{
+  id String @id @default(cuid())
+  blockerId String
+  blockedId String
+  blocker User @relation("BlocksSent", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("BlocksReceived", fields: [blockedId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([blockerId])
+  @@index([blockedId])
+  @@unique([blockerId, blockedId])
 }
 

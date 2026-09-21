@@ -198,6 +198,19 @@ export class UsersService {
     await this.userRepository.deleteFriendship(existing.id);
   }
 
+  async removeFriendshipIfExists(
+    userId: string,
+    otherUserId: string,
+  ): Promise<void> {
+    const existing = await this.userRepository.findFriendshipBetween(
+      userId,
+      otherUserId,
+    );
+    if (existing) {
+      await this.userRepository.deleteFriendship(existing.id);
+    }
+  }
+
   listFriends(userId: string): Promise<UserEntity[]> {
     return this.userRepository.listAcceptedFriends(userId);
   }

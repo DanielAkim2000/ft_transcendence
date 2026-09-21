@@ -19,6 +19,7 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: 5173,
+    allowedHosts: ["localhost", "diffusive-perch-undercook.ngrok-free.dev"],
     watch: {
       usePolling: process.env.CHOKIDAR_USEPOLLING === "true",
     },

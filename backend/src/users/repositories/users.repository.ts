@@ -287,6 +287,8 @@ export class UserRepository {
         role = Role.USER;
         break;
     }
+    const theme: ThemePreference = user.theme;
+    const language: LanguagePreference = user.language;
     return new UserEntity({
       id: user.id,
       login42: user.login42,
@@ -299,8 +301,8 @@ export class UserRepository {
       twoFactorPendingSecret: user.twoFactorPendingSecret,
       isOnline: user.isOnline,
       status,
-      theme: user.theme as ThemePreference,
-      language: user.language as LanguagePreference,
+      theme: theme,
+      language: language,
       role,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

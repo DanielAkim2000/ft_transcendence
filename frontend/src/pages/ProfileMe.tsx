@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import { useForm } from "@tanstack/react-form";
+import { useForm, useStore } from "@tanstack/react-form";
 import { useTranslation } from "react-i18next";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { toast } from "@/components/ui/toast";
 import { useMeQuery } from "@/features/auth/authApi";
+import { PlayerBadgesCard } from "@/features/badges/PlayerBadgesCard";
 import { ROUTES } from "@/constants/routes";
 import {
   useUpdateProfileMutation,
@@ -52,6 +53,7 @@ function ProfileMeForm({
   const [uploadAvatar, { isLoading: isUploading }] = useUploadAvatarMutation();
   const [serverError, setServerError] = useState<string | null>(null);
 
+  // i18n.language force la recomputation quand la langue change (messages traduits).
   const schema = useMemo(
     () =>
       z.object({
@@ -60,6 +62,7 @@ function ProfileMeForm({
           .min(3, t("auth.validation.usernameMin"))
           .max(32, t("auth.validation.usernameMax")),
       }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [t, i18n.language],
   );
 
@@ -83,10 +86,13 @@ function ProfileMeForm({
     },
   });
 
+  const previewName =
+    useStore(form.store, (state) => state.values.displayname).trim() || user.displayname;
+
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
       <div>
-        <h1 className="font-serif text-3xl tracking-tight">
+        <h1 className="text-2xl font-bold tracking-tight">
           {t("profile.meTitle")}
         </h1>
         <p className="mt-1 font-sans text-sm text-muted-foreground">
@@ -200,6 +206,29 @@ function ProfileMeForm({
           </ConfirmDialog>
         </CardFooter>
       </Card>
+
+      <div className="flex flex-col gap-3 border border-border bg-card p-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          {t("profile.previewTitle")}
+        </p>
+        <div className="flex items-center gap-4">
+          <Avatar className="size-14">
+            <AvatarImage
+              src={resolveAvatarUrl(user.avatarUrl)}
+              alt={previewName}
+            />
+            <AvatarFallback>{getInitials(previewName)}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <p className="truncate text-base font-bold">{previewName}</p>
+            <p className="text-xs uppercase tracking-wider text-primary">
+              {t("profile.online")}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <PlayerBadgesCard userId={user.id} />
     </div>
   );
 }

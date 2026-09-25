@@ -98,6 +98,19 @@ export class ChatService {
     return conversations;
   }
 
+  async markConversationRead(
+    currentUserId: string,
+    conversationId: string,
+  ): Promise<void> {
+    const conversation = await this.getConversation(
+      currentUserId,
+      conversationId,
+    );
+    const readAt = new Date();
+    await this.conversationRepository.markRead(conversationId, currentUserId);
+    this.chatGateway.emitConversationRead(conversation, currentUserId, readAt);
+  }
+
   async blockUser(currentUserId: string, targetUserId: string): Promise<void> {
     if (currentUserId === targetUserId) {
       throw new BadRequestException('Cannot block yourself');

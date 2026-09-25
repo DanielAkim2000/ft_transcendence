@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { AppSidebar } from "@/components/app-sidebar";
+import { LegalLinks } from "@/components/legal-links";
 
 export const DashboardLayout = () => {
   return (
@@ -21,6 +22,7 @@ export const DashboardLayout = () => {
           <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
             <Outlet />
           </div>
+          <LegalLinks className="border-t border-border px-4 py-3 md:px-6" />
         </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>

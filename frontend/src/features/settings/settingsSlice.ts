@@ -10,7 +10,7 @@ type SettingsState = {
 };
 
 const initialState: SettingsState = {
-  theme: "light",
+  theme: "dark",
   language: "en",
 };
 

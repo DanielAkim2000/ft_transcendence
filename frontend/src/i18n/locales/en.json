@@ -1,6 +1,6 @@
 {
   "common": {
-    "brand": "ft_transcendence",
+    "brand": "transcendence",
     "or": "or",
     "loading": "Loading…",
     "logout": "Log out",
@@ -75,7 +75,16 @@
   },
   "home": {
     "title": "Dashboard",
-    "loggedInAs": "Signed in as {{name}}"
+    "loggedInAs": "Signed in as {{name}}",
+    "greeting": "Hi {{name}}.",
+    "onlineCount_one": "{{count}} friend online",
+    "onlineCount_other": "{{count}} friends online",
+    "pendingRequests_one": "{{count}} pending friend request",
+    "pendingRequests_other": "{{count}} pending friend requests",
+    "review": "Review",
+    "seeAll": "see all",
+    "noOnline": "No friends online right now.",
+    "recentMessages": "Recent messages"
   },
   "nav": {
     "menu": "Menu",
@@ -83,7 +92,11 @@
     "profile": "Profile",
     "friends": "Friends",
     "settings": "Settings",
-    "twoFactor": "Two-factor auth"
+    "twoFactor": "Two-factor auth",
+    "chat": "Chat",
+    "tables": "Tables",
+    "ranking": "Ranking",
+    "tournaments": "Tournaments"
   },
   "settings": {
     "title": "Settings",
@@ -121,6 +134,13 @@
       "toggleFailed": "Could not update 2FA.",
       "enabledSuccess": "2FA is now enabled.",
       "disabledSuccess": "2FA is now disabled."
+    },
+    "security": {
+      "title": "Security",
+      "twoFactor": "Two-factor authentication",
+      "manage": "Manage",
+      "active": "enabled",
+      "inactive": "disabled"
     }
   },
   "profile": {
@@ -140,7 +160,8 @@
     "edit": "Edit profile",
     "notFound": "User not found.",
     "online": "Online",
-    "offline": "Offline"
+    "offline": "Offline",
+    "previewTitle": "Public preview"
   },
   "friends": {
     "title": "Friends",
@@ -159,6 +180,268 @@
     "inviteAlreadySent": "Invitation already sent",
     "inviteSentToast": "Invitation sent",
     "already": "Friend",
-    "actionFailed": "Could not update friendship."
+    "actionFailed": "Could not update friendship.",
+    "message": "Message",
+    "onlineTitle": "Online",
+    "offlineTitle": "Offline",
+    "newRequests": "New friend requests",
+    "requestReceivedToast": "{{name}} wants to be your friend."
+  },
+  "chat": {
+    "title": "Messages",
+    "conversations": "Conversations",
+    "noConversations": "No conversations yet. Message a friend from the Friends page.",
+    "selectPrompt": "Pick a conversation.",
+    "noMessages": "No messages yet. Say hi!",
+    "placeholder": "write a message…",
+    "send": "Send",
+    "loadOlder": "Load older messages",
+    "block": "Block",
+    "unblock": "Unblock",
+    "blockTitle": "Block this user?",
+    "blockDescription": "You won’t be able to chat with {{name}} and the friendship will be removed. History stays readable.",
+    "blockedToast": "User blocked",
+    "unblockedToast": "User unblocked",
+    "blockedNotice": "Conversation blocked: new messages are disabled.",
+    "back": "Conversations",
+    "sendFailed": "Could not send the message.",
+    "actionFailed": "Action failed.",
+    "openFailed": "Could not open the conversation.",
+    "you": "me",
+    "unread": "{{count}} unread message",
+    "newMessages": "New messages",
+    "typing": "is typing…",
+    "sent": "Sent",
+    "read": "Read"
+  },
+  "legal": {
+    "nav": {
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service"
+    },
+    "back": "← back",
+    "updated": "Last updated: Sep 21, 2026",
+    "label": "Legal",
+    "privacy": {
+      "title": "Privacy Policy",
+      "sections": [
+        {
+          "title": "Data collected",
+          "body": "We only collect your email, username, avatar, your preferences (theme, language) and the messages you send through chat. If you sign in with the 42 intra, we receive your 42 login."
+        },
+        {
+          "title": "Purposes",
+          "body": "This data runs your account, authentication, friend list, chat and online presence. No data is ever sold."
+        },
+        {
+          "title": "Retention",
+          "body": "Data is kept as long as your account exists. When you delete your account, your messages, friendships and blocks are deleted."
+        },
+        {
+          "title": "Cookies & session",
+          "body": "A technical httpOnly cookie stores your refresh token to keep you signed in. No advertising cookies are used."
+        },
+        {
+          "title": "Your rights (GDPR)",
+          "body": "You can access, correct or request deletion of your data at any time by contacting us."
+        },
+        {
+          "title": "Contact",
+          "body": "For any question about your data, contact the Transcendence project team."
+        }
+      ]
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "sections": [
+        {
+          "title": "Acceptance",
+          "body": "By creating an account you accept these terms of service."
+        },
+        {
+          "title": "Account",
+          "body": "You are responsible for keeping your credentials private and for the activity on your account. One username per person."
+        },
+        {
+          "title": "Acceptable use",
+          "body": "No harassment, spam or illegal content in chat. You can block any user at any time."
+        },
+        {
+          "title": "Content",
+          "body": "You remain responsible for the messages you send. We may remove content or suspend an account in case of abuse."
+        },
+        {
+          "title": "Liability",
+          "body": "Transcendence is an educational project provided as is, with no availability guarantee."
+        },
+        {
+          "title": "Changes",
+          "body": "These terms may change. The last update date is shown at the top of this page."
+        }
+      ]
+    }
+  },
+  "tables": {
+    "title": "Tables",
+    "realtime": "Live",
+    "free": "Free",
+    "busy": "Busy",
+    "take": "Take the table",
+    "release": "Free the table",
+    "noMatch": "No match",
+    "since": "Since {{time}}",
+    "releaseTitle": "Free the table?",
+    "releaseDescription": "{{name}} will be marked as free for everyone.",
+    "actionFailed": "Could not update the table.",
+    "homeAllFree": "All tables are free.",
+    "occupiedByOther": "Occupied by another player",
+    "alreadyOnOther": "You already occupy another table",
+    "tournamentBadge": "Tournament in progress",
+    "viewTournament": "View tournament"
+  },
+  "queue": {
+    "title": "Queue",
+    "join": "Join the queue",
+    "leave": "Leave the queue",
+    "joinFailed": "Could not join the queue.",
+    "calledBadge": "Your turn",
+    "yourTurn": "It's your turn! You have {{time}} left to take the table.",
+    "yourTurnBadge": "It's your turn",
+    "calledToast": "It's your turn on {{table}}!",
+    "expiredToast": "You didn't confirm in time, you lost your spot on {{table}}."
+  },
+  "matches": {
+    "history": "Match history",
+    "historyEmpty": "No match played yet.",
+    "historyWin": "Win",
+    "historyLoss": "Loss",
+    "historyLadder": "Challenge",
+    "historyTournament": "Tournament",
+    "historyLeg": "leg {{n}}",
+    "rankingTitle": "Ranking",
+    "myMatches": "My challenges",
+    "noMatches": "No matches yet.",
+    "matchesPlayed": "{{count}} match played",
+    "matchesPlayed_other": "{{count}} matches played",
+    "challenge": "Challenge",
+    "challengeTitle": "Challenge {{name}}",
+    "oneVOne": "1v1",
+    "twoVTwo": "2v2",
+    "pickTeammateTitle": "Pick your teammate",
+    "pickTeammateDescription": "For 2v2, you need to play with a teammate.",
+    "noFriends": "Add a friend to play 2v2.",
+    "sendChallenge": "Send challenge",
+    "challengeSentToast": "Challenge sent to {{name}}.",
+    "actionFailed": "Action failed.",
+    "vs": "vs",
+    "pendingForYou": "You've been challenged, respond!",
+    "pendingForOpponent": "Waiting for the opponent to respond.",
+    "declined": "Challenge declined.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "scoreOfTeamA": "Team A score",
+    "scoreOfTeamB": "Team B score",
+    "submitScore": "Submit score",
+    "scoreSubmitted": "Score submitted: {{a}} - {{b}}",
+    "validate": "Validate",
+    "dispute": "Dispute",
+    "awaitingValidation": "Waiting for the opponent to validate.",
+    "completed": "Completed: {{a}} - {{b}}",
+    "disputedResult": "Disputed: {{a}} - {{b}} (no ranking change)",
+    "actionNeededBadge": "Action needed on a match",
+    "proposedToast": "{{name}} challenges you!",
+    "declinedToast": "{{name}} declined your challenge.",
+    "acceptedToast": "Challenge accepted! Find a free table to play.",
+    "scoreToValidateToast": "Score submitted ({{a}}-{{b}}), needs validation.",
+    "scoreSubmittedToast": "Score submitted ({{a}}-{{b}}), waiting for the opponent to validate.",
+    "wonToast": "You won {{a}}-{{b}}! Your rating was updated.",
+    "lostToast": "You lost {{a}}-{{b}}. Your rating was updated.",
+    "disputedToast": "The score was disputed, no rating change."
+  },
+  "tournaments": {
+    "title": "Tournaments",
+    "none": "No tournaments yet.",
+    "create": "Create a tournament",
+    "createTitle": "New tournament",
+    "entries": "Entries",
+    "entryCount": "{{count}} entry",
+    "entryCount_other": "{{count}} entries",
+    "name": "Tournament name",
+    "namePlaceholder": "Foosball Cup",
+    "format": "Format",
+    "twoLegged": "Two-legged",
+    "twoLeggedOption": "Two-legged ties (decider if tied)",
+    "searchPlayer": "Search a player…",
+    "pickSecondPlayer": "Pick {{name}}'s teammate",
+    "removeEntry": "Remove",
+    "launch": "Launch tournament",
+    "needsPowerOfTwo": "You need a power-of-two number of entries (4, 8, 16, 32…) to launch.",
+    "cancel": "Cancel tournament",
+    "cancelTitle": "Cancel this tournament?",
+    "cancelDescription": "Ongoing ties will be stopped and tables freed.",
+    "champion": "🏆 Champion: {{name}}",
+    "tbd": "TBD",
+    "tieWon": "{{name}} won (+{{points}} pts)",
+    "aggregate": "Aggregate {{a}}-{{b}} (leg {{played}}/{{needed}})",
+    "actionFailed": "Action failed.",
+    "actionNeededBadge": "A tournament tie is ready to play",
+    "status": {
+      "DRAFT": "Draft",
+      "IN_PROGRESS": "In progress",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled"
+    },
+    "round": {
+      "FINAL": "Final",
+      "SEMI": "Semi-final",
+      "QUARTER": "Quarter-final",
+      "ROUND_OF_16": "Round of 16"
+    },
+    "roundGeneric": "Round {{n}}",
+    "launchedToast": "The {{name}} tournament has started!",
+    "tableReclaimedToast": "Your table was freed for the {{name}} tournament.",
+    "tieStartedToast": "Your turn to play! Tournament {{name}}.",
+    "tieWonToast": "You advance to the next round in {{name}}!",
+    "eliminatedToast": "You've been eliminated from {{name}}.",
+    "completedToast": "The {{name}} tournament is over!"
+  },
+  "badges": {
+    "title": "Progress",
+    "level": "Level {{level}}",
+    "xpProgress": "{{xp}} / {{total}} XP",
+    "wins": "Wins",
+    "matchesPlayed": "Matches played",
+    "bestStreak": "Best streak",
+    "earnedToast": "🏅 Badge unlocked: {{name}}",
+    "catalog": {
+      "FIRST_WIN": {
+        "name": "First win",
+        "description": "Win your first match."
+      },
+      "TEN_WINS": {
+        "name": "Regular",
+        "description": "Win 10 matches."
+      },
+      "FIFTY_MATCHES": {
+        "name": "Veteran",
+        "description": "Play 50 matches."
+      },
+      "WIN_STREAK_3": {
+        "name": "3-win streak",
+        "description": "Win 3 matches in a row."
+      },
+      "GIANT_SLAYER": {
+        "name": "Giant slayer",
+        "description": "Beat an opponent rated at least 150 points above you."
+      },
+      "TOURNAMENT_FINALIST": {
+        "name": "Finalist",
+        "description": "Reach a tournament final."
+      },
+      "TOURNAMENT_CHAMPION": {
+        "name": "Champion",
+        "description": "Win a tournament."
+      }
+    }
   }
 }

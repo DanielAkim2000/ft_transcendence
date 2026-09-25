@@ -7,8 +7,18 @@ export const ROUTES = {
   PROFILE_ME: "/profile/me",
   /** Pattern React Router */
   PROFILE_BY_ID: "/profile/:id",
+  PRIVACY: "/privacy",
+  TERMS: "/terms",
   FRIENDS: "/friends",
+  CHAT: "/chat",
+  TABLES: "/tables",
+  RANKING: "/ranking",
+  TOURNAMENTS: "/tournaments",
+  TOURNAMENTS_NEW: "/tournaments/new",
+  TOURNAMENT_BY_ID: "/tournaments/:id",
   SETTINGS: "/settings",
   SETTINGS_2FA: "/settings/2fa",
   profile: (id: string) => `/profile/${id}`,
+  tournament: (id: string) => `/tournaments/${id}`,
+  chatWith: (userId: string) => `/chat?user=${userId}`,
 } as const;

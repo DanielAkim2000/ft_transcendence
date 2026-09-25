@@ -12,6 +12,7 @@ export const API_ROUTES = {
   AUTH_42_LOGIN: "/auth/42/login",
 
   USERS: "/users",
+  USERS_RANKING: "/users/ranking",
   USERS_ME: "/users/me",
   USERS_ME_SETTINGS: "/users/me/settings",
   USERS_ME_AVATAR: "/users/me/avatar",
@@ -21,6 +22,40 @@ export const API_ROUTES = {
   user: (id: string) => `/users/${id}`,
   friend: (userId: string) => `/users/me/friends/${userId}`,
   friendAccept: (userId: string) => `/users/me/friends/${userId}/accept`,
+
+  TABLES: "/tables",
+  tableOccupy: (tableId: string) => `/tables/${tableId}/occupy`,
+  tableRelease: (tableId: string) => `/tables/${tableId}/release`,
+
+  QUEUE_ME: "/queue/me",
+  queueForTable: (tableId: string) => `/queue/${tableId}`,
+  queueJoin: (tableId: string) => `/queue/${tableId}/join`,
+  queueEntry: (entryId: string) => `/queue/${entryId}`,
+
+  MATCHES: "/matches",
+  MATCHES_ME: "/matches/me",
+  MATCHES_HISTORY: "/matches/me/history",
+  match: (matchId: string) => `/matches/${matchId}`,
+  matchRespond: (matchId: string) => `/matches/${matchId}/respond`,
+  matchScore: (matchId: string) => `/matches/${matchId}/score`,
+  matchValidate: (matchId: string) => `/matches/${matchId}/validate`,
+
+  TOURNAMENTS: "/tournaments",
+  tournament: (id: string) => `/tournaments/${id}`,
+  tournamentEntries: (id: string) => `/tournaments/${id}/entries`,
+  tournamentEntry: (id: string, entryId: string) => `/tournaments/${id}/entries/${entryId}`,
+  tournamentLaunch: (id: string) => `/tournaments/${id}/launch`,
+  tournamentCancel: (id: string) => `/tournaments/${id}/cancel`,
+
+  badges: (userId: string) => `/badges/${userId}`,
+
+  CHAT_CONVERSATIONS: "/chat/conversations",
+  CHAT_BLOCKS: "/chat/blocks",
+  chatMessages: (conversationId: string) =>
+    `/chat/conversations/${conversationId}/messages`,
+  chatRead: (conversationId: string) =>
+    `/chat/conversations/${conversationId}/read`,
+  chatBlock: (userId: string) => `/chat/blocks/${userId}`,
 } as const;
 
 /** Endpoints pour lesquels un 401 ne déclenche pas de refresh token. */

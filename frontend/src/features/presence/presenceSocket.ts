@@ -1,4 +1,5 @@
-import { Socket, io } from "socket.io-client";
+import type { Socket } from "socket.io-client";
+import { createSocket } from "@/lib/socket";
 
 let socket: Socket | null = null;
 
@@ -9,11 +10,7 @@ const connect = (accessToken: string): Socket | null => {
   } else if (socket) {
     return socket;
   }
-  socket = io(`${import.meta.env.VITE_API_URL}/presence`, {
-    auth: {
-      access_token: accessToken,
-    },
-  });
+  socket = createSocket("/presence", accessToken);
   return socket;
 };
 

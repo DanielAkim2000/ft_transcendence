@@ -6,6 +6,11 @@ import { UsersModule } from './users/users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { PresenceModule } from './presence/presence.module';
 import { ChatModule } from './chat/chat.module';
+import { TablesModule } from './tables/tables.module';
+import { QueueModule } from './queue/queue.module';
+import { MatchesModule } from './matches/matches.module';
+import { TournamentsModule } from './tournaments/tournaments.module';
+import { BadgesModule } from './badges/badges.module';
 
 @Module({
   imports: [
@@ -25,6 +30,11 @@ import { ChatModule } from './chat/chat.module';
     AuthModule,
     UsersModule,
     ChatModule,
+    TablesModule,
+    QueueModule,
+    MatchesModule,
+    TournamentsModule,
+    BadgesModule,
   ],
   controllers: [],
   providers: [],

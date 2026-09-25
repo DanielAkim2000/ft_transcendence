@@ -3,4 +3,12 @@ export const TAG_TYPES = {
   SETTINGS: "Settings",
   USERS: "Users",
   FRIENDS: "Friends",
+  CHAT: "Chat",
+  TABLES: "Tables",
+  BLOCKS: "Blocks",
+  QUEUE: "Queue",
+  RANKING: "Ranking",
+  MATCHES: "Matches",
+  TOURNAMENTS: "Tournaments",
+  BADGES: "Badges",
 };

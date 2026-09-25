@@ -41,6 +41,16 @@ export class ChatController {
     return this.chatService.listConversations(req.user.id);
   }
 
+  @Post('conversations/:conversationId/read')
+  @UseGuards(AccessTokenGuard)
+  async markRead(
+    @Req() req: Request & { user: UserEntity },
+    @Param('conversationId') conversationId: string,
+  ): Promise<{ ok: true }> {
+    await this.chatService.markConversationRead(req.user.id, conversationId);
+    return { ok: true };
+  }
+
   @Get('blocks')
   @UseGuards(AccessTokenGuard)
   listBlocked(@Req() req: Request & { user: UserEntity }) {

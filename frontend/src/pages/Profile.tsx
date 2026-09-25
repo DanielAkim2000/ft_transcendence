@@ -21,6 +21,7 @@ import { getInitials, resolveAvatarUrl } from "@/lib/user";
 import { getErrorMessage } from "@/lib/get-error-message";
 import { toast } from "@/components/ui/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { PlayerBadgesCard } from "@/features/badges/PlayerBadgesCard";
 import { useState } from "react";
 import { ROUTES } from "@/constants/routes";
 
@@ -69,20 +70,20 @@ export const Profile = () => {
             {canSeePresence ? (
               <span
                 className={`absolute right-0.5 bottom-0.5 size-3.5 rounded-full ring-2 ring-background ${
-                  user.isOnline ? "bg-emerald-500" : "bg-zinc-400"
+                  user.isOnline ? "bg-primary" : "bg-muted-foreground"
                 }`}
                 aria-hidden
               />
             ) : null}
           </div>
           <div>
-            <CardTitle className="font-serif text-2xl">
+            <CardTitle className="text-xl font-bold">
               {user.displayname}
             </CardTitle>
             {canSeePresence ? (
               <CardDescription
                 className={
-                  user.isOnline ? "text-emerald-600 font-medium" : undefined
+                  user.isOnline ? "text-primary font-medium" : undefined
                 }
               >
                 {user.isOnline ? t("profile.online") : t("profile.offline")}
@@ -99,6 +100,10 @@ export const Profile = () => {
               {t("profile.edit")}
             </Button>
           ) : friendshipStatus === "friends" ? (
+            <>
+            <Button render={<Link to={ROUTES.chatWith(user.id)} />}>
+              {t("friends.message")}
+            </Button>
             <ConfirmDialog
               title={t("confirm.removeFriendTitle")}
               description={t("confirm.removeFriendDescription", {
@@ -121,6 +126,7 @@ export const Profile = () => {
                 {t("friends.remove")}
               </Button>
             </ConfirmDialog>
+            </>
           ) : friendshipStatus === "pending_in" ? (
             <>
               <Button
@@ -194,6 +200,7 @@ export const Profile = () => {
       {actionError ? (
         <p className="text-sm text-destructive">{actionError}</p>
       ) : null}
+      <PlayerBadgesCard userId={user.id} />
     </div>
   );
 };

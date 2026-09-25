@@ -208,6 +208,14 @@ export class AuthController {
     return await this.authService.toggle2fa(req.user, dto.code);
   }
 
+  private useSecureCookies(): boolean {
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') ?? '';
+    return (
+      process.env.NODE_ENV === 'production' ||
+      frontendUrl.startsWith('https://')
+    );
+  }
+
   private async setRefreshCookie(
     user: UserEntity,
     res: Response,
@@ -224,7 +232,7 @@ export class AuthController {
     }
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: this.useSecureCookies(),
       sameSite: 'lax',
       path: '/auth',
       maxAge: ms(expirationTime),
@@ -245,7 +253,7 @@ export class AuthController {
     }
     res.cookie('preAuthToken', preAuthToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: this.useSecureCookies(),
       sameSite: 'lax',
       path: '/auth',
       maxAge: ms(expirationTime),

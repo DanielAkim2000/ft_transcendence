@@ -1,6 +1,6 @@
 {
   "common": {
-    "brand": "ft_transcendence",
+    "brand": "transcendence",
     "or": "ou",
     "loading": "Chargement…",
     "logout": "Se déconnecter",
@@ -75,7 +75,16 @@
   },
   "home": {
     "title": "Dashboard",
-    "loggedInAs": "Connecté en tant que {{name}}"
+    "loggedInAs": "Connecté en tant que {{name}}",
+    "greeting": "Salut {{name}}.",
+    "onlineCount_one": "{{count}} ami en ligne",
+    "onlineCount_other": "{{count}} amis en ligne",
+    "pendingRequests_one": "{{count}} demande d’ami en attente",
+    "pendingRequests_other": "{{count}} demandes d’amis en attente",
+    "review": "Voir",
+    "seeAll": "tout voir",
+    "noOnline": "Aucun ami en ligne pour le moment.",
+    "recentMessages": "Messages récents"
   },
   "nav": {
     "menu": "Menu",
@@ -83,7 +92,11 @@
     "profile": "Profil",
     "friends": "Amis",
     "settings": "Paramètres",
-    "twoFactor": "Auth à deux facteurs"
+    "twoFactor": "Auth à deux facteurs",
+    "chat": "Chat",
+    "tables": "Tables",
+    "ranking": "Classement",
+    "tournaments": "Tournois"
   },
   "settings": {
     "title": "Paramètres",
@@ -121,6 +134,13 @@
       "toggleFailed": "Impossible de mettre à jour la 2FA.",
       "enabledSuccess": "La 2FA est maintenant activée.",
       "disabledSuccess": "La 2FA est maintenant désactivée."
+    },
+    "security": {
+      "title": "Sécurité",
+      "twoFactor": "Double authentification",
+      "manage": "Gérer",
+      "active": "activée",
+      "inactive": "désactivée"
     }
   },
   "profile": {
@@ -140,7 +160,8 @@
     "edit": "Modifier le profil",
     "notFound": "Utilisateur introuvable.",
     "online": "En ligne",
-    "offline": "Hors ligne"
+    "offline": "Hors ligne",
+    "previewTitle": "Aperçu public"
   },
   "friends": {
     "title": "Amis",
@@ -159,6 +180,268 @@
     "inviteAlreadySent": "Invitation déjà envoyée",
     "inviteSentToast": "Invitation envoyée",
     "already": "Ami",
-    "actionFailed": "Impossible de mettre à jour l’amitié."
+    "actionFailed": "Impossible de mettre à jour l’amitié.",
+    "message": "Message",
+    "onlineTitle": "En ligne",
+    "offlineTitle": "Hors ligne",
+    "newRequests": "Nouvelles demandes d’ami",
+    "requestReceivedToast": "{{name}} veut être ton ami."
+  },
+  "chat": {
+    "title": "Messages",
+    "conversations": "Conversations",
+    "noConversations": "Aucune conversation. Écris à un ami depuis la page Amis.",
+    "selectPrompt": "Choisis une conversation.",
+    "noMessages": "Aucun message. Dis bonjour !",
+    "placeholder": "écrire un message…",
+    "send": "Envoyer",
+    "loadOlder": "Charger les messages précédents",
+    "block": "Bloquer",
+    "unblock": "Débloquer",
+    "blockTitle": "Bloquer cet utilisateur ?",
+    "blockDescription": "Tu ne pourras plus échanger avec {{name}} et l’amitié sera supprimée. L’historique reste lisible.",
+    "blockedToast": "Utilisateur bloqué",
+    "unblockedToast": "Utilisateur débloqué",
+    "blockedNotice": "Conversation bloquée : les nouveaux messages sont désactivés.",
+    "back": "Conversations",
+    "sendFailed": "Impossible d’envoyer le message.",
+    "actionFailed": "Action impossible.",
+    "openFailed": "Impossible d’ouvrir la conversation.",
+    "you": "moi",
+    "unread": "{{count}} message non lu",
+    "newMessages": "Nouveaux messages",
+    "typing": "est en train d’écrire…",
+    "sent": "Envoyé",
+    "read": "Lu"
+  },
+  "legal": {
+    "nav": {
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service"
+    },
+    "back": "← retour",
+    "updated": "Dernière mise à jour : 21 sept. 2026",
+    "label": "Légal",
+    "privacy": {
+      "title": "Privacy Policy",
+      "sections": [
+        {
+          "title": "Données collectées",
+          "body": "Nous collectons uniquement l’email, le pseudo, l’avatar, tes préférences (thème, langue) et les messages que tu envoies via le chat. Si tu te connectes avec l’intra 42, nous recevons ton login 42."
+        },
+        {
+          "title": "Finalités",
+          "body": "Ces données servent à faire fonctionner ton compte, l’authentification, la liste d’amis, le chat et la présence en ligne. Aucune donnée n’est revendue."
+        },
+        {
+          "title": "Conservation",
+          "body": "Les données sont conservées tant que ton compte existe. À la suppression du compte, tes messages, amitiés et blocages sont supprimés."
+        },
+        {
+          "title": "Cookies & session",
+          "body": "Un cookie technique httpOnly stocke ton jeton de rafraîchissement pour maintenir ta session. Aucun cookie publicitaire n’est utilisé."
+        },
+        {
+          "title": "Tes droits (RGPD)",
+          "body": "Tu peux accéder à tes données, les rectifier ou demander leur suppression à tout moment en nous contactant."
+        },
+        {
+          "title": "Contact",
+          "body": "Pour toute question sur tes données, contacte l’équipe du projet Transcendence."
+        }
+      ]
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "sections": [
+        {
+          "title": "Acceptation",
+          "body": "En créant un compte, tu acceptes ces conditions d’utilisation."
+        },
+        {
+          "title": "Compte",
+          "body": "Tu es responsable de la confidentialité de tes identifiants et de l’activité de ton compte. Un pseudo par personne."
+        },
+        {
+          "title": "Usage acceptable",
+          "body": "Pas de harcèlement, de spam ni de contenu illégal dans le chat. Tu peux bloquer tout utilisateur à tout moment."
+        },
+        {
+          "title": "Contenu",
+          "body": "Tu restes responsable des messages que tu envoies. Nous pouvons retirer un contenu ou suspendre un compte en cas d’abus."
+        },
+        {
+          "title": "Responsabilité",
+          "body": "Transcendence est un projet pédagogique fourni tel quel, sans garantie de disponibilité."
+        },
+        {
+          "title": "Modifications",
+          "body": "Ces conditions peuvent évoluer. La date de dernière mise à jour figure en haut de cette page."
+        }
+      ]
+    }
+  },
+  "tables": {
+    "title": "Tables",
+    "realtime": "Temps réel",
+    "free": "Libre",
+    "busy": "Occupée",
+    "take": "Prendre la table",
+    "release": "Libérer la table",
+    "noMatch": "Aucun match",
+    "since": "Depuis {{time}}",
+    "releaseTitle": "Libérer la table ?",
+    "releaseDescription": "{{name}} sera marquée comme libre pour tout le monde.",
+    "actionFailed": "Action impossible sur la table.",
+    "homeAllFree": "Toutes les tables sont libres.",
+    "occupiedByOther": "Occupée par un autre joueur",
+    "alreadyOnOther": "Tu occupes déjà une autre table",
+    "tournamentBadge": "Tournoi en cours",
+    "viewTournament": "Voir le tournoi"
+  },
+  "queue": {
+    "title": "File d’attente",
+    "join": "Rejoindre la file",
+    "leave": "Quitter la file",
+    "joinFailed": "Impossible de rejoindre la file.",
+    "calledBadge": "À toi",
+    "yourTurn": "C’est ton tour ! Il te reste {{time}} pour prendre la table.",
+    "yourTurnBadge": "C’est ton tour",
+    "calledToast": "C’est ton tour sur {{table}} !",
+    "expiredToast": "Tu n’as pas confirmé à temps, tu as perdu ta place sur {{table}}."
+  },
+  "matches": {
+    "history": "Historique des matchs",
+    "historyEmpty": "Aucun match joué pour l’instant.",
+    "historyWin": "Victoire",
+    "historyLoss": "Défaite",
+    "historyLadder": "Défi",
+    "historyTournament": "Tournoi",
+    "historyLeg": "manche {{n}}",
+    "rankingTitle": "Classement",
+    "myMatches": "Mes défis",
+    "noMatches": "Aucun match pour l’instant.",
+    "matchesPlayed": "{{count}} match joué",
+    "matchesPlayed_other": "{{count}} matchs joués",
+    "challenge": "Défier",
+    "challengeTitle": "Défier {{name}}",
+    "oneVOne": "1v1",
+    "twoVTwo": "2v2",
+    "pickTeammateTitle": "Choisis ton coéquipier",
+    "pickTeammateDescription": "En 2v2, tu dois jouer avec un coéquipier.",
+    "noFriends": "Ajoute un ami pour pouvoir jouer en 2v2.",
+    "sendChallenge": "Envoyer le défi",
+    "challengeSentToast": "Défi envoyé à {{name}}.",
+    "actionFailed": "Action impossible.",
+    "vs": "vs",
+    "pendingForYou": "Tu as été défié·e, réponds !",
+    "pendingForOpponent": "En attente de réponse de l’adversaire.",
+    "declined": "Défi refusé.",
+    "accept": "Accepter",
+    "decline": "Refuser",
+    "scoreOfTeamA": "Score équipe A",
+    "scoreOfTeamB": "Score équipe B",
+    "submitScore": "Soumettre le score",
+    "scoreSubmitted": "Score soumis : {{a}} - {{b}}",
+    "validate": "Valider",
+    "dispute": "Contester",
+    "awaitingValidation": "En attente de validation par l’adversaire.",
+    "completed": "Terminé : {{a}} - {{b}}",
+    "disputedResult": "Litige : {{a}} - {{b}} (pas de changement de classement)",
+    "actionNeededBadge": "Action requise sur un match",
+    "proposedToast": "{{name}} te défie !",
+    "declinedToast": "{{name}} a refusé ton défi.",
+    "acceptedToast": "Défi accepté ! Trouvez une table libre pour jouer.",
+    "scoreToValidateToast": "Score soumis ({{a}}-{{b}}), à valider.",
+    "scoreSubmittedToast": "Score soumis ({{a}}-{{b}}), en attente de validation par l’adversaire.",
+    "wonToast": "Victoire {{a}}-{{b}} ! Ton classement a été mis à jour.",
+    "lostToast": "Défaite {{a}}-{{b}}. Ton classement a été mis à jour.",
+    "disputedToast": "Litige sur le score, aucun changement de classement."
+  },
+  "tournaments": {
+    "title": "Tournois",
+    "none": "Aucun tournoi pour l’instant.",
+    "create": "Créer un tournoi",
+    "createTitle": "Nouveau tournoi",
+    "entries": "Participants",
+    "entryCount": "{{count}} participant",
+    "entryCount_other": "{{count}} participants",
+    "name": "Nom du tournoi",
+    "namePlaceholder": "Coupe du babyfoot",
+    "format": "Format",
+    "twoLegged": "Aller-retour",
+    "twoLeggedOption": "Matchs aller-retour (belle en cas d’égalité)",
+    "searchPlayer": "Chercher un joueur…",
+    "pickSecondPlayer": "Choisis le coéquipier de {{name}}",
+    "removeEntry": "Retirer",
+    "launch": "Lancer le tournoi",
+    "needsPowerOfTwo": "Il faut une puissance de 2 (4, 8, 16, 32…) participants pour lancer.",
+    "cancel": "Annuler le tournoi",
+    "cancelTitle": "Annuler ce tournoi ?",
+    "cancelDescription": "Les rencontres en cours seront arrêtées et les tables libérées.",
+    "champion": "🏆 Vainqueur : {{name}}",
+    "tbd": "À déterminer",
+    "tieWon": "Victoire de {{name}} (+{{points}} pts)",
+    "aggregate": "Score cumulé {{a}}-{{b}} (manche {{played}}/{{needed}})",
+    "actionFailed": "Action impossible.",
+    "actionNeededBadge": "Rencontre de tournoi à jouer",
+    "status": {
+      "DRAFT": "Brouillon",
+      "IN_PROGRESS": "En cours",
+      "COMPLETED": "Terminé",
+      "CANCELLED": "Annulé"
+    },
+    "round": {
+      "FINAL": "Finale",
+      "SEMI": "Demi-finale",
+      "QUARTER": "Quart de finale",
+      "ROUND_OF_16": "Huitièmes de finale"
+    },
+    "roundGeneric": "Tour {{n}}",
+    "launchedToast": "Le tournoi {{name}} a commencé !",
+    "tableReclaimedToast": "Ta table a été libérée pour le tournoi {{name}}.",
+    "tieStartedToast": "À toi de jouer ! Tournoi {{name}}.",
+    "tieWonToast": "Tu passes au tour suivant dans {{name}} !",
+    "eliminatedToast": "Tu es éliminé du tournoi {{name}}.",
+    "completedToast": "Le tournoi {{name}} est terminé !"
+  },
+  "badges": {
+    "title": "Progression",
+    "level": "Niveau {{level}}",
+    "xpProgress": "{{xp}} / {{total}} XP",
+    "wins": "Victoires",
+    "matchesPlayed": "Matchs joués",
+    "bestStreak": "Meilleure série",
+    "earnedToast": "🏅 Badge débloqué : {{name}}",
+    "catalog": {
+      "FIRST_WIN": {
+        "name": "Première victoire",
+        "description": "Gagner son premier match."
+      },
+      "TEN_WINS": {
+        "name": "Habitué",
+        "description": "Gagner 10 matchs."
+      },
+      "FIFTY_MATCHES": {
+        "name": "Vétéran",
+        "description": "Jouer 50 matchs."
+      },
+      "WIN_STREAK_3": {
+        "name": "Série de 3",
+        "description": "Gagner 3 matchs d’affilée."
+      },
+      "GIANT_SLAYER": {
+        "name": "Tombeur",
+        "description": "Battre un adversaire avec au moins 150 points de classement d’avance."
+      },
+      "TOURNAMENT_FINALIST": {
+        "name": "Finaliste",
+        "description": "Atteindre la finale d’un tournoi."
+      },
+      "TOURNAMENT_CHAMPION": {
+        "name": "Champion",
+        "description": "Remporter un tournoi."
+      }
+    }
   }
 }

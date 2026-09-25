@@ -1,0 +1,35 @@
+export enum BadgeCode {
+  FIRST_WIN = 'FIRST_WIN',
+  TEN_WINS = 'TEN_WINS',
+  FIFTY_MATCHES = 'FIFTY_MATCHES',
+  WIN_STREAK_3 = 'WIN_STREAK_3',
+  TOURNAMENT_FINALIST = 'TOURNAMENT_FINALIST',
+  TOURNAMENT_CHAMPION = 'TOURNAMENT_CHAMPION',
+  GIANT_SLAYER = 'GIANT_SLAYER',
+}
+
+export class UserBadgeEntity {
+  code!: BadgeCode;
+  earnedAt!: Date;
+
+  constructor(badge: Partial<UserBadgeEntity>) {
+    Object.assign(this, badge);
+  }
+}
+
+export class PlayerBadgesProfile {
+  userId!: string;
+  xp!: number;
+  level!: number;
+  xpIntoLevel!: number;
+  xpPerLevel!: number;
+  wins!: number;
+  matchesPlayed!: number;
+  currentWinStreak!: number;
+  bestWinStreak!: number;
+  badges!: UserBadgeEntity[];
+
+  constructor(profile: Partial<PlayerBadgesProfile>) {
+    Object.assign(this, profile);
+  }
+}

@@ -19,6 +19,57 @@ enum Status {
   IN_GAME
 }
 
+enum TableStatus {
+  FREE
+  BUSY
+}
+
+enum QueueEntryStatus {
+  WAITING
+  CALLED
+  EXPIRED
+  CANCELLED
+  DONE
+}
+
+enum MatchFormat {
+  ONE_V_ONE
+  TWO_V_TWO
+}
+
+enum MatchStatus {
+  PENDING
+  DECLINED
+  ACCEPTED
+  PENDING_VALIDATION
+  COMPLETED
+  DISPUTED
+}
+
+enum TournamentStatus {
+  DRAFT
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum TournamentTieStatus {
+  PENDING
+  READY
+  IN_PROGRESS
+  DONE
+}
+
+enum BadgeCode {
+  FIRST_WIN
+  TEN_WINS
+  FIFTY_MATCHES
+  WIN_STREAK_3
+  TOURNAMENT_FINALIST
+  TOURNAMENT_CHAMPION
+  GIANT_SLAYER
+}
+
 enum FriendshipStatus {
   PENDING
   ACCEPTED
@@ -76,6 +127,13 @@ model User {
   role             Role         @default(USER)
   theme            ThemePreference    @default(light)
   language         LanguagePreference @default(en)
+  rating           Int          @default(1000)
+  matchesPlayed    Int          @default(0)
+  wins             Int          @default(0)
+  xp               Int          @default(0)
+  currentWinStreak Int          @default(0)
+  bestWinStreak    Int          @default(0)
+  badges           UserBadge[]
   refreshTokens    RefreshToken[]
   friendshipsSent      Friendship[] @relation("FriendshipsSent")
   friendshipsReceived  Friendship[] @relation("FriendshipsReceived")
@@ -84,6 +142,17 @@ model User {
   messages          Message[]
   blocksSent        Block[]        @relation("BlocksSent")
   blocksReceived    Block[]        @relation("BlocksReceived")
+  tablesOccupied    Table[]
+  queueEntries      QueueEntry[]
+  matchesAsTeamAPlayer1 Match[] @relation("MatchTeamAPlayer1")
+  matchesAsTeamAPlayer2 Match[] @relation("MatchTeamAPlayer2")
+  matchesAsTeamBPlayer1 Match[] @relation("MatchTeamBPlayer1")
+  matchesAsTeamBPlayer2 Match[] @relation("MatchTeamBPlayer2")
+  matchesSubmitted      Match[] @relation("MatchSubmittedBy")
+  matchesValidated      Match[] @relation("MatchValidatedBy")
+  tournamentsCreated       Tournament[]      @relation("TournamentCreatedBy")
+  tournamentEntriesAsPlayer1 TournamentEntry[] @relation("TournamentEntryPlayer1")
+  tournamentEntriesAsPlayer2 TournamentEntry[] @relation("TournamentEntryPlayer2")
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 }
@@ -108,6 +177,8 @@ model Conversation {
   userA User @relation("ConversationsAsA", fields: [userAId], references: [id], onDelete: Cascade)
   userB User @relation("ConversationsAsB", fields: [userBId], references: [id], onDelete: Cascade)
   messages Message[]
+  userALastReadAt DateTime @default(now())
+  userBLastReadAt DateTime @default(now())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -129,3 +200,165 @@ model Block{
   @@unique([blockerId, blockedId])
 }
 
+// Contrainte "un utilisateur = au plus une table BUSY" : index unique partiel
+// (CREATE UNIQUE INDEX ... WHERE status = 'BUSY'), ajouté à la main dans la
+// migration 20260922090000_table_one_per_user (non représentable ici en DSL Prisma).
+model Table {
+  id           String      @id @default(cuid())
+  name         String      @unique
+  status       TableStatus @default(FREE)
+  occupiedAt   DateTime?
+  occupiedById String?
+  occupiedBy   User?       @relation(fields: [occupiedById], references: [id], onDelete: SetNull)
+  queueEntries QueueEntry[]
+  // Non-null tant qu'un tournoi utilise cette table pour une rencontre en cours :
+  // bloque occupy()/queue normaux le temps que le tournoi la récupère.
+  currentTournamentTieId String?       @unique
+  currentTournamentTie   TournamentTie? @relation(fields: [currentTournamentTieId], references: [id], onDelete: SetNull)
+  matchLegs    Match[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+// Un utilisateur ne peut avoir qu'une seule entrée active (WAITING/CALLED)
+// en tant que demandeur : index unique partiel ajouté à la main dans la
+// migration 20260922130000_add_queue (non représentable ici en DSL Prisma).
+model QueueEntry {
+  id          String           @id @default(cuid())
+  tableId     String
+  table       Table            @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  requesterId String
+  requester   User             @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+  status      QueueEntryStatus @default(WAITING)
+  joinedAt    DateTime         @default(now())
+  calledAt    DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([tableId, status, joinedAt])
+}
+
+// Défi 1v1 / 2v2 indépendant des tables : on propose, l'autre accepte
+// (et choisit son coéquipier en 2v2), puis n'importe qui joue et soumet
+// le score, un adversaire valide. L'Elo est appliqué à la validation.
+model Match {
+  id     String      @id @default(cuid())
+  format MatchFormat
+  status MatchStatus @default(PENDING)
+
+  teamAPlayer1Id String
+  teamAPlayer1   User    @relation("MatchTeamAPlayer1", fields: [teamAPlayer1Id], references: [id], onDelete: Cascade)
+  teamAPlayer2Id String?
+  teamAPlayer2   User?   @relation("MatchTeamAPlayer2", fields: [teamAPlayer2Id], references: [id], onDelete: Cascade)
+  teamBPlayer1Id String
+  teamBPlayer1   User    @relation("MatchTeamBPlayer1", fields: [teamBPlayer1Id], references: [id], onDelete: Cascade)
+  teamBPlayer2Id String?
+  teamBPlayer2   User?   @relation("MatchTeamBPlayer2", fields: [teamBPlayer2Id], references: [id], onDelete: Cascade)
+
+  scoreA Int?
+  scoreB Int?
+  submittedById String?
+  submittedBy   User?   @relation("MatchSubmittedBy", fields: [submittedById], references: [id], onDelete: SetNull)
+  validatedById String?
+  validatedBy   User?   @relation("MatchValidatedBy", fields: [validatedById], references: [id], onDelete: SetNull)
+
+  // Non-nuls uniquement pour une rencontre de tournoi (legNumber 1/2, 3 = belle en cas d'égalité aller-retour).
+  tournamentTieId String?
+  tournamentTie   TournamentTie? @relation(fields: [tournamentTieId], references: [id], onDelete: Cascade)
+  legNumber       Int?
+  tableId         String?
+  table           Table?  @relation(fields: [tableId], references: [id], onDelete: SetNull)
+
+  createdAt           DateTime  @default(now())
+  updatedAt            DateTime @updatedAt
+  respondedAt          DateTime?
+  submittedAt          DateTime?
+  validationExpiresAt  DateTime?
+
+  @@index([teamAPlayer1Id])
+  @@index([teamAPlayer2Id])
+  @@index([teamBPlayer1Id])
+  @@index([teamBPlayer2Id])
+  @@index([tournamentTieId])
+}
+
+// Un tournoi : brouillon (l'admin ajoute des entrées) -> lancé (tirage au sort,
+// moteur d'attribution des tables) -> terminé. Format et aller-retour choisis
+// à la création. Les points par tour s'ajoutent au même rating (User.rating).
+model Tournament {
+  id          String            @id @default(cuid())
+  name        String
+  format      MatchFormat
+  twoLegged   Boolean           @default(false)
+  status      TournamentStatus  @default(DRAFT)
+  totalRounds Int?
+  createdById String
+  createdBy   User              @relation("TournamentCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  entries     TournamentEntry[]
+  ties        TournamentTie[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  @@index([status])
+}
+
+// Une place dans le tableau : 1 joueur (1v1) ou 2 (2v2, équipe fixe pour tout le tournoi).
+model TournamentEntry {
+  id              String     @id @default(cuid())
+  tournamentId    String
+  tournament      Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  seed            Int
+  player1Id       String
+  player1         User       @relation("TournamentEntryPlayer1", fields: [player1Id], references: [id], onDelete: Cascade)
+  player2Id       String?
+  player2         User?      @relation("TournamentEntryPlayer2", fields: [player2Id], references: [id], onDelete: Cascade)
+  eliminatedRound Int?
+  tiesAsA         TournamentTie[] @relation("TieEntryA")
+  tiesAsB         TournamentTie[] @relation("TieEntryB")
+  tiesWon         TournamentTie[] @relation("TieWinner")
+  createdAt       DateTime   @default(now())
+
+  @@unique([tournamentId, seed])
+}
+
+// Une rencontre du tableau (round/slot) : ronde 1 = 1er tour, jusqu'à totalRounds = finale.
+// Pré-créée "à blanc" (PENDING, sans entries) pour les tours futurs dès le lancement,
+// puis remplie au fur et à mesure que les vainqueurs avancent.
+model TournamentTie {
+  id             String              @id @default(cuid())
+  tournamentId   String
+  tournament     Tournament          @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  round          Int
+  slot           Int
+  entryAId       String?
+  entryA         TournamentEntry?    @relation("TieEntryA", fields: [entryAId], references: [id], onDelete: SetNull)
+  entryBId       String?
+  entryB         TournamentEntry?    @relation("TieEntryB", fields: [entryBId], references: [id], onDelete: SetNull)
+  status         TournamentTieStatus @default(PENDING)
+  winnerEntryId  String?
+  winnerEntry    TournamentEntry?    @relation("TieWinner", fields: [winnerEntryId], references: [id], onDelete: SetNull)
+  pointsAwarded  Int?
+  legs           Match[]
+  table          Table?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@unique([tournamentId, round, slot])
+  @@index([tournamentId, status])
+}
+
+// Un badge gagné par un utilisateur. Le catalogue (nom, description, icône)
+// est statique côté code, cette table ne garde que "qui a débloqué quoi, quand".
+model UserBadge {
+  id       String    @id @default(cuid())
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code     BadgeCode
+  earnedAt DateTime  @default(now())
+
+  @@unique([userId, code])
+  @@index([userId])
+}

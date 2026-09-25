@@ -44,7 +44,43 @@ export class ConversationRepository {
       orderBy: { updatedAt: 'desc' },
     });
 
-    return conversations.map((conversation) => this.toEntity(conversation));
+    const unreadCounts = await Promise.all(
+      conversations.map((conversation) =>
+        this.prisma.message.count({
+          where: {
+            conversationId: conversation.id,
+            senderId: { not: userId },
+            createdAt: {
+              gt:
+                conversation.userAId === userId
+                  ? conversation.userALastReadAt
+                  : conversation.userBLastReadAt,
+            },
+          },
+        }),
+      ),
+    );
+
+    return conversations.map((conversation, index) => {
+      const entity = this.toEntity(conversation);
+      entity.unreadCount = unreadCounts[index];
+      entity.peerLastReadAt =
+        conversation.userAId === userId
+          ? conversation.userBLastReadAt
+          : conversation.userALastReadAt;
+      return entity;
+    });
+  }
+
+  async markRead(conversationId: string, userId: string): Promise<void> {
+    await this.prisma.conversation.updateMany({
+      where: { id: conversationId, userAId: userId },
+      data: { userALastReadAt: new Date() },
+    });
+    await this.prisma.conversation.updateMany({
+      where: { id: conversationId, userBId: userId },
+      data: { userBLastReadAt: new Date() },
+    });
   }
 
   private toEntity(conversation: ConversationPrisma): ConversationEntity {

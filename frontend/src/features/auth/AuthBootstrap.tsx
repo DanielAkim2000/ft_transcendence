@@ -3,6 +3,8 @@ import { useRefreshMutation } from "./authApi";
 import { useState, useEffect } from "react";
 import { logger } from "@/lib/logger";
 
+let bootstrapRefresh: Promise<void> | null = null;
+
 interface AuthBootstrapProps {
   children: React.ReactNode;
 }
@@ -17,11 +19,11 @@ export const AuthBootstrap = ({ children }: AuthBootstrapProps) => {
 
     (async () => {
       if (!accessToken) {
-        try {
-          await refresh().unwrap();
-        } catch {
-          logger("No session", "error");
-        }
+        bootstrapRefresh ??= refresh()
+          .unwrap()
+          .then(() => undefined)
+          .catch(() => logger("No session", "error"));
+        await bootstrapRefresh;
       }
       if (!cancelled) setReady(true);
     })();
@@ -29,6 +31,10 @@ export const AuthBootstrap = ({ children }: AuthBootstrapProps) => {
     return () => {
       cancelled = true;
     };
+    // Volontairement mount-only : ne doit tourner qu'une fois au boot de l'app,
+    // sinon le dédoublonnage via bootstrapRefresh perd son intérêt et on
+    // retombe sur la race de double refresh corrigée précédemment.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!ready) return null;

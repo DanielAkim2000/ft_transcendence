@@ -40,6 +40,11 @@ export class UsersController {
     return this.usersService.searchUsers(req.user.id, query);
   }
 
+  @Get('ranking')
+  getRanking() {
+    return this.usersService.getRanking();
+  }
+
   @Get('me/friends')
   listFriends(
     @Req() req: Request & { user: UserEntity },
@@ -142,11 +147,7 @@ export class UsersController {
   ): Promise<{
     user: UserEntity;
     friendshipStatus:
-      | 'none'
-      | 'pending_out'
-      | 'pending_in'
-      | 'friends'
-      | 'self';
+      'none' | 'pending_out' | 'pending_in' | 'friends' | 'self';
   }> {
     return this.usersService.getProfileForViewer(req.user.id, id);
   }

@@ -24,6 +24,17 @@ export class ConversationEntity {
   })
   lastMessage?: MessageEntity;
   @ApiProperty({
+    description: 'Number of messages from the other user not read yet',
+    example: 2,
+  })
+  unreadCount: number = 0;
+  @ApiProperty({
+    description: 'When the other participant last read this conversation',
+    required: false,
+    example: '2026-01-01T12:00:00.000Z',
+  })
+  peerLastReadAt?: Date;
+  @ApiProperty({
     description: 'The date when the conversation was created',
     example: '2026-01-01T12:00:00.000Z',
   })

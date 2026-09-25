@@ -9,6 +9,7 @@ import { AuthBootstrap } from "./features/auth/AuthBootstrap.tsx";
 import { I18nSync } from "./i18n/I18nSync.tsx";
 import { ThemeSync } from "./features/settings/ThemeSync.tsx";
 import { Toaster } from "@/components/ui/toast";
+import { NavigationBridge } from "@/components/navigation-bridge";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -16,6 +17,7 @@ createRoot(document.getElementById("root")!).render(
       <ThemeSync>
         <I18nSync>
           <BrowserRouter>
+            <NavigationBridge />
             <AuthBootstrap>
               <App />
               <Toaster />

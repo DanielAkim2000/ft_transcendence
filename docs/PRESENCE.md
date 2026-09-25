@@ -30,21 +30,21 @@ Document de suivi pour la feature **online/offline** via Socket.IO.
 - [x] `setUserPresence()` — DB puis notify friends
 
 ### Fichiers back
-- `backend/src/socket/presence.gateway.ts`
-- `backend/src/socket/presence.module.ts`
+- `backend/src/presence/presence.gateway.ts`
+- `backend/src/presence/presence.module.ts`
 - `backend/src/users/repositories/users.repository.ts` (`updatePresence`)
 - `backend/src/users/services/users.services.ts` (`updatePresence`)
 
 ---
 
-## 🔲 Front — à faire
+## ✅ Front — fait (étapes 1 à 4)
 
 ### Étape 1 — Client socket
 **Fichier :** `frontend/src/features/presence/presenceSocket.ts`
 
-- [ ] `connect(accessToken)` → `io(\`${VITE_API_URL}/presence\`, { auth: { access_token } })`
-- [ ] `disconnect()` → fermer proprement la connexion
-- [ ] Exporter une instance singleton (éviter plusieurs connexions)
+- [x] `connect(accessToken)` → `io(\`${VITE_API_URL}/presence\`, { auth: { access_token } })`
+- [x] `disconnect()` → fermer proprement la connexion
+- [x] Exporter une instance singleton (éviter plusieurs connexions)
 
 ```ts
 // Connexion attendue côté client
@@ -58,10 +58,10 @@ io(`${import.meta.env.VITE_API_URL}/presence`, {
 ### Étape 2 — PresenceBootstrap
 **Fichier :** `frontend/src/features/presence/PresenceBootstrap.tsx`
 
-- [ ] Lire `accessToken` depuis Redux (`useAppSelector`)
-- [ ] `useEffect` : connect quand token présent, disconnect au cleanup / logout
-- [ ] Reconnect si le token change (refresh)
-- [ ] Brancher dans `ProtectedLayout` (socket uniquement si authentifié)
+- [x] Lire `accessToken` depuis Redux (`useAppSelector`)
+- [x] `useEffect` : connect quand token présent, disconnect au cleanup / logout
+- [x] Reconnect si le token change (refresh)
+- [x] Brancher dans `ProtectedLayout` (socket uniquement si authentifié)
 
 ```
 ProtectedLayout
@@ -74,9 +74,9 @@ ProtectedLayout
 ### Étape 3 — Écouter les events
 Dans `PresenceBootstrap` (ou `presenceListeners.ts`) :
 
-- [ ] `socket.on('presence:sync', ...)` — snapshot initial des amis online
-- [ ] `socket.on('presence:update', ...)` — changement en direct
-- [ ] Cleanup : `socket.off(...)` au unmount
+- [x] `socket.on('presence:sync', ...)` — snapshot initial des amis online
+- [x] `socket.on('presence:update', ...)` — changement en direct
+- [x] Cleanup : `socket.off(...)` au unmount
 
 ---
 
@@ -85,9 +85,9 @@ Pas besoin de modifier `Friends.tsx` / `Profile.tsx` si le cache est patché.
 
 Utiliser `api.util.updateQueryData` pour :
 
-- [ ] `listFriends` — liste amis
-- [ ] `getUser` — page profil
-- [ ] `searchUsers` — recherche (optionnel)
+- [x] `listFriends` — liste amis
+- [x] `getUser` — page profil
+- [x] `searchUsers` — recherche (optionnel)
 
 Logique patch :
 
@@ -104,14 +104,14 @@ status: status
 ---
 
 ### Étape 5 — Logout
-- [ ] Le socket se ferme quand `accessToken` → `null` (via cleanup du `useEffect`)
+- [x] Le socket se ferme quand `accessToken` → `null` (via cleanup du `useEffect`)
 - [ ] Vérifier que `logout` appelle bien `clearCredentials`
 
 ---
 
 ### Étape 6 — Tests manuels
 - [ ] 2 navigateurs, 2 comptes amis
-- [ ] A connecte → B voit ● online
+- [x] A connecte → B voit ● online (vu en UI, chat + amis)
 - [ ] A ferme onglet → B voit ○ offline
 - [ ] A 2 onglets → fermer 1 ne change rien, fermer le 2e → offline
 - [ ] B se connecte alors qu'A est déjà online → B reçoit `presence:sync`

@@ -1,12 +1,15 @@
 import {
   BadRequestException,
   ConflictException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { UserRepository } from '../repositories/users.repository';
+import { PresenceGateway } from '../../presence/presence.gateway';
 import { RefreshToken, Status, UserEntity } from '../entities/users.entity';
 import { Profile42Dto } from '../../auth/dtos/profile42.dto';
 import { RegisterDto } from '../../auth/dtos/register.dto';
@@ -17,7 +20,11 @@ import { Prisma } from '../../generated/prisma/client';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    @Inject(forwardRef(() => PresenceGateway))
+    private readonly presenceGateway: PresenceGateway,
+  ) {}
 
   findUserById(id: string): Promise<UserEntity | null> {
     return this.userRepository.findUserById(id);
@@ -46,11 +53,7 @@ export class UsersService {
   ): Promise<{
     user: UserEntity;
     friendshipStatus:
-      | 'none'
-      | 'pending_out'
-      | 'pending_in'
-      | 'friends'
-      | 'self';
+      'none' | 'pending_out' | 'pending_in' | 'friends' | 'self';
   }> {
     const user = await this.getProfile(targetId);
     const friendshipStatus = await this.getFriendshipStatus(viewerId, targetId);
@@ -153,6 +156,9 @@ export class UsersService {
     );
     if (!existing) {
       await this.userRepository.createFriendRequest(requester.id, addresseeId);
+      this.presenceGateway.emitToUser(addresseeId, 'friend:request', {
+        userId: requester.id,
+      });
       return addressee;
     }
     if (existing.status === 'ACCEPTED') {
@@ -162,6 +168,9 @@ export class UsersService {
       throw new ConflictException('Friend request already sent');
     }
     await this.userRepository.acceptFriendship(existing.id);
+    this.presenceGateway.emitToUser(addresseeId, 'friend:update', {
+      userId: requester.id,
+    });
     return addressee;
   }
 
@@ -181,6 +190,9 @@ export class UsersService {
       throw new NotFoundException('Friend request not found');
     }
     await this.userRepository.acceptFriendship(existing.id);
+    this.presenceGateway.emitToUser(requesterId, 'friend:update', {
+      userId: currentUser.id,
+    });
     return this.getProfile(requesterId);
   }
 
@@ -196,6 +208,9 @@ export class UsersService {
       throw new NotFoundException('Friendship not found');
     }
     await this.userRepository.deleteFriendship(existing.id);
+    this.presenceGateway.emitToUser(otherUserId, 'friend:update', {
+      userId: currentUser.id,
+    });
   }
 
   async removeFriendshipIfExists(
@@ -273,5 +288,9 @@ export class UsersService {
     status: Status,
   ): Promise<void> {
     return this.userRepository.updatePresence(userId, isOnline, status);
+  }
+
+  getRanking() {
+    return this.userRepository.listRanking();
   }
 }

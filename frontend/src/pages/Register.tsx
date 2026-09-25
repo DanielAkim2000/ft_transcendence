@@ -33,8 +33,10 @@ export const Register = () => {
   const [register, { isLoading }] = useRegisterMutation();
   const [serverError, setServerError] = useState<string | null>(null);
 
+  // i18n.language force la recomputation quand la langue change (messages traduits).
   const registerSchema = useMemo(
     () => createRegisterSchema(t),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [t, i18n.language],
   );
 
@@ -66,7 +68,7 @@ export const Register = () => {
     <AuthShell>
       <Card className="w-full border-border bg-card/80 shadow-sm backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="font-serif text-3xl tracking-tight">
+          <CardTitle className="text-2xl font-bold tracking-tight">
             {t("auth.register.title")}
           </CardTitle>
           <CardDescription className="font-sans">

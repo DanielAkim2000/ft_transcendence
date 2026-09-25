@@ -15,6 +15,14 @@ export type FriendshipStatus =
   | "friends"
   | "self";
 
+export interface RankingEntry {
+  id: string;
+  displayname: string;
+  avatarUrl: string | null;
+  rating: number;
+  matchesPlayed: number;
+}
+
 export const usersApi = api.injectEndpoints({
   endpoints: (builder) => ({
     [USERS_ENDPOINTS.SEARCH_USERS]: builder.query<User[], string | void>({
@@ -23,6 +31,10 @@ export const usersApi = api.injectEndpoints({
         params: q ? { q } : undefined,
       }),
       providesTags: [TAG_TYPES.USERS],
+    }),
+    [USERS_ENDPOINTS.GET_RANKING]: builder.query<RankingEntry[], void>({
+      query: () => API_ROUTES.USERS_RANKING,
+      providesTags: [TAG_TYPES.RANKING],
     }),
     [USERS_ENDPOINTS.GET_USER]: builder.query<
       { user: User; friendshipStatus: FriendshipStatus },
@@ -126,6 +138,7 @@ export const usersApi = api.injectEndpoints({
 
 export const {
   useSearchUsersQuery,
+  useGetRankingQuery,
   useGetUserQuery,
   useUpdateProfileMutation,
   useUpdateSettingsMutation,

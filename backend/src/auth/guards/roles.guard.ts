@@ -24,9 +24,9 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<
-      Request & { user?: UserEntity }
-    >();
+    const request = context
+      .switchToHttp()
+      .getRequest<Request & { user?: UserEntity }>();
     const user = request.user;
     if (!user) {
       throw new UnauthorizedException('Access token invalide');

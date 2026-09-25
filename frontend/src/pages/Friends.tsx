@@ -1,5 +1,5 @@
 import { useState, type ReactNode, useMemo } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,7 +51,7 @@ function UserRow({
           {showPresence ? (
             <span
               className={`absolute right-0 bottom-0 size-2.5 rounded-full ring-2 ring-background ${
-                user.isOnline ? "bg-emerald-500" : "bg-zinc-400"
+                user.isOnline ? "bg-primary" : "bg-muted-foreground"
               }`}
               aria-hidden
             />
@@ -64,7 +64,7 @@ function UserRow({
           {showPresence ? (
             <p
               className={`truncate text-xs font-medium ${
-                user.isOnline ? "text-emerald-600" : "text-muted-foreground"
+                user.isOnline ? "text-primary" : "text-muted-foreground"
               }`}
             >
               {user.isOnline ? t("profile.online") : t("profile.offline")}
@@ -83,6 +83,7 @@ function UserRow({
 
 export const Friends = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const { data: friends = [], isLoading: friendsLoading } =
     useListFriendsQuery();
@@ -107,6 +108,14 @@ export const Friends = () => {
     }
   };
 
+  const onlineFriends = useMemo(
+    () => friends.filter((u) => u.isOnline),
+    [friends],
+  );
+  const offlineFriends = useMemo(
+    () => friends.filter((u) => !u.isOnline),
+    [friends],
+  );
   const friendIds = useMemo(() => new Set(friends.map((u) => u.id)), [friends]);
   const pendingIds = useMemo(
     () => new Set(pending.map((u) => u.id)),
@@ -120,7 +129,7 @@ export const Friends = () => {
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
       <div>
-        <h1 className="font-serif text-3xl tracking-tight">
+        <h1 className="text-2xl font-bold tracking-tight">
           {t("friends.title")}
         </h1>
         <p className="mt-1 font-sans text-sm text-muted-foreground">
@@ -133,8 +142,8 @@ export const Friends = () => {
       ) : null}
 
       <section className="flex flex-col gap-3">
-        <h2 className="font-heading text-lg font-semibold">
-          {t("friends.pendingTitle")}
+        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          {t("friends.pendingTitle")} · {pending.length}
         </h2>
         {pendingLoading ? (
           <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
@@ -178,45 +187,67 @@ export const Friends = () => {
         )}
       </section>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="font-heading text-lg font-semibold">
-          {t("friends.listTitle")}
-        </h2>
-        {friendsLoading ? (
-          <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
-        ) : friends.length === 0 ? (
+      {friendsLoading ? (
+        <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+      ) : friends.length === 0 ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            {t("friends.listTitle")}
+          </h2>
           <p className="text-sm text-muted-foreground">
             {t("friends.noFriends")}
           </p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {friends.map((user) => (
-              <UserRow
-                key={user.id}
-                user={user}
-                showPresence
-                actions={
-                  <ConfirmDialog
-                    title={t("confirm.removeFriendTitle")}
-                    description={t("confirm.removeFriendDescription", {
-                      name: user.displayname,
-                    })}
-                    confirmLabel={t("friends.remove")}
-                    onConfirm={() => run(() => removeFriend(user.id).unwrap())}
-                  >
-                    <Button size="sm" variant="outline">
-                      {t("friends.remove")}
-                    </Button>
-                  </ConfirmDialog>
-                }
-              />
-            ))}
-          </ul>
-        )}
-      </section>
+        </section>
+      ) : (
+        [
+          { key: "online", title: t("friends.onlineTitle"), list: onlineFriends },
+          { key: "offline", title: t("friends.offlineTitle"), list: offlineFriends },
+        ]
+          .filter((group) => group.list.length > 0)
+          .map((group) => (
+            <section key={group.key} className="flex flex-col gap-3">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                {group.title} · {group.list.length}
+              </h2>
+              <ul className="flex flex-col gap-2">
+                {group.list.map((user) => (
+                  <UserRow
+                    key={user.id}
+                    user={user}
+                    showPresence
+                    actions={
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={() => navigate(ROUTES.chatWith(user.id))}
+                        >
+                          {t("friends.message")}
+                        </Button>
+                        <ConfirmDialog
+                          title={t("confirm.removeFriendTitle")}
+                          description={t("confirm.removeFriendDescription", {
+                            name: user.displayname,
+                          })}
+                          confirmLabel={t("friends.remove")}
+                          onConfirm={() =>
+                            run(() => removeFriend(user.id).unwrap())
+                          }
+                        >
+                          <Button size="sm" variant="outline">
+                            {t("friends.remove")}
+                          </Button>
+                        </ConfirmDialog>
+                      </>
+                    }
+                  />
+                ))}
+              </ul>
+            </section>
+          ))
+      )}
 
       <section className="flex flex-col gap-3">
-        <h2 className="font-heading text-lg font-semibold">
+        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
           {t("friends.searchTitle")}
         </h2>
         <Input

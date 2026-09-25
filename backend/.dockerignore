@@ -10,3 +10,4 @@ coverage
 .claude
 .windsurf
 test
+dist-seed

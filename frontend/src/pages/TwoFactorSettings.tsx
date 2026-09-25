@@ -18,7 +18,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { CodeInput } from "@/components/ui/code-input";
 import {
   useMeQuery,
   useSetup2faMutation,
@@ -101,7 +101,7 @@ export const TwoFactorSettings = () => {
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
       <div>
-        <h1 className="font-serif text-3xl tracking-tight">
+        <h1 className="text-2xl font-bold tracking-tight">
           {t("settings.twoFactor.title")}
         </h1>
         <p className="mt-1 font-sans text-sm text-muted-foreground">
@@ -137,11 +137,11 @@ export const TwoFactorSettings = () => {
               </Button>
 
               {qrDataUrl && (
-                <div className="flex flex-col items-start gap-3 rounded-lg border border-border p-4">
+                <div className="flex flex-col items-start gap-3 border border-border p-4">
                   <img
                     src={qrDataUrl}
                     alt={t("settings.twoFactor.qrAlt")}
-                    className="size-55 rounded-md bg-white"
+                    className="size-55 bg-white"
                   />
                   {secret && (
                     <p className="font-sans text-xs break-all text-muted-foreground">
@@ -172,22 +172,13 @@ export const TwoFactorSettings = () => {
                       <FieldLabel htmlFor={field.name}>
                         {t("settings.twoFactor.code")}
                       </FieldLabel>
-                      <Input
+                      <CodeInput
                         id={field.name}
                         name={field.name}
-                        inputMode="numeric"
-                        autoComplete="one-time-code"
-                        maxLength={6}
                         value={field.state.value}
                         onBlur={field.handleBlur}
-                        onChange={(e) =>
-                          field.handleChange(
-                            e.target.value.replace(/\D/g, "").slice(0, 6),
-                          )
-                        }
-                        aria-invalid={isInvalid}
-                        placeholder={t("auth.twoFactor.codePlaceholder")}
-                        className="h-10 max-w-xs tracking-[0.3em]"
+                        onChange={field.handleChange}
+                        invalid={isInvalid}
                       />
                       {isInvalid && (
                         <FieldError errors={field.state.meta.errors} />

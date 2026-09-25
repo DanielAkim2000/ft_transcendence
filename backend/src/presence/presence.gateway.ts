@@ -5,7 +5,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { DefaultEventsMap, Server, Socket } from 'socket.io';
-import { Logger } from '@nestjs/common';
+import { forwardRef, Inject, Logger } from '@nestjs/common';
 import { UsersService } from '../users/services/users.services';
 import { JwtService } from '@nestjs/jwt';
 import { Status } from '../users/entities/users.entity';
@@ -31,6 +31,7 @@ export class PresenceGateway
   @WebSocketServer()
   private server!: Server;
   constructor(
+    @Inject(forwardRef(() => UsersService))
     private readonly userService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
@@ -114,6 +115,11 @@ export class PresenceGateway
       }));
 
     client.emit('presence:sync', { onlineFriends });
+  }
+
+  /** Envoie un événement à toutes les sessions ouvertes d'un utilisateur. */
+  emitToUser(userId: string, event: string, payload: unknown): void {
+    this.server.to(userId).emit(event, payload);
   }
 
   private async setUserPresence(

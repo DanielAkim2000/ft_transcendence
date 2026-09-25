@@ -8,6 +8,7 @@ import type {
 import { RefreshToken, User } from '../../generated/prisma/client';
 import { Profile42Dto } from '../../auth/dtos/profile42.dto';
 import { RefreshToken as RefreshTokenEntity } from '../entities/users.entity';
+import { RankingEntry } from '../entities/ranking-entry.entity';
 
 @Injectable()
 export class UserRepository {
@@ -252,6 +253,21 @@ export class UserRepository {
       },
     });
     return rows.map((row) => this.mapUser(row.addressee));
+  }
+
+  async listRanking(): Promise<RankingEntry[]> {
+    const users = await this.prisma.user.findMany({
+      select: {
+        id: true,
+        displayname: true,
+        avatarUrl: true,
+        rating: true,
+        matchesPlayed: true,
+      },
+      orderBy: { rating: 'desc' },
+      take: 100,
+    });
+    return users.map((user) => new RankingEntry(user));
   }
 
   async updatePresence(

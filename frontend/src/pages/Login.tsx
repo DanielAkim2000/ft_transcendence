@@ -18,6 +18,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
+import { CodeInput } from "@/components/ui/code-input";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -39,6 +40,8 @@ function LoginCredentialsForm() {
   const [login, { isLoading }] = useLoginMutation();
   const [serverError, setServerError] = useState<string | null>(null);
 
+  // i18n.language force la recomputation quand la langue change (messages traduits).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const loginSchema = useMemo(() => createLoginSchema(t), [t, i18n.language]);
 
   const form = useForm({
@@ -69,7 +72,7 @@ function LoginCredentialsForm() {
   return (
     <Card className="w-full border-border bg-card/80 shadow-sm backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="font-serif text-3xl tracking-tight">
+        <CardTitle className="text-2xl font-bold tracking-tight">
           {t("auth.login.title")}
         </CardTitle>
         <CardDescription className="font-sans">
@@ -202,8 +205,10 @@ function TwoFactorForm() {
   const [verify2fa, { isLoading }] = useVerify2faMutation();
   const [serverError, setServerError] = useState<string | null>(null);
 
+  // i18n.language force la recomputation quand la langue change (messages traduits).
   const twoFactorSchema = useMemo(
     () => createTwoFactorSchema(t),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [t, i18n.language],
   );
 
@@ -228,7 +233,7 @@ function TwoFactorForm() {
   return (
     <Card className="w-full border-border bg-card/80 shadow-sm backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="font-serif text-3xl tracking-tight">
+        <CardTitle className="text-2xl font-bold tracking-tight">
           {t("auth.twoFactor.title")}
         </CardTitle>
         <CardDescription className="font-sans">
@@ -255,22 +260,14 @@ function TwoFactorForm() {
                     <FieldLabel htmlFor={field.name}>
                       {t("auth.twoFactor.code")}
                     </FieldLabel>
-                    <Input
+                    <CodeInput
                       id={field.name}
                       name={field.name}
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      maxLength={6}
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(e) =>
-                        field.handleChange(
-                          e.target.value.replace(/\D/g, "").slice(0, 6),
-                        )
-                      }
-                      aria-invalid={isInvalid}
-                      placeholder={t("auth.twoFactor.codePlaceholder")}
-                      className="h-10 tracking-[0.3em]"
+                      onChange={field.handleChange}
+                      invalid={isInvalid}
+                      autoFocus
                     />
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />

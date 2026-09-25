@@ -1,6 +1,6 @@
 {
   "common": {
-    "brand": "ft_transcendence",
+    "brand": "transcendence",
     "or": "o",
     "loading": "Cargando…",
     "logout": "Cerrar sesión",
@@ -75,7 +75,16 @@
   },
   "home": {
     "title": "Panel",
-    "loggedInAs": "Conectado como {{name}}"
+    "loggedInAs": "Conectado como {{name}}",
+    "greeting": "Hola {{name}}.",
+    "onlineCount_one": "{{count}} amigo en línea",
+    "onlineCount_other": "{{count}} amigos en línea",
+    "pendingRequests_one": "{{count}} solicitud de amistad pendiente",
+    "pendingRequests_other": "{{count}} solicitudes de amistad pendientes",
+    "review": "Ver",
+    "seeAll": "ver todo",
+    "noOnline": "Ningún amigo en línea por ahora.",
+    "recentMessages": "Mensajes recientes"
   },
   "nav": {
     "menu": "Menú",
@@ -83,7 +92,11 @@
     "profile": "Perfil",
     "friends": "Amigos",
     "settings": "Ajustes",
-    "twoFactor": "Auth en dos pasos"
+    "twoFactor": "Auth en dos pasos",
+    "chat": "Chat",
+    "tables": "Mesas",
+    "ranking": "Clasificación",
+    "tournaments": "Torneos"
   },
   "settings": {
     "title": "Ajustes",
@@ -121,6 +134,13 @@
       "toggleFailed": "No se pudo actualizar la 2FA.",
       "enabledSuccess": "La 2FA está ahora activada.",
       "disabledSuccess": "La 2FA está ahora desactivada."
+    },
+    "security": {
+      "title": "Seguridad",
+      "twoFactor": "Doble autenticación",
+      "manage": "Gestionar",
+      "active": "activada",
+      "inactive": "desactivada"
     }
   },
   "profile": {
@@ -140,7 +160,8 @@
     "edit": "Editar perfil",
     "notFound": "Usuario no encontrado.",
     "online": "En línea",
-    "offline": "Desconectado"
+    "offline": "Desconectado",
+    "previewTitle": "Vista pública"
   },
   "friends": {
     "title": "Amigos",
@@ -159,6 +180,268 @@
     "inviteAlreadySent": "Invitación ya enviada",
     "inviteSentToast": "Invitación enviada",
     "already": "Amigo",
-    "actionFailed": "No se pudo actualizar la amistad."
+    "actionFailed": "No se pudo actualizar la amistad.",
+    "message": "Mensaje",
+    "onlineTitle": "En línea",
+    "offlineTitle": "Desconectados",
+    "newRequests": "Nuevas solicitudes de amistad",
+    "requestReceivedToast": "{{name}} quiere ser tu amigo."
+  },
+  "chat": {
+    "title": "Mensajes",
+    "conversations": "Conversaciones",
+    "noConversations": "Aún no hay conversaciones. Escribe a un amigo desde la página Amigos.",
+    "selectPrompt": "Elige una conversación.",
+    "noMessages": "Aún no hay mensajes. ¡Saluda!",
+    "placeholder": "escribe un mensaje…",
+    "send": "Enviar",
+    "loadOlder": "Cargar mensajes anteriores",
+    "block": "Bloquear",
+    "unblock": "Desbloquear",
+    "blockTitle": "¿Bloquear a este usuario?",
+    "blockDescription": "No podrás chatear con {{name}} y se eliminará la amistad. El historial sigue siendo legible.",
+    "blockedToast": "Usuario bloqueado",
+    "unblockedToast": "Usuario desbloqueado",
+    "blockedNotice": "Conversación bloqueada: los mensajes nuevos están desactivados.",
+    "back": "Conversaciones",
+    "sendFailed": "No se pudo enviar el mensaje.",
+    "actionFailed": "Acción fallida.",
+    "openFailed": "No se pudo abrir la conversación.",
+    "you": "yo",
+    "unread": "{{count}} mensaje sin leer",
+    "newMessages": "Mensajes nuevos",
+    "typing": "está escribiendo…",
+    "sent": "Enviado",
+    "read": "Leído"
+  },
+  "legal": {
+    "nav": {
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service"
+    },
+    "back": "← volver",
+    "updated": "Última actualización: 21 sept. 2026",
+    "label": "Legal",
+    "privacy": {
+      "title": "Privacy Policy",
+      "sections": [
+        {
+          "title": "Datos recogidos",
+          "body": "Solo recogemos tu email, nombre de usuario, avatar, tus preferencias (tema, idioma) y los mensajes que envías por el chat. Si entras con la intra 42, recibimos tu login 42."
+        },
+        {
+          "title": "Finalidades",
+          "body": "Estos datos sirven para tu cuenta, la autenticación, la lista de amigos, el chat y la presencia en línea. Nunca se venden datos."
+        },
+        {
+          "title": "Conservación",
+          "body": "Los datos se conservan mientras exista tu cuenta. Al eliminarla, se borran tus mensajes, amistades y bloqueos."
+        },
+        {
+          "title": "Cookies y sesión",
+          "body": "Una cookie técnica httpOnly guarda tu token de renovación para mantener la sesión. No se usan cookies publicitarias."
+        },
+        {
+          "title": "Tus derechos (RGPD)",
+          "body": "Puedes acceder a tus datos, rectificarlos o solicitar su eliminación en cualquier momento contactándonos."
+        },
+        {
+          "title": "Contacto",
+          "body": "Para cualquier duda sobre tus datos, contacta con el equipo del proyecto Transcendence."
+        }
+      ]
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "sections": [
+        {
+          "title": "Aceptación",
+          "body": "Al crear una cuenta aceptas estas condiciones de uso."
+        },
+        {
+          "title": "Cuenta",
+          "body": "Eres responsable de la confidencialidad de tus credenciales y de la actividad de tu cuenta. Un usuario por persona."
+        },
+        {
+          "title": "Uso aceptable",
+          "body": "Sin acoso, spam ni contenido ilegal en el chat. Puedes bloquear a cualquier usuario en cualquier momento."
+        },
+        {
+          "title": "Contenido",
+          "body": "Sigues siendo responsable de los mensajes que envías. Podemos retirar contenido o suspender una cuenta en caso de abuso."
+        },
+        {
+          "title": "Responsabilidad",
+          "body": "Transcendence es un proyecto educativo ofrecido tal cual, sin garantía de disponibilidad."
+        },
+        {
+          "title": "Cambios",
+          "body": "Estas condiciones pueden cambiar. La fecha de última actualización aparece al inicio de esta página."
+        }
+      ]
+    }
+  },
+  "tables": {
+    "title": "Mesas",
+    "realtime": "En vivo",
+    "free": "Libre",
+    "busy": "Ocupada",
+    "take": "Tomar la mesa",
+    "release": "Liberar la mesa",
+    "noMatch": "Sin partido",
+    "since": "Desde {{time}}",
+    "releaseTitle": "¿Liberar la mesa?",
+    "releaseDescription": "{{name}} se marcará como libre para todos.",
+    "actionFailed": "No se pudo actualizar la mesa.",
+    "homeAllFree": "Todas las mesas están libres.",
+    "occupiedByOther": "Ocupada por otro jugador",
+    "alreadyOnOther": "Ya ocupas otra mesa",
+    "tournamentBadge": "Torneo en curso",
+    "viewTournament": "Ver el torneo"
+  },
+  "queue": {
+    "title": "Cola de espera",
+    "join": "Unirse a la cola",
+    "leave": "Salir de la cola",
+    "joinFailed": "No se pudo unir a la cola.",
+    "calledBadge": "Tu turno",
+    "yourTurn": "¡Es tu turno! Te quedan {{time}} para tomar la mesa.",
+    "yourTurnBadge": "Es tu turno",
+    "calledToast": "¡Es tu turno en {{table}}!",
+    "expiredToast": "No confirmaste a tiempo, perdiste tu lugar en {{table}}."
+  },
+  "matches": {
+    "history": "Historial de partidos",
+    "historyEmpty": "Aún no has jugado ningún partido.",
+    "historyWin": "Victoria",
+    "historyLoss": "Derrota",
+    "historyLadder": "Desafío",
+    "historyTournament": "Torneo",
+    "historyLeg": "manche {{n}}",
+    "rankingTitle": "Clasificación",
+    "myMatches": "Mis desafíos",
+    "noMatches": "Todavía no hay partidos.",
+    "matchesPlayed": "{{count}} partido jugado",
+    "matchesPlayed_other": "{{count}} partidos jugados",
+    "challenge": "Desafiar",
+    "challengeTitle": "Desafiar a {{name}}",
+    "oneVOne": "1v1",
+    "twoVTwo": "2v2",
+    "pickTeammateTitle": "Elige a tu compañero",
+    "pickTeammateDescription": "En 2v2, debes jugar con un compañero.",
+    "noFriends": "Añade un amigo para jugar en 2v2.",
+    "sendChallenge": "Enviar desafío",
+    "challengeSentToast": "Desafío enviado a {{name}}.",
+    "actionFailed": "Acción imposible.",
+    "vs": "vs",
+    "pendingForYou": "Has sido desafiado, ¡responde!",
+    "pendingForOpponent": "Esperando la respuesta del oponente.",
+    "declined": "Desafío rechazado.",
+    "accept": "Aceptar",
+    "decline": "Rechazar",
+    "scoreOfTeamA": "Puntuación equipo A",
+    "scoreOfTeamB": "Puntuación equipo B",
+    "submitScore": "Enviar resultado",
+    "scoreSubmitted": "Resultado enviado: {{a}} - {{b}}",
+    "validate": "Validar",
+    "dispute": "Impugnar",
+    "awaitingValidation": "Esperando la validación del oponente.",
+    "completed": "Terminado: {{a}} - {{b}}",
+    "disputedResult": "Impugnado: {{a}} - {{b}} (sin cambio de clasificación)",
+    "actionNeededBadge": "Acción requerida en un partido",
+    "proposedToast": "¡{{name}} te desafía!",
+    "declinedToast": "{{name}} rechazó tu desafío.",
+    "acceptedToast": "¡Desafío aceptado! Busquen una mesa libre para jugar.",
+    "scoreToValidateToast": "Resultado enviado ({{a}}-{{b}}), pendiente de validación.",
+    "scoreSubmittedToast": "Resultado enviado ({{a}}-{{b}}), esperando la validación del oponente.",
+    "wonToast": "¡Ganaste {{a}}-{{b}}! Tu clasificación se actualizó.",
+    "lostToast": "Perdiste {{a}}-{{b}}. Tu clasificación se actualizó.",
+    "disputedToast": "El resultado fue impugnado, sin cambio de clasificación."
+  },
+  "tournaments": {
+    "title": "Torneos",
+    "none": "Todavía no hay torneos.",
+    "create": "Crear un torneo",
+    "createTitle": "Nuevo torneo",
+    "entries": "Participantes",
+    "entryCount": "{{count}} participante",
+    "entryCount_other": "{{count}} participantes",
+    "name": "Nombre del torneo",
+    "namePlaceholder": "Copa del futbolín",
+    "format": "Formato",
+    "twoLegged": "Ida y vuelta",
+    "twoLeggedOption": "Partidos ida y vuelta (desempate si hay empate)",
+    "searchPlayer": "Buscar un jugador…",
+    "pickSecondPlayer": "Elige el compañero de {{name}}",
+    "removeEntry": "Quitar",
+    "launch": "Lanzar el torneo",
+    "needsPowerOfTwo": "Se necesita una potencia de 2 (4, 8, 16, 32…) de participantes para lanzar.",
+    "cancel": "Cancelar el torneo",
+    "cancelTitle": "¿Cancelar este torneo?",
+    "cancelDescription": "Los partidos en curso se detendrán y las mesas se liberarán.",
+    "champion": "🏆 Campeón: {{name}}",
+    "tbd": "Por determinar",
+    "tieWon": "Victoria de {{name}} (+{{points}} pts)",
+    "aggregate": "Marcador acumulado {{a}}-{{b}} (manga {{played}}/{{needed}})",
+    "actionFailed": "Acción imposible.",
+    "actionNeededBadge": "Partido de torneo por jugar",
+    "status": {
+      "DRAFT": "Borrador",
+      "IN_PROGRESS": "En curso",
+      "COMPLETED": "Terminado",
+      "CANCELLED": "Cancelado"
+    },
+    "round": {
+      "FINAL": "Final",
+      "SEMI": "Semifinal",
+      "QUARTER": "Cuartos de final",
+      "ROUND_OF_16": "Octavos de final"
+    },
+    "roundGeneric": "Ronda {{n}}",
+    "launchedToast": "¡El torneo {{name}} ha comenzado!",
+    "tableReclaimedToast": "Tu mesa se liberó para el torneo {{name}}.",
+    "tieStartedToast": "¡Es tu turno de jugar! Torneo {{name}}.",
+    "tieWonToast": "¡Avanzas a la siguiente ronda en {{name}}!",
+    "eliminatedToast": "Has sido eliminado del torneo {{name}}.",
+    "completedToast": "¡El torneo {{name}} ha terminado!"
+  },
+  "badges": {
+    "title": "Progresión",
+    "level": "Nivel {{level}}",
+    "xpProgress": "{{xp}} / {{total}} XP",
+    "wins": "Victorias",
+    "matchesPlayed": "Partidos jugados",
+    "bestStreak": "Mejor racha",
+    "earnedToast": "🏅 Insignia desbloqueada: {{name}}",
+    "catalog": {
+      "FIRST_WIN": {
+        "name": "Primera victoria",
+        "description": "Gana tu primer partido."
+      },
+      "TEN_WINS": {
+        "name": "Habitual",
+        "description": "Gana 10 partidos."
+      },
+      "FIFTY_MATCHES": {
+        "name": "Veterano",
+        "description": "Juega 50 partidos."
+      },
+      "WIN_STREAK_3": {
+        "name": "Racha de 3",
+        "description": "Gana 3 partidos seguidos."
+      },
+      "GIANT_SLAYER": {
+        "name": "Cazagigantes",
+        "description": "Vence a un rival con al menos 150 puntos de clasificación más que tú."
+      },
+      "TOURNAMENT_FINALIST": {
+        "name": "Finalista",
+        "description": "Llega a la final de un torneo."
+      },
+      "TOURNAMENT_CHAMPION": {
+        "name": "Campeón",
+        "description": "Gana un torneo."
+      }
+    }
   }
 }

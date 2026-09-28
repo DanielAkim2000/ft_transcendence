@@ -1,10 +1,16 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { cn } from "@/lib/utils";
+import { Pagination } from "@/components/pagination";
+import { useClampedPage } from "@/lib/use-clamped-page";
 import { ROUTES } from "@/constants/routes";
 import { useListMatchHistoryQuery, type Match } from "./matchesApi";
 import { teamOf } from "./matchHelpers";
 import { TeamAvatar } from "./MatchCard";
+import { ListSkeleton } from "@/components/skeletons";
+
+const HISTORY_PAGE_SIZE = 10;
 
 function HistoryRow({ match, meId }: { match: Match; meId: string }) {
   const { t, i18n } = useTranslation();
@@ -59,7 +65,13 @@ function HistoryRow({ match, meId }: { match: Match; meId: string }) {
 
 export function MatchHistoryList({ meId }: { meId: string }) {
   const { t } = useTranslation();
-  const { data: history = [], isLoading } = useListMatchHistoryQuery();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isFetching } = useListMatchHistoryQuery({
+    page,
+    limit: HISTORY_PAGE_SIZE,
+  });
+  useClampedPage(page, data?.totalPages, setPage);
+  const history = data?.items ?? [];
 
   return (
     <section className="flex flex-col gap-3">
@@ -67,7 +79,7 @@ export function MatchHistoryList({ meId }: { meId: string }) {
         {t("matches.history")}
       </h2>
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+        <ListSkeleton count={HISTORY_PAGE_SIZE / 2} action />
       ) : history.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("matches.historyEmpty")}</p>
       ) : (
@@ -77,6 +89,12 @@ export function MatchHistoryList({ meId }: { meId: string }) {
           ))}
         </ul>
       )}
+      <Pagination
+        page={data?.page ?? page}
+        totalPages={data?.totalPages ?? 1}
+        onPageChange={setPage}
+        disabled={isFetching}
+      />
     </section>
   );
 }

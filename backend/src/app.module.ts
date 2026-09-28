@@ -12,6 +12,7 @@ import { MatchesModule } from './matches/matches.module';
 import { TournamentsModule } from './tournaments/tournaments.module';
 import { BadgesModule } from './badges/badges.module';
 
+/** Module racine : charge la config (.env), le JWT global (access token, 1 h) et tous les modules fonctionnels de l'application. */
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -20,6 +21,7 @@ import { BadgesModule } from './badges/badges.module';
     }),
     JwtModule.registerAsync({
       global: true,
+      /** Configure le JWT global : secret de l'access token et expiration par défaut d'1 h. */
       useFactory: () => ({
         secret: process.env.JWT_ACCESS_TOKEN_SECRET,
         signOptions: { expiresIn: '1h' },

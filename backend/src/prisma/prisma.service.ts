@@ -12,6 +12,7 @@ export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
+  /** Injecte les dépendances : PrismaPg. */
   constructor(@Inject('PrismaAdapter') adapter: PrismaPg) {
     super({
       adapter: adapter,
@@ -19,10 +20,12 @@ export class PrismaService
     });
   }
 
+  /** Ouvre la connexion à la base au démarrage du module. */
   async onModuleInit() {
     await this.$connect();
   }
 
+  /** Ferme la connexion à la base à l'arrêt du module. */
   async onModuleDestroy() {
     await this.$disconnect();
   }

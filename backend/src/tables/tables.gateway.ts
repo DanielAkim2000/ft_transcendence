@@ -27,11 +27,13 @@ export class TablesGateway implements OnGatewayConnection {
   @WebSocketServer()
   private server!: Server;
 
+  /** Injecte les dépendances : UsersService, JwtService. */
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
 
+  /** Authentifie la connexion WebSocket via le JWT ; déconnecte le client si le token est absent, invalide ou si l'utilisateur n'existe pas. */
   async handleConnection(client: TablesSocket): Promise<void> {
     const accessToken = (client.handshake.auth as { access_token?: unknown })
       .access_token;
@@ -55,6 +57,7 @@ export class TablesGateway implements OnGatewayConnection {
     }
   }
 
+  /** Diffuse l'état à jour d'une table à tous les clients connectés (événement table:update). */
   emitTableUpdate(table: TableEntity) {
     this.server.emit('table:update', table);
   }

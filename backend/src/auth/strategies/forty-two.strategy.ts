@@ -17,6 +17,7 @@ export class FortyTwoStrategy extends PassportStrategy(
   Strategy,
   FOURTY_TWO_STRATEGY,
 ) {
+  /** Injecte les dépendances : AuthService. */
   constructor(private readonly authService: AuthService) {
     const clientID = process.env.CLIENT_ID;
     if (!clientID) {
@@ -39,6 +40,7 @@ export class FortyTwoStrategy extends PassportStrategy(
     super(options);
   }
 
+  /** Reçoit le profil OAuth 42 et retourne l'utilisateur correspondant (créé si nouveau). */
   async validate(
     accessToken: string,
     refreshToken: string,

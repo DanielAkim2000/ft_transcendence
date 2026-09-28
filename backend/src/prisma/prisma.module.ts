@@ -4,10 +4,12 @@ import { PRISMA_ADAPTER } from './constants/injection-tokens';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { ConfigService } from '@nestjs/config';
 
+/** Accès à la base de données : fournit l'adaptateur PostgreSQL (DATABASE_URL) et exporte PrismaService. */
 @Module({
   providers: [
     {
       provide: PRISMA_ADAPTER,
+      /** Crée l'adaptateur PostgreSQL à partir de DATABASE_URL ; échoue au démarrage si la variable est absente. */
       useFactory: (configService: ConfigService) => {
         const databaseUrl = configService.get<string>('DATABASE_URL');
         if (!databaseUrl) {

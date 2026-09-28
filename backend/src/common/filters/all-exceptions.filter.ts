@@ -9,8 +9,10 @@ import { HttpAdapterHost } from '@nestjs/core';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
+  /** Injecte les dépendances : HttpAdapterHost. */
   constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
 
+  /** Intercepte toute exception et répond avec un JSON uniforme (statusCode, message, timestamp, path) ; les erreurs non HTTP deviennent une 500 générique. */
   catch(exception: unknown, host: ArgumentsHost): void {
     const { httpAdapter } = this.httpAdapterHost;
     const ctx = host.switchToHttp();

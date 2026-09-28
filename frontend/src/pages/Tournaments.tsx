@@ -1,10 +1,16 @@
+import { useState } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useMeQuery } from "@/features/auth/authApi";
 import { useListTournamentsQuery } from "@/features/tournaments/tournamentsApi";
 import { Button } from "@/components/ui/button";
+import { Pagination } from "@/components/pagination";
+import { useClampedPage } from "@/lib/use-clamped-page";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
+import { ListSkeleton } from "@/components/skeletons";
+
+const TOURNAMENTS_PAGE_SIZE = 10;
 
 const STATUS_STYLES: Record<string, string> = {
   DRAFT: "text-muted-foreground",
@@ -16,7 +22,13 @@ const STATUS_STYLES: Record<string, string> = {
 export const Tournaments = () => {
   const { t } = useTranslation();
   const { data: me } = useMeQuery();
-  const { data: tournaments = [], isLoading } = useListTournamentsQuery();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isFetching } = useListTournamentsQuery({
+    page,
+    limit: TOURNAMENTS_PAGE_SIZE,
+  });
+  useClampedPage(page, data?.totalPages, setPage);
+  const tournaments = data?.items ?? [];
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
@@ -30,7 +42,7 @@ export const Tournaments = () => {
       </header>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+        <ListSkeleton count={4} avatar={false} action className="py-3" />
       ) : tournaments.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("tournaments.none")}</p>
       ) : (
@@ -63,6 +75,12 @@ export const Tournaments = () => {
           ))}
         </ul>
       )}
+      <Pagination
+        page={data?.page ?? page}
+        totalPages={data?.totalPages ?? 1}
+        onPageChange={setPage}
+        disabled={isFetching}
+      />
     </div>
   );
 };

@@ -2,7 +2,10 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Dialog } from "@base-ui/react/dialog";
 import { useMeQuery } from "@/features/auth/authApi";
-import { useGetRankingQuery, useListFriendsQuery, type RankingEntry } from "@/features/users/usersApi";
+import { useGetRankingQuery, type RankingEntry } from "@/features/users/usersApi";
+import { FriendPicker } from "@/features/users/FriendPicker";
+import { Pagination } from "@/components/pagination";
+import { useClampedPage } from "@/lib/use-clamped-page";
 import { useListMatchesQuery, useProposeMatchMutation, type MatchFormat } from "@/features/matches/matchesApi";
 import { MatchCard } from "@/features/matches/MatchCard";
 import { MatchHistoryList } from "@/features/matches/MatchHistoryList";
@@ -13,6 +16,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/components/ui/toast";
 import { getErrorMessage } from "@/lib/get-error-message";
 import { getInitials, resolveAvatarUrl } from "@/lib/user";
+import { ListSkeleton } from "@/components/skeletons";
+
+const RANKING_PAGE_SIZE = 10;
+const MATCHES_PAGE_SIZE = 10;
 
 function ChallengeDialog({
   opponent,
@@ -25,8 +32,6 @@ function ChallengeDialog({
   const [open, setOpen] = useState(false);
   const [format, setFormat] = useState<MatchFormat>("ONE_V_ONE");
   const [teammateId, setTeammateId] = useState("");
-  const { data: allFriends = [] } = useListFriendsQuery();
-  const friends = allFriends.filter((friend) => friend.id !== opponent.id);
   const [propose, { isLoading }] = useProposeMatchMutation();
 
   const submit = async () => {
@@ -80,17 +85,7 @@ function ChallengeDialog({
               <p className="mb-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
                 {t("matches.pickTeammateTitle")}
               </p>
-              <RadioGroup value={teammateId} onValueChange={setTeammateId} className="flex flex-col gap-2">
-                {friends.map((friend) => (
-                  <Label key={friend.id} className="flex items-center gap-2 border border-border p-2 text-sm">
-                    <RadioGroupItem value={friend.id} />
-                    {friend.displayname}
-                  </Label>
-                ))}
-                {friends.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">{t("matches.noFriends")}</p>
-                ) : null}
-              </RadioGroup>
+              <FriendPicker value={teammateId} onChange={setTeammateId} excludeIds={[opponent.id]} />
             </div>
           ) : null}
           <div className="mt-5 flex justify-end gap-2">
@@ -115,9 +110,17 @@ export const Ranking = () => {
   const { t } = useTranslation();
   const { data: me } = useMeQuery();
   const { data: ranking = [], isLoading: rankingLoading } = useGetRankingQuery();
-  const { data: matches = [], isLoading: matchesLoading } = useListMatchesQuery();
+  const [matchesPage, setMatchesPage] = useState(1);
+  const { data: matches, isLoading: matchesLoading, isFetching: matchesFetching } =
+    useListMatchesQuery({ page: matchesPage, limit: MATCHES_PAGE_SIZE });
+  const [page, setPage] = useState(1);
+  const pageCount = Math.max(1, Math.ceil(ranking.length / RANKING_PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const firstRank = (currentPage - 1) * RANKING_PAGE_SIZE;
+  const pageEntries = ranking.slice(firstRank, firstRank + RANKING_PAGE_SIZE);
 
-  const activeMatches = matches.filter((m) => m.status !== "DECLINED");
+  useClampedPage(matchesPage, matches?.totalPages, setMatchesPage);
+  const activeMatches = matches?.items ?? [];
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
@@ -130,17 +133,17 @@ export const Ranking = () => {
 
       <section className="flex flex-col gap-3">
         {rankingLoading ? (
-          <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+          <ListSkeleton count={RANKING_PAGE_SIZE} lead action />
         ) : (
           <ol className="flex flex-col gap-2">
-            {ranking.map((entry, index) => (
+            {pageEntries.map((entry, index) => (
               <li
                 key={entry.id}
                 className="flex items-center justify-between gap-3 border border-border px-3 py-2"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <span className="w-6 shrink-0 text-right text-xs font-bold text-muted-foreground">
-                    {index + 1}
+                    {firstRank + index + 1}
                   </span>
                   <Avatar className="size-9 rounded-lg">
                     <AvatarImage src={resolveAvatarUrl(entry.avatarUrl)} alt={entry.displayname} className="rounded-lg" />
@@ -167,6 +170,7 @@ export const Ranking = () => {
             ))}
           </ol>
         )}
+        <Pagination page={currentPage} totalPages={pageCount} onPageChange={setPage} />
       </section>
 
       <section className="flex flex-col gap-3">
@@ -174,7 +178,7 @@ export const Ranking = () => {
           {t("matches.myMatches")}
         </h2>
         {matchesLoading ? (
-          <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+          <ListSkeleton count={3} avatar={false} action />
         ) : activeMatches.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("matches.noMatches")}</p>
         ) : me ? (
@@ -184,6 +188,12 @@ export const Ranking = () => {
             ))}
           </ul>
         ) : null}
+        <Pagination
+          page={matches?.page ?? matchesPage}
+          totalPages={matches?.totalPages ?? 1}
+          onPageChange={setMatchesPage}
+          disabled={matchesFetching}
+        />
       </section>
 
       {me ? <MatchHistoryList meId={me.id} /> : null}

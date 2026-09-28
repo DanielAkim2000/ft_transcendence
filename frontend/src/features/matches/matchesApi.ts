@@ -2,6 +2,7 @@ import { api } from "@/store/api";
 import { TAG_TYPES } from "@/constants/tagTypes";
 import { API_ROUTES } from "@/constants/apiRoutes";
 import { MATCHES_ENDPOINTS } from "@/constants/queryEndpoints";
+import type { PageArgs, Paginated } from "@/lib/pagination";
 
 export type MatchFormat = "ONE_V_ONE" | "TWO_V_TWO";
 export type MatchStatus =
@@ -38,16 +39,22 @@ export interface Match {
   tournamentId: string | null;
   tournamentName: string | null;
   tournamentRound: number | null;
+  tableId: string | null;
 }
 
 export const matchesApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    [MATCHES_ENDPOINTS.LIST_MATCHES]: builder.query<Match[], void>({
-      query: () => API_ROUTES.MATCHES_ME,
+    [MATCHES_ENDPOINTS.LIST_MATCHES]: builder.query<Paginated<Match>, PageArgs | void>({
+      query: (args) => ({ url: API_ROUTES.MATCHES_ME, params: args ?? undefined }),
       providesTags: [TAG_TYPES.MATCHES],
     }),
-    [MATCHES_ENDPOINTS.LIST_MATCH_HISTORY]: builder.query<Match[], void>({
-      query: () => API_ROUTES.MATCHES_HISTORY,
+    [MATCHES_ENDPOINTS.LIST_MATCH_HISTORY]: builder.query<Paginated<Match>, PageArgs | void>({
+      query: (args) => ({ url: API_ROUTES.MATCHES_HISTORY, params: args ?? undefined }),
+      providesTags: [TAG_TYPES.MATCHES],
+    }),
+    // Nombre de défis qui attendent une action (pastille de la barre latérale).
+    [MATCHES_ENDPOINTS.COUNT_MATCH_ACTIONS]: builder.query<{ count: number }, void>({
+      query: () => API_ROUTES.MATCHES_PENDING_ACTIONS,
       providesTags: [TAG_TYPES.MATCHES],
     }),
     [MATCHES_ENDPOINTS.PROPOSE_MATCH]: builder.mutation<
@@ -95,19 +102,9 @@ export const matchesApi = api.injectEndpoints({
 
 type Dispatch = (action: unknown) => unknown;
 
-/** Met à jour (ou insère) un match dans le cache "mes matchs" (réponse websocket). */
+/** Un match a changé (websocket) : les listes sont paginées côté backend, on les recharge au lieu de les patcher. */
 export function applyMatchToCache(dispatch: Dispatch, match: Match) {
-  dispatch(
-    matchesApi.util.updateQueryData(
-      MATCHES_ENDPOINTS.LIST_MATCHES,
-      undefined,
-      (draft) => {
-        const index = draft.findIndex((entry) => entry.id === match.id);
-        if (index === -1) draft.unshift(match);
-        else draft[index] = match;
-      },
-    ),
-  );
+  dispatch(matchesApi.util.invalidateTags([TAG_TYPES.MATCHES]));
   if (match.status === "COMPLETED") {
     dispatch(matchesApi.util.invalidateTags([TAG_TYPES.RANKING]));
   }
@@ -116,6 +113,7 @@ export function applyMatchToCache(dispatch: Dispatch, match: Match) {
 export const {
   useListMatchesQuery,
   useListMatchHistoryQuery,
+  useCountMatchActionsQuery,
   useProposeMatchMutation,
   useRespondMatchMutation,
   useSubmitScoreMutation,

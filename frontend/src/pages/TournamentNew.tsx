@@ -5,6 +5,8 @@ import { useSearchUsersQuery } from "@/features/users/usersApi";
 import { useMeQuery } from "@/features/auth/authApi";
 import { useCreateTournamentMutation, type Tournament } from "@/features/tournaments/tournamentsApi";
 import { Button } from "@/components/ui/button";
+import { Pagination } from "@/components/pagination";
+import { useClampedPage } from "@/lib/use-clamped-page";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -12,6 +14,8 @@ import { toast } from "@/components/ui/toast";
 import { getErrorMessage } from "@/lib/get-error-message";
 import { ROUTES } from "@/constants/routes";
 import type { MatchFormat } from "@/features/matches/matchesApi";
+
+const PLAYER_SEARCH_PAGE_SIZE = 8;
 
 interface StagedEntry {
   key: string;
@@ -29,11 +33,19 @@ export const TournamentNew = () => {
   const [entries, setEntries] = useState<StagedEntry[]>([]);
   const [pendingPlayer1, setPendingPlayer1] = useState<{ id: string; displayname: string } | null>(null);
   const [query, setQuery] = useState("");
-  const { data: searchResults = [] } = useSearchUsersQuery(query.trim() || undefined);
+  const [searchPage, setSearchPage] = useState(1);
+  const { data: searchData, isFetching: searching } = useSearchUsersQuery({
+    q: query.trim() || undefined,
+    page: searchPage,
+    limit: PLAYER_SEARCH_PAGE_SIZE,
+  });
+  useClampedPage(searchPage, searchData?.totalPages, setSearchPage);
+  const searchResults = searchData?.items ?? [];
   const { data: me } = useMeQuery();
   const q = query.trim().toLowerCase();
+  // L'utilisateur connecté n'apparaît pas dans la recherche : on l'ajoute en tête de la première page.
   const results =
-    me && (q === "" || me.displayname.toLowerCase().includes(q))
+    me && searchPage === 1 && (q === "" || me.displayname.toLowerCase().includes(q))
       ? [me, ...searchResults]
       : searchResults;
   const [createTournament, { isLoading }] = useCreateTournamentMutation();
@@ -152,7 +164,10 @@ export const TournamentNew = () => {
         ) : null}
         <Input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setSearchPage(1);
+          }}
           placeholder={t("tournaments.searchPlayer")}
         />
         <ul className="flex flex-col gap-1">
@@ -170,6 +185,12 @@ export const TournamentNew = () => {
               </li>
             ))}
         </ul>
+        <Pagination
+          page={searchData?.page ?? searchPage}
+          totalPages={searchData?.totalPages ?? 1}
+          onPageChange={setSearchPage}
+          disabled={searching}
+        />
       </div>
 
       <Button

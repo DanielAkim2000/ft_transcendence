@@ -27,6 +27,7 @@ import {
 import { createTwoFactorSchema } from "@/features/auth/two-factor.schema";
 import { getErrorMessage } from "@/lib/get-error-message";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { PageFallback } from "@/components/page-fallback";
 
 export const TwoFactorSettings = () => {
   const { t } = useTranslation();
@@ -93,7 +94,7 @@ export const TwoFactorSettings = () => {
   };
 
   if (isLoadingUser) {
-    return <p className="text-muted-foreground">{t("common.loading")}</p>;
+    return <PageFallback />;
   }
 
   const isEnabled = user?.twoFactorEnabled === true;

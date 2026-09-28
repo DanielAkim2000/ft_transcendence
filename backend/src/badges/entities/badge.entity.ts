@@ -12,6 +12,7 @@ export class UserBadgeEntity {
   code!: BadgeCode;
   earnedAt!: Date;
 
+  /** Copie dans l'instance les champs fournis. */
   constructor(badge: Partial<UserBadgeEntity>) {
     Object.assign(this, badge);
   }
@@ -29,6 +30,7 @@ export class PlayerBadgesProfile {
   bestWinStreak!: number;
   badges!: UserBadgeEntity[];
 
+  /** Copie dans l'instance les champs fournis. */
   constructor(profile: Partial<PlayerBadgesProfile>) {
     Object.assign(this, profile);
   }

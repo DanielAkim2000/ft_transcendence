@@ -13,6 +13,7 @@ export class RefreshTokenStrategy extends PassportStrategy(
 ) {
   private readonly logger = new Logger(RefreshTokenStrategy.name);
 
+  /** Injecte les dépendances : AuthService. */
   constructor(private readonly authService: AuthService) {
     const secret = process.env.JWT_REFRESH_TOKEN_SECRET;
     if (!secret) {
@@ -35,8 +36,10 @@ export class RefreshTokenStrategy extends PassportStrategy(
     super(options);
   }
 
+  /** Vérifie que le refresh token du cookie est connu et non expiré, puis retourne l'utilisateur ; il devient req.user. */
   async validate(req: Request, payload: PayloadJwtDto) {
     try {
+      /** Refresh token brut lu dans le cookie de la requête. */
       const rawRefreshToken = (
         req.cookies as Record<string, unknown> | undefined
       )?.refreshToken;

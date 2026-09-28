@@ -20,14 +20,17 @@ export function roundLabel(round: number, totalRounds: number): string {
 
 /** Points fixes gagnés par le vainqueur d'une rencontre, selon le tour (même barème pour tous, pas d'Elo relatif). */
 const POINTS_PER_ROUND_BASE = 10;
+/** Points gagnés par le vainqueur d'une rencontre : 10 × numéro du tour. */
 export function pointsForRound(round: number): number {
   return POINTS_PER_ROUND_BASE * round;
 }
 
+/** Indique si n est une puissance de 2 supérieure ou égale à 2 (taille valide pour un tableau). */
 export function isPowerOfTwo(n: number): boolean {
   return n >= 2 && (n & (n - 1)) === 0;
 }
 
+/** Logarithme base 2 arrondi : nombre de tours d'un tableau de n entrées. */
 export function log2(n: number): number {
   return Math.round(Math.log2(n));
 }

@@ -8,7 +8,7 @@ import {
   LanguagePreference,
   MatchFormat,
   MatchStatus,
-  QueueEntryStatus,
+  QueueGroupStatus,
   Role,
   TableStatus,
   ThemePreference,
@@ -43,28 +43,34 @@ const XP_PER_MATCH_WIN_BONUS = 20;
 const XP_PER_TOURNAMENT_WIN_BONUS = 50;
 const GIANT_SLAYER_RATING_GAP = 150;
 
+/** Facteur K d'Elo : 40 pour un joueur de moins de 10 matchs, 20 sinon (même règle que matches/lib/elo.ts). */
 function kFactor(matchesPlayed) {
   return matchesPlayed < NEW_PLAYER_MATCH_THRESHOLD
     ? K_NEW_PLAYER
     : K_ESTABLISHED;
 }
+/** Probabilité de victoire attendue d'une équipe face à une autre selon la formule Elo. */
 function expectedScore(teamRating, opponentRating) {
   return 1 / (1 + 10 ** ((opponentRating - teamRating) / 400));
 }
+/** Moyenne d'un tableau de nombres (notes d'une équipe). */
 function avg(values) {
   return values.reduce((sum, v) => sum + v, 0) / values.length;
 }
 
 const now = new Date();
+/** Date située il y a `days` jours à l'heure donnée (minutes variables pour éviter des horaires identiques). */
 function daysAgo(days, hour = 12) {
   const d = new Date(now);
   d.setDate(d.getDate() - days);
   d.setHours(hour, (days * 7) % 60, 0, 0);
   return d;
 }
+/** Date située il y a `minutes` minutes. */
 function minutesAgo(minutes) {
   return new Date(now.getTime() - minutes * 60_000);
 }
+/** Date située dans `minutes` minutes. */
 function minutesFromNow(minutes) {
   return new Date(now.getTime() + minutes * 60_000);
 }
@@ -143,6 +149,7 @@ const tables = [
 
 // --- Moteur de simulation (rejoue exactement la logique métier réelle) ---
 
+/** Crée les statistiques initiales simulées d'un joueur (note 1000, 0 match, 0 XP, aucun badge). */
 function makeStats(id) {
   return {
     id,
@@ -159,10 +166,12 @@ function makeStats(id) {
 const stats = {};
 for (const u of users) stats[u.id] = makeStats(u.id);
 
+/** Attribue un badge simulé au joueur à la date donnée, sans écraser un badge déjà obtenu. */
 function awardBadge(user, code, at) {
   if (!user.badges.has(code)) user.badges.set(code, at);
 }
 
+/** Attribue les badges de jalons simulés (première victoire, 10 victoires, 50 matchs, série de 3). */
 function checkMilestones(user, at) {
   if (user.wins >= 1) awardBadge(user, 'FIRST_WIN', at);
   if (user.wins >= 10) awardBadge(user, 'TEN_WINS', at);
@@ -172,6 +181,7 @@ function checkMilestones(user, at) {
 
 const matches: any[] = []; // lignes prêtes à insérer dans "Match"
 let matchSeq = 0;
+/** Génère l'identifiant suivant des matchs de démo (seed_match_1, seed_match_2, …). */
 function nextMatchId() {
   matchSeq += 1;
   return `seed_match_${matchSeq}`;
@@ -349,6 +359,7 @@ const t1EntryByPlayer = Object.fromEntries(
   tournament1.entries.map((e) => [e.player1Id, e]),
 );
 
+/** Simule une rencontre de tournoi 1v1 en une manche : joue le match, ajoute le bonus de points du tour (10 × tour) au vainqueur et retourne la ligne « TournamentTie » à insérer. */
 function tournamentTie1v1({
   tournamentId,
   round,
@@ -915,48 +926,73 @@ const blocks = [
   { id: 'seed_block_1', blockerId: 'seed_charlie', blockedId: 'seed_ivan' },
 ];
 
-// --- Tables + queue : deux tables occupées, deux libres, et une file
-// d'attente avec un joueur WAITING et un joueur déjà CALLED (à confirmer).
+// --- Tables + file : Baby A a un match 1v1 en cours (bob vs charlie) avec deux
+// groupes en file (diana puis ewan) ; Baby B est vide mais fatima y a été
+// appelée (à confirmer).
 const tableStates = [
   {
     id: 'table_a',
     status: 'BUSY',
-    occupiedById: 'seed_bob',
+    format: 'ONE_V_ONE',
     occupiedAt: minutesAgo(12),
   },
-  { id: 'table_b', status: 'FREE', occupiedById: null, occupiedAt: null },
+  { id: 'table_b', status: 'FREE', format: 'ONE_V_ONE', occupiedAt: null },
 ];
 
-const queueEntries = [
+const queueGroups = [
   {
-    id: 'seed_queue_1',
+    id: 'seed_qg_1',
     tableId: 'table_a',
-    requesterId: 'seed_diana',
+    userId: 'seed_bob',
+    status: 'ON_TABLE',
+    slot: 0,
+    joinedAt: minutesAgo(14),
+    calledAt: null,
+    expiresAt: null,
+  },
+  {
+    id: 'seed_qg_2',
+    tableId: 'table_a',
+    userId: 'seed_charlie',
+    status: 'ON_TABLE',
+    slot: 1,
+    joinedAt: minutesAgo(13),
+    calledAt: null,
+    expiresAt: null,
+  },
+  {
+    id: 'seed_qg_3',
+    tableId: 'table_a',
+    userId: 'seed_diana',
     status: 'WAITING',
+    slot: null,
     joinedAt: minutesAgo(5),
     calledAt: null,
     expiresAt: null,
   },
   {
-    id: 'seed_queue_2',
+    id: 'seed_qg_4',
     tableId: 'table_a',
-    requesterId: 'seed_ewan',
+    userId: 'seed_ewan',
     status: 'WAITING',
+    slot: null,
     joinedAt: minutesAgo(2),
     calledAt: null,
     expiresAt: null,
   },
   {
-    id: 'seed_queue_3',
+    id: 'seed_qg_5',
     tableId: 'table_b',
-    requesterId: 'seed_fatima',
+    userId: 'seed_fatima',
     status: 'CALLED',
+    slot: null,
     joinedAt: minutesAgo(8),
     calledAt: minutesAgo(2),
     expiresAt: minutesFromNow(3),
   },
 ];
 
+/** Reconstruit en une transaction tout le jeu de données de démo (utilisateurs, amis, tables, matchs, tournois, file d'attente, chat, badges), en repartant d'une base propre pour les comptes de démo. */
 async function main() {
   const prisma = new PrismaClient({
     adapter: new PrismaPg({ connectionString: databaseUrl }),
@@ -972,7 +1008,7 @@ async function main() {
       async (tx) => {
         // Repart d'une base propre pour tous les comptes de démo : les
         // cascades du schéma (Match, Friendship, Conversation/Message,
-        // UserBadge, Tournament -> Entry/Tie -> Match, QueueEntry...)
+        // UserBadge, Tournament -> Entry/Tie -> Match, QueueGroupMember...)
         // suppriment tout ce qui en dépend.
         await tx.user.deleteMany({ where: { id: { in: seedUserIds } } });
 
@@ -983,16 +1019,16 @@ async function main() {
         });
 
         // Deux tables de baby-foot, créées si absentes puis remises à FREE
-        // (le statut BUSY resterait figé sinon : occupiedById passe à NULL
-        // par ON DELETE SET NULL mais pas le statut).
+        // (le statut BUSY resterait figé sinon).
         for (const table of tables) {
           await tx.table.upsert({
             where: { id: table.id },
             create: { id: table.id, name: table.name },
             update: {
               status: TableStatus.FREE,
-              occupiedById: null,
+              format: null,
               occupiedAt: null,
+              endRequestedAt: null,
               currentTournamentTieId: null,
             },
           });
@@ -1138,23 +1174,53 @@ async function main() {
             where: { id: t.id },
             data: {
               status: t.status as TableStatus,
-              occupiedById: t.occupiedById,
+              format: t.format as MatchFormat,
               occupiedAt: t.occupiedAt,
             },
           });
         }
 
-        await tx.queueEntry.createMany({
-          data: queueEntries.map((q) => ({
-            id: q.id,
-            tableId: q.tableId,
-            requesterId: q.requesterId,
-            status: q.status as QueueEntryStatus,
-            joinedAt: q.joinedAt,
-            calledAt: q.calledAt,
-            expiresAt: q.expiresAt,
-            createdAt: q.joinedAt,
-          })),
+        // Nettoie d'anciens groupes de démo restés sur les tables (les
+        // membres partent en cascade avec les utilisateurs supprimés plus haut).
+        await tx.queueGroup.deleteMany({
+          where: { id: { startsWith: 'seed_qg_' } },
+        });
+
+        for (const q of queueGroups) {
+          await tx.queueGroup.create({
+            data: {
+              id: q.id,
+              tableId: q.tableId,
+              format: MatchFormat.ONE_V_ONE,
+              status: q.status as QueueGroupStatus,
+              slot: q.slot,
+              joinedAt: q.joinedAt,
+              calledAt: q.calledAt,
+              expiresAt: q.expiresAt,
+              createdAt: q.joinedAt,
+              members: {
+                create: {
+                  userId: q.userId,
+                  isRequester: true,
+                  accepted: true,
+                },
+              },
+            },
+          });
+        }
+
+        // Le match de table en cours entre les deux groupes sur Baby A.
+        await tx.match.create({
+          data: {
+            id: 'seed_table_match_1',
+            format: MatchFormat.ONE_V_ONE,
+            status: MatchStatus.ACCEPTED,
+            teamAPlayer1Id: 'seed_bob',
+            teamBPlayer1Id: 'seed_charlie',
+            tableId: 'table_a',
+            createdAt: minutesAgo(12),
+            respondedAt: minutesAgo(12),
+          },
         });
       },
       { timeout: 60_000 },
@@ -1176,6 +1242,7 @@ async function main() {
   );
 }
 
+/** Hash entier déterministe d'une chaîne, pour produire des valeurs pseudo-aléatoires reproductibles. */
 function hashCode(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -1184,7 +1251,6 @@ function hashCode(str) {
   }
   return hash;
 }
-
 
 main().catch((error) => {
   console.error('Seed failed:', error);

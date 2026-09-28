@@ -7,6 +7,7 @@ declare module 'passport-42' {
   }
 
   export class Strategy {
+    /** Crée la stratégie OAuth 42 avec ses options et un callback de vérification optionnel. */
     constructor(
       options: StrategyOptions,
       verify?: (

@@ -26,11 +26,13 @@ export class BadgesGateway implements OnGatewayConnection {
   @WebSocketServer()
   private server!: Server;
 
+  /** Injecte les dépendances : UsersService, JwtService. */
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
 
+  /** Authentifie la connexion WebSocket via le JWT et fait rejoindre au client sa room personnelle (son userId) ; déconnecte si le token est absent ou invalide. */
   async handleConnection(client: BadgesSocket): Promise<void> {
     const accessToken = (client.handshake.auth as { access_token?: unknown })
       .access_token;
@@ -55,6 +57,7 @@ export class BadgesGateway implements OnGatewayConnection {
     }
   }
 
+  /** Envoie un événement (ex. badges:earned) au seul utilisateur ciblé. */
   emitToUser(userId: string, event: string, payload: unknown): void {
     this.server.to(userId).emit(event, payload);
   }

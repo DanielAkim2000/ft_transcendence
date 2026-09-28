@@ -15,7 +15,7 @@ import {
   useBlockUserMutation,
   useCreateConversationMutation,
   useGetMessagesQuery,
-  useListBlockedQuery,
+  useIsBlockedQuery,
   useListConversationsQuery,
   useMarkConversationReadMutation,
   useSendMessageMutation,
@@ -29,6 +29,7 @@ import { onTypingEvent } from "@/features/chat/typingIndicator";
 import { getErrorMessage } from "@/lib/get-error-message";
 import { getInitials, resolveAvatarUrl } from "@/lib/user";
 import { cn } from "@/lib/utils";
+import { RowSkeleton } from "@/components/skeletons";
 
 const TYPING_STOP_DELAY_MS = 1500;
 const TYPING_EXPIRE_MS = 3000;
@@ -142,7 +143,7 @@ function Thread({
   const { t } = useTranslation();
   const peerId = otherUserId(conversation, meId);
   const { data: peer } = useGetUserQuery(peerId);
-  const { data: blocked = [] } = useListBlockedQuery();
+  const { data: blockStatus } = useIsBlockedQuery(peerId);
   const [cursor, setCursor] = useState<string | undefined>();
   const [exhausted, setExhausted] = useState(false);
   const lengthBeforeLoadMore = useRef(0);
@@ -160,7 +161,7 @@ function Thread({
   const stopTypingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
-  const isBlockedByMe = blocked.some((u) => u.id === peerId);
+  const isBlockedByMe = blockStatus?.blocked ?? false;
   const newestId = messages[0]?.id;
   const ordered = useMemo(() => [...messages].reverse(), [messages]);
 
@@ -450,9 +451,14 @@ export const Chat = () => {
         </h1>
         <ul className="min-h-0 flex-1 overflow-y-auto">
           {isLoading ? (
-            <li className="px-4 py-3 text-sm text-muted-foreground">
-              {t("common.loading")}
-            </li>
+            <>
+              <li className="sr-only" role="status">
+                {t("common.loading")}
+              </li>
+              {Array.from({ length: 6 }, (_, index) => (
+                <RowSkeleton key={index} index={index} variant="flush" />
+              ))}
+            </>
           ) : conversations.length === 0 ? (
             <li className="px-4 py-3 text-sm text-muted-foreground">
               {t("chat.noConversations")}

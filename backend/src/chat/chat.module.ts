@@ -8,6 +8,7 @@ import { MessageRepository } from './repositories/message.repository';
 import { ChatController } from './chat.controller';
 import { ChatGateway } from './chat.gateway';
 
+/** Messagerie privée entre amis : conversations, messages, blocage et événements temps réel. */
 @Module({
   imports: [PrismaModule, forwardRef(() => UsersModule)],
   controllers: [ChatController],

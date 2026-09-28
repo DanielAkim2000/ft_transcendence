@@ -17,27 +17,39 @@ import { UpdateProfileDto } from '../dtos/update-profile.dto';
 import { UpdateSettingsDto } from '../dtos/update-settings.dto';
 import * as bcrypt from 'bcrypt';
 import { Prisma } from '../../generated/prisma/client';
+import { PageQueryDto } from '../../common/pagination/page-query.dto';
+import { Paginated, toPaginated } from '../../common/pagination/paginated';
+
+/** Utilisateur renvoyé par la recherche, avec sa relation d'amitié avec l'utilisateur connecté. */
+export type UserWithFriendship = UserEntity & {
+  friendshipStatus: 'none' | 'pending_out' | 'pending_in' | 'friends';
+};
 
 @Injectable()
 export class UsersService {
+  /** Injecte les dépendances : UserRepository, PresenceGateway. */
   constructor(
     private readonly userRepository: UserRepository,
     @Inject(forwardRef(() => PresenceGateway))
     private readonly presenceGateway: PresenceGateway,
   ) {}
 
+  /** Retrouve un utilisateur par id, ou null. */
   findUserById(id: string): Promise<UserEntity | null> {
     return this.userRepository.findUserById(id);
   }
 
+  /** Retrouve un utilisateur par email, ou null. */
   findUserByEmail(email: string): Promise<UserEntity | null> {
     return this.userRepository.findUserByEmail(email);
   }
 
+  /** Retrouve un utilisateur par login 42, ou null. */
   findUserByLogin(login: string): Promise<UserEntity | null> {
     return this.userRepository.findUserByLogin(login);
   }
 
+  /** Retourne un utilisateur par id ou lève une NotFoundException. */
   async getProfile(id: string): Promise<UserEntity> {
     const user = await this.userRepository.findUserById(id);
     if (!user) {
@@ -63,18 +75,29 @@ export class UsersService {
     return { user, friendshipStatus };
   }
 
+  /** Recherche paginée d'utilisateurs (hors l'utilisateur courant) : chaque résultat porte sa relation d'amitié avec l'utilisateur, et la présence des non-amis est masquée. */
   async searchUsers(
     excludeUserId: string,
-    query?: string,
-  ): Promise<UserEntity[]> {
-    const [users, friends] = await Promise.all([
-      this.userRepository.searchUsers(excludeUserId, query),
-      this.userRepository.listAcceptedFriends(excludeUserId),
-    ]);
-    const friendIds = new Set(friends.map((friend) => friend.id));
-    return users.map((user) =>
-      friendIds.has(user.id) ? user : this.hidePresence(user),
+    query: string | undefined,
+    page: PageQueryDto,
+  ): Promise<Paginated<UserWithFriendship>> {
+    const { users, total } = await this.userRepository.searchUsers(
+      excludeUserId,
+      query,
+      page,
     );
+    const statuses = await this.userRepository.findFriendshipStatuses(
+      excludeUserId,
+      users.map((user) => user.id),
+    );
+    const items = users.map((user): UserWithFriendship => {
+      const friendshipStatus: UserWithFriendship['friendshipStatus'] =
+        statuses.get(user.id) ?? 'none';
+      const visible =
+        friendshipStatus === 'friends' ? user : this.hidePresence(user);
+      return Object.assign(visible, { friendshipStatus });
+    });
+    return toPaginated(items, total, page);
   }
 
   /** Masque isOnline / status pour les non-amis. */
@@ -84,10 +107,12 @@ export class UsersService {
     return user;
   }
 
+  /** Crée un utilisateur à partir du profil renvoyé par l'OAuth 42. */
   createUserFrom42Profile(profile: Profile42Dto): Promise<UserEntity> {
     return this.userRepository.createUserFrom42Profile(profile);
   }
 
+  /** Crée un utilisateur avec mot de passe haché (bcrypt) ; lève une ConflictException si l'email est déjà pris. */
   async createUserFromRegisterInfo(
     registerDto: RegisterDto,
   ): Promise<UserEntity> {
@@ -110,10 +135,12 @@ export class UsersService {
     }
   }
 
+  /** Enregistre en base l'état complet de l'entité utilisateur. */
   updateUser(user: UserEntity): Promise<UserEntity> {
     return this.userRepository.updateUser(user);
   }
 
+  /** Met à jour le nom d'affichage (espaces retirés) de l'utilisateur. */
   async updateProfile(
     user: UserEntity,
     dto: UpdateProfileDto,
@@ -122,6 +149,7 @@ export class UsersService {
     return this.userRepository.updateUser(user);
   }
 
+  /** Met à jour le thème et la langue de l'utilisateur. */
   async updateSettings(
     user: UserEntity,
     dto: UpdateSettingsDto,
@@ -131,6 +159,7 @@ export class UsersService {
     return this.userRepository.updateUser(user);
   }
 
+  /** Enregistre le nouvel avatar et supprime l'ancien fichier s'il était stocké localement. */
   async updateAvatar(user: UserEntity, filename: string): Promise<UserEntity> {
     const previous = user.avatarUrl;
     user.avatarUrl = `/uploads/avatars/${filename}`;
@@ -142,6 +171,7 @@ export class UsersService {
     return updated;
   }
 
+  /** Envoie une demande d'ami et notifie le destinataire ; si l'autre avait déjà envoyé une demande, l'amitié est acceptée. Refuse si on se cible soi-même, déjà amis ou demande déjà envoyée. */
   async sendFriendRequest(
     requester: UserEntity,
     addresseeId: string,
@@ -174,6 +204,7 @@ export class UsersService {
     return addressee;
   }
 
+  /** Accepte la demande d'ami reçue d'un utilisateur et le notifie ; 404 si aucune demande en attente ne lui est adressée. */
   async acceptFriendRequest(
     currentUser: UserEntity,
     requesterId: string,
@@ -196,6 +227,7 @@ export class UsersService {
     return this.getProfile(requesterId);
   }
 
+  /** Supprime l'amitié ou la demande entre deux utilisateurs et notifie l'autre ; 404 si aucune relation n'existe. */
   async removeFriendship(
     currentUser: UserEntity,
     otherUserId: string,
@@ -213,6 +245,7 @@ export class UsersService {
     });
   }
 
+  /** Supprime silencieusement la relation d'amitié entre deux utilisateurs si elle existe (utilisé au blocage). */
   async removeFriendshipIfExists(
     userId: string,
     otherUserId: string,
@@ -226,18 +259,50 @@ export class UsersService {
     }
   }
 
-  listFriends(userId: string): Promise<UserEntity[]> {
-    return this.userRepository.listAcceptedFriends(userId);
+  /** Liste une page des amis confirmés de l'utilisateur (en ligne d'abord), avec filtres optionnels texte / en ligne. */
+  async listFriends(
+    userId: string,
+    page: PageQueryDto,
+    filters: { query?: string; onlineOnly?: boolean } = {},
+  ): Promise<Paginated<UserEntity>> {
+    const { users, total } = await this.userRepository.listAcceptedFriends(
+      userId,
+      page,
+      filters,
+    );
+    return toPaginated(users, total, page);
   }
 
-  listPendingRequests(userId: string): Promise<UserEntity[]> {
-    return this.userRepository.listIncomingRequests(userId);
+  /** Ids de tous les amis confirmés (sans pagination : usage interne, ex. présence en temps réel). */
+  listFriendIds(userId: string): Promise<string[]> {
+    return this.userRepository.listAcceptedFriendIds(userId);
   }
 
-  listOutgoingRequests(userId: string): Promise<UserEntity[]> {
-    return this.userRepository.listOutgoingRequests(userId);
+  /** Liste une page des demandes d'ami reçues par l'utilisateur et non encore acceptées. */
+  async listPendingRequests(
+    userId: string,
+    page: PageQueryDto,
+  ): Promise<Paginated<UserEntity>> {
+    const { users, total } = await this.userRepository.listIncomingRequests(
+      userId,
+      page,
+    );
+    return toPaginated(users, total, page);
   }
 
+  /** Liste une page des demandes d'ami envoyées par l'utilisateur et non encore acceptées. */
+  async listOutgoingRequests(
+    userId: string,
+    page: PageQueryDto,
+  ): Promise<Paginated<UserEntity>> {
+    const { users, total } = await this.userRepository.listOutgoingRequests(
+      userId,
+      page,
+    );
+    return toPaginated(users, total, page);
+  }
+
+  /** Retourne la relation entre deux utilisateurs : 'self', 'none', 'pending_out', 'pending_in' ou 'friends'. */
   async getFriendshipStatus(
     currentUserId: string,
     otherUserId: string,
@@ -260,6 +325,7 @@ export class UsersService {
       : 'pending_in';
   }
 
+  /** Enregistre le hash d'un refresh token pour l'utilisateur, avec sa date d'expiration. */
   addRefreshToken(
     userId: string,
     tokenHash: string,
@@ -268,6 +334,7 @@ export class UsersService {
     return this.userRepository.addRefreshToken(userId, tokenHash, expiresAt);
   }
 
+  /** Révoque (supprime) un refresh token ; retourne true s'il existait. */
   async revokeRefreshToken(
     userId: string,
     tokenHash: string,
@@ -275,6 +342,7 @@ export class UsersService {
     return this.userRepository.deleteRefreshToken(userId, tokenHash);
   }
 
+  /** Retrouve un refresh token de l'utilisateur à partir de son hash, ou null. */
   findRefreshToken(
     userId: string,
     tokenHash: string,
@@ -282,6 +350,7 @@ export class UsersService {
     return this.userRepository.findRefreshToken(userId, tokenHash);
   }
 
+  /** Met à jour l'état de connexion et le statut (en ligne, hors ligne, en jeu) de l'utilisateur. */
   updatePresence(
     userId: string,
     isOnline: boolean,
@@ -290,6 +359,7 @@ export class UsersService {
     return this.userRepository.updatePresence(userId, isOnline, status);
   }
 
+  /** Retourne le classement des joueurs par note Elo. */
   getRanking() {
     return this.userRepository.listRanking();
   }

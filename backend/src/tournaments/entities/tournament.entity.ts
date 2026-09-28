@@ -28,6 +28,7 @@ export class TournamentEntryEntity {
   player2!: TournamentPlayer | null;
   eliminatedRound!: number | null;
 
+  /** Copie dans l'instance les champs fournis. */
   constructor(entry: Partial<TournamentEntryEntity>) {
     Object.assign(this, entry);
   }
@@ -51,6 +52,7 @@ export class TournamentTieEntity {
   aggregateScoreA!: number | null;
   aggregateScoreB!: number | null;
 
+  /** Copie dans l'instance les champs fournis. */
   constructor(tie: Partial<TournamentTieEntity>) {
     Object.assign(this, tie);
   }
@@ -71,6 +73,7 @@ export class TournamentEntity {
   completedAt!: Date | null;
   championEntryId!: string | null;
 
+  /** Copie dans l'instance les champs fournis. */
   constructor(tournament: Partial<TournamentEntity>) {
     Object.assign(this, tournament);
   }

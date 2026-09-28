@@ -19,12 +19,14 @@ import { hashRefreshToken } from './utils/utils';
 
 @Injectable()
 export class AuthService {
+  /** Injecte les dépendances : UsersService, JwtService, ConfigService. */
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
 
+  /** Crée l'utilisateur puis génère ses tokens de session. */
   async register(registerDto: RegisterDto): Promise<{
     user: UserEntity;
     tokens: { accessToken: string; refreshToken: string };
@@ -35,6 +37,7 @@ export class AuthService {
     return { user, tokens };
   }
 
+  /** Signe un JWT de courte durée prouvant que le mot de passe est validé, en attente du code 2FA. */
   async createPreAuthToken(user: UserEntity): Promise<string> {
     const secret = this.configService.get<string>('JWT_PRE_AUTH_TOKEN_SECRET');
     const expiresIn = this.configService.get<msStringValue>(
@@ -52,6 +55,7 @@ export class AuthService {
     );
   }
 
+  /** Signe l'access token et le refresh token de l'utilisateur et stocke le hash du refresh token en base. */
   async createTokens(
     user: UserEntity,
   ): Promise<{ accessToken: string; refreshToken: string }> {
@@ -102,6 +106,7 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
+  /** Retourne l'utilisateur lié au login 42 du profil, en le créant à la première connexion. */
   async validateUserFrom42Profile(
     _accessToken: string,
     _refreshToken: string,
@@ -116,6 +121,7 @@ export class AuthService {
     return this.usersService.createUserFrom42Profile(profile);
   }
 
+  /** Retrouve l'utilisateur d'un payload JWT ou lève une UnauthorizedException. */
   async validateUserFromToken(userId: string): Promise<UserEntity> {
     const user = await this.usersService.findUserById(userId);
     if (!user) {
@@ -124,6 +130,7 @@ export class AuthService {
     return user;
   }
 
+  /** Vérifie email et mot de passe (bcrypt) et retourne l'utilisateur, sinon lève une UnauthorizedException. */
   async validateUserFromLogin(loginDto: LoginDto): Promise<UserEntity> {
     const user = await this.usersService.findUserByEmail(loginDto.email);
     if (!user?.passwordHash) {
@@ -141,10 +148,12 @@ export class AuthService {
     return user;
   }
 
+  /** Vérifie le code TOTP de l'utilisateur avec son secret 2FA actif. */
   async verify2fa(user: UserEntity, code: string): Promise<void> {
     await this.assertValidTotp(user.twoFactorSecret, code);
   }
 
+  /** Lève une UnauthorizedException si le secret est absent ou si le code TOTP est invalide (tolérance d'un pas de temps). */
   private async assertValidTotp(
     secret: string | null,
     code: string,
@@ -166,6 +175,7 @@ export class AuthService {
     }
   }
 
+  /** Génère un secret TOTP et l'URL otpauth, le stocke comme secret en attente ; refuse si la 2FA est déjà active. */
   async generate2faSecret(
     user: UserEntity,
   ): Promise<{ secret: string; otpauthUrl: string }> {
@@ -188,6 +198,7 @@ export class AuthService {
     return { secret, otpauthUrl };
   }
 
+  /** Désactive la 2FA (code requis) ou l'active en confirmant le secret en attente avec un code valide ; retourne le nouvel état. */
   async toggle2fa(user: UserEntity, code: string): Promise<boolean> {
     if (user.twoFactorEnabled) {
       await this.assertValidTotp(user.twoFactorSecret, code);
@@ -212,6 +223,7 @@ export class AuthService {
     return true;
   }
 
+  /** Supprime le refresh token en base ; lève une UnauthorizedException s'il n'existe pas. */
   async revokeRefreshToken(
     userId: string,
     refreshToken: string,
@@ -225,6 +237,7 @@ export class AuthService {
     }
   }
 
+  /** Vérifie que le refresh token existe en base et n'est pas expiré (il est supprimé s'il l'est). */
   async assertRefreshTokenIsValid(
     userId: string,
     refreshToken: string,
@@ -242,6 +255,7 @@ export class AuthService {
     }
   }
 
+  /** Contrôle et révoque l'ancien refresh token puis en génère une nouvelle paire. */
   async rotateRefreshToken(
     user: UserEntity,
     oldRefreshToken: string,

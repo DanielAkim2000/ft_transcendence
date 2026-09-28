@@ -7,7 +7,7 @@ import { DefaultEventsMap, Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/services/users.services';
-import { QueueEntryEntity } from './entities/queue-entry.entity';
+import { QueueGroupEntity } from './entities/queue-group.entity';
 
 type QueueSocket = Socket<
   DefaultEventsMap,
@@ -27,11 +27,13 @@ export class QueueGateway implements OnGatewayConnection {
   @WebSocketServer()
   private server!: Server;
 
+  /** Injecte les dépendances : UsersService, JwtService. */
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
 
+  /** Authentifie la connexion WebSocket via le JWT et fait rejoindre au client sa room personnelle (son userId) ; déconnecte si le token est invalide. */
   async handleConnection(client: QueueSocket): Promise<void> {
     const accessToken = (client.handshake.auth as { access_token?: unknown })
       .access_token;
@@ -57,12 +59,18 @@ export class QueueGateway implements OnGatewayConnection {
   }
 
   /** Liste à jour pour tout le monde (page Tables/Queue). */
-  emitQueueUpdate(tableId: string, entries: QueueEntryEntity[]) {
-    this.server.emit('queue:update', { tableId, entries });
+  emitQueueUpdate(tableId: string, groups: QueueGroupEntity[]) {
+    this.server.emit('queue:update', { tableId, groups });
   }
 
   /** Notification personnelle (c'est ton tour / tu as perdu ta place). */
   emitToUser(userId: string, event: string, payload: unknown) {
     this.server.to(userId).emit(event, payload);
+  }
+
+  /** Notification personnelle envoyée à plusieurs utilisateurs à la fois. */
+  emitToUsers(userIds: string[], event: string, payload: unknown) {
+    if (userIds.length === 0) return;
+    this.server.to(userIds).emit(event, payload);
   }
 }

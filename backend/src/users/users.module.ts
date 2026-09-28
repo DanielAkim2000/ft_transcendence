@@ -6,6 +6,7 @@ import { UserRepository } from './repositories/users.repository';
 import { UsersService } from './services/users.services';
 import { UsersController } from './users.controller';
 
+/** Utilisateurs : profils, paramètres, avatar, amis et classement. Exporte UsersService. */
 @Module({
   imports: [
     PrismaModule,

@@ -99,13 +99,16 @@ function RecentConversation({
 export const Home = () => {
   const { t, i18n } = useTranslation();
   const { data: me } = useMeQuery();
-  const { data: friends = [] } = useListFriendsQuery();
-  const { data: pending = [] } = useListPendingFriendsQuery();
+  // Seuls 5 amis en ligne sont affichés ; le total sert aux compteurs.
+  const { data: onlineData } = useListFriendsQuery({ online: true, limit: 5 });
+  const { data: pendingData } = useListPendingFriendsQuery({ limit: 1 });
   const { data: conversations = [] } = useListConversationsQuery();
   const { data: tables = [] } = useListTablesQuery();
   const now = useNow(tables.some((table) => table.status === "BUSY"));
 
-  const onlineFriends = friends.filter((friend) => friend.isOnline);
+  const onlineFriends = onlineData?.items ?? [];
+  const onlineCount = onlineData?.total ?? 0;
+  const pendingCount = pendingData?.total ?? 0;
   const recent = conversations.filter((c) => c.lastMessage).slice(0, 5);
   const unreadTotal = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
   const today = new Date().toLocaleDateString(i18n.language, {
@@ -121,15 +124,15 @@ export const Home = () => {
           {t("home.greeting", { name: me?.displayname ?? "…" })}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {today} · {t("home.onlineCount", { count: onlineFriends.length })}
+          {today} · {t("home.onlineCount", { count: onlineCount })}
         </p>
       </header>
 
-      {pending.length > 0 ? (
+      {pendingCount > 0 ? (
         <div className="flex items-center justify-between gap-3 border border-primary/60 bg-primary/10 px-4 py-3">
           <p className="text-sm">
             <span className="mr-2 text-primary">▲</span>
-            {t("home.pendingRequests", { count: pending.length })}
+            {t("home.pendingRequests", { count: pendingCount })}
           </p>
           <Button size="sm" render={<Link to={ROUTES.FRIENDS} />}>
             {t("home.review")}
@@ -161,12 +164,12 @@ export const Home = () => {
       </Panel>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Panel title={t("friends.onlineTitle")} count={onlineFriends.length} to={ROUTES.FRIENDS} className="min-h-48">
+        <Panel title={t("friends.onlineTitle")} count={onlineCount} to={ROUTES.FRIENDS} className="min-h-48">
           {onlineFriends.length === 0 ? (
             <Empty>{t("home.noOnline")}</Empty>
           ) : (
             <ul>
-              {onlineFriends.slice(0, 5).map((friend) => (
+              {onlineFriends.map((friend) => (
                 <li key={friend.id}>
                   <Link
                     to={ROUTES.chatWith(friend.id)}

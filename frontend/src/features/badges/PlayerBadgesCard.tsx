@@ -4,12 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGetBadgesQuery } from "./badgesApi";
 import { BADGE_CATALOG } from "./badgeCatalog";
 import { cn } from "@/lib/utils";
+import { CardSkeleton } from "@/components/skeletons";
 
 export function PlayerBadgesCard({ userId }: { userId: string }) {
   const { t } = useTranslation();
   const { data: profile, isLoading } = useGetBadgesQuery(userId);
 
-  if (isLoading || !profile) {
+  if (isLoading) {
+    return <CardSkeleton lines={4} />;
+  }
+
+  if (!profile) {
     return null;
   }
 

@@ -11,6 +11,7 @@ import { PreAuthTokenStrategy } from './strategies/pre-auth-token.strategy';
 import { PreAuthTokenGuard } from './guards/pre-auth-token.guard';
 import { RolesGuard } from './guards/roles.guard';
 
+/** Authentification : inscription/connexion, JWT (access, refresh, pré-auth 2FA), OAuth 42, 2FA et gardes de rôles. Exporte AuthService et les guards. */
 @Module({
   imports: [forwardRef(() => UsersModule)],
   providers: [

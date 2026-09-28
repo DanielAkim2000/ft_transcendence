@@ -4,6 +4,7 @@ import { AccessTokenGuard } from '../guards/access-token.guard';
 import { RolesGuard } from '../guards/roles.guard';
 import { Roles } from './roles.decorator';
 
+/** Décorateur combiné : exige un access token valide et l'un des rôles donnés. */
 export function AuthRoles(...roles: Role[]) {
   return applyDecorators(
     UseGuards(AccessTokenGuard, RolesGuard),

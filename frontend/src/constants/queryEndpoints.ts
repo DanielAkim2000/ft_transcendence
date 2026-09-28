@@ -34,7 +34,7 @@ export const CHAT_ENDPOINTS = {
   GET_MESSAGES: "getMessages",
   SEND_MESSAGE: "sendMessage",
   MARK_READ: "markConversationRead",
-  LIST_BLOCKED: "listBlocked",
+  IS_BLOCKED: "isBlocked",
   BLOCK_USER: "blockUser",
   UNBLOCK_USER: "unblockUser",
 } as const;
@@ -42,22 +42,24 @@ export const CHAT_ENDPOINTS = {
 /** Noms des endpoints RTK Query — tablesApi */
 export const TABLES_ENDPOINTS = {
   LIST_TABLES: "listTables",
-  OCCUPY_TABLE: "occupyTable",
-  RELEASE_TABLE: "releaseTable",
+  VOTE_RELEASE_TABLE: "voteReleaseTable",
 } as const;
 
 /** Noms des endpoints RTK Query — queueApi */
 export const QUEUE_ENDPOINTS = {
   LIST_QUEUE: "listQueue",
-  GET_MY_QUEUE_ENTRY: "getMyQueueEntry",
+  GET_MY_QUEUE_GROUP: "getMyQueueGroup",
   JOIN_QUEUE: "joinQueue",
-  LEAVE_QUEUE: "leaveQueue",
+  RESPOND_INVITE: "respondQueueInvite",
+  CONFIRM_GROUP: "confirmQueueGroup",
+  LEAVE_GROUP: "leaveQueueGroup",
 } as const;
 
 /** Noms des endpoints RTK Query — matchesApi */
 export const MATCHES_ENDPOINTS = {
   LIST_MATCHES: "listMatches",
   LIST_MATCH_HISTORY: "listMatchHistory",
+  COUNT_MATCH_ACTIONS: "countMatchActions",
   PROPOSE_MATCH: "proposeMatch",
   RESPOND_MATCH: "respondMatch",
   SUBMIT_SCORE: "submitScore",
@@ -67,6 +69,7 @@ export const MATCHES_ENDPOINTS = {
 /** Noms des endpoints RTK Query — tournamentsApi */
 export const TOURNAMENTS_ENDPOINTS = {
   LIST_TOURNAMENTS: "listTournaments",
+  COUNT_TOURNAMENT_ACTIONS: "countTournamentActions",
   GET_TOURNAMENT: "getTournament",
   CREATE_TOURNAMENT: "createTournament",
   ADD_ENTRY: "addTournamentEntry",

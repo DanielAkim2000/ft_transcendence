@@ -31,13 +31,13 @@ import {
 } from "@/features/users/usersApi";
 import { getErrorMessage } from "@/lib/get-error-message";
 import { getInitials, resolveAvatarUrl } from "@/lib/user";
+import { PageFallback } from "@/components/page-fallback";
 
 export const ProfileMe = () => {
-  const { t } = useTranslation();
   const { data: user, isLoading } = useMeQuery();
 
   if (isLoading || !user) {
-    return <p className="text-muted-foreground">{t("common.loading")}</p>;
+    return <PageFallback />;
   }
 
   return <ProfileMeForm user={user} />;

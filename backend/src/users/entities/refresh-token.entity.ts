@@ -19,6 +19,7 @@ export class RefreshToken {
   })
   createdAt!: Date;
 
+  /** Copie dans l'instance les champs fournis. */
   constructor(refreshToken: Partial<RefreshToken>) {
     Object.assign(this, refreshToken);
   }

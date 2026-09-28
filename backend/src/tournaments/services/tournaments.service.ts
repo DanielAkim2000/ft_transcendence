@@ -24,10 +24,14 @@ import {
   type TieLeg,
 } from '../lib/bracket';
 
+import { PageQueryDto } from '../../common/pagination/page-query.dto';
+import { Paginated, toPaginated } from '../../common/pagination/paginated';
+
 const MIN_ENTRIES = 4;
 
 @Injectable()
 export class TournamentsService {
+  /** Injecte les dépendances : TournamentsRepository, TournamentsGateway, UsersService, TablesService, QueueService, BadgesService. */
   constructor(
     private readonly tournamentsRepository: TournamentsRepository,
     private readonly tournamentsGateway: TournamentsGateway,
@@ -37,10 +41,21 @@ export class TournamentsService {
     private readonly badgesService: BadgesService,
   ) {}
 
-  listAll(): Promise<TournamentEntity[]> {
-    return this.tournamentsRepository.listAll();
+  /** Liste une page de tournois. */
+  async listPage(page: PageQueryDto): Promise<Paginated<TournamentEntity>> {
+    const { tournaments, total } =
+      await this.tournamentsRepository.listPage(page);
+    return toPaginated(tournaments, total, page);
   }
 
+  /** Nombre de manches de tournoi que l'utilisateur doit jouer ou valider (pastille de la barre latérale). */
+  async countPendingActions(userId: string): Promise<{ count: number }> {
+    return {
+      count: await this.tournamentsRepository.countActiveLegsForUser(userId),
+    };
+  }
+
+  /** Retrouve un tournoi par id ou lève une NotFoundException. */
   async getById(id: string): Promise<TournamentEntity> {
     const tournament = await this.tournamentsRepository.findById(id);
     if (!tournament) {
@@ -49,6 +64,7 @@ export class TournamentsService {
     return tournament;
   }
 
+  /** Crée un tournoi en brouillon après validation des entrées, puis le diffuse à tous les clients. */
   async create(
     createdById: string,
     name: string,
@@ -68,6 +84,7 @@ export class TournamentsService {
     return tournament;
   }
 
+  /** Ajoute une entrée à un tournoi encore en brouillon, après validation de l'ensemble des entrées, puis diffuse la mise à jour. */
   async addEntry(
     tournamentId: string,
     player1Id: string,
@@ -94,6 +111,7 @@ export class TournamentsService {
     return updated;
   }
 
+  /** Retire une entrée d'un tournoi encore en brouillon puis diffuse la mise à jour. */
   async removeEntry(
     tournamentId: string,
     entryId: string,
@@ -112,6 +130,7 @@ export class TournamentsService {
     return updated;
   }
 
+  /** Lance le tournoi : exige un nombre d'entrées puissance de 2 (au moins 4), tire au sort le tableau, réquisitionne les tables (libère les occupants, vide les files), notifie les participants et démarre les premières rencontres. */
   async launch(tournamentId: string): Promise<TournamentEntity> {
     const tournament = await this.getById(tournamentId);
     if (tournament.status !== TournamentStatus.DRAFT) {
@@ -146,16 +165,15 @@ export class TournamentsService {
       futureRounds,
     );
 
-    // Les 2 tables passent sous contrôle du tournoi : on libère de force
-    // l'occupant en cours (s'il y en a un) et on vide leurs files d'attente.
+    // Les tables passent sous contrôle du tournoi : on vide leur file, on
+    // annule les groupes et le match en cours, et on prévient les joueurs
+    // qui étaient sur la table.
     const tables = await this.tablesService.list();
     for (const table of tables) {
-      const previousOccupantId = await this.tablesService.forceRelease(
-        table.id,
-      );
-      if (previousOccupantId) {
+      const previousPlayerIds = await this.queueService.clearForTable(table.id);
+      for (const playerId of previousPlayerIds) {
         this.tournamentsGateway.emitToUser(
-          previousOccupantId,
+          playerId,
           'tournament:tableReclaimed',
           {
             tableId: table.id,
@@ -163,7 +181,6 @@ export class TournamentsService {
           },
         );
       }
-      await this.queueService.clearForTable(table.id);
     }
 
     const updated = await this.getById(tournamentId);
@@ -181,6 +198,7 @@ export class TournamentsService {
     return this.getById(tournamentId);
   }
 
+  /** Annule un tournoi non terminé : libère les tables des rencontres en cours et diffuse la mise à jour. */
   async cancel(tournamentId: string): Promise<TournamentEntity> {
     const tournament = await this.getById(tournamentId);
     if (
@@ -350,6 +368,7 @@ export class TournamentsService {
     }
   }
 
+  /** Retourne la rencontre et la table liées à une manche (match) de tournoi, ou null si le match n'en est pas une. */
   private async findLegMeta(
     matchId: string,
   ): Promise<{ tieId: string; tableId: string | null } | null> {
@@ -418,6 +437,7 @@ export class TournamentsService {
     this.tournamentsGateway.broadcast('tournament:updated', updated);
   }
 
+  /** Vérifie les entrées : joueur 2 requis en 2v2 et interdit en 1v1, pas de paire avec soi-même, aucun joueur en double, tous les joueurs existent. */
   private async validateEntries(
     format: MatchFormat,
     entries: { player1Id: string; player2Id?: string }[],

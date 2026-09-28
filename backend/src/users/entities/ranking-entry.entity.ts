@@ -12,6 +12,7 @@ export class RankingEntry {
   @ApiProperty({ example: 5 })
   matchesPlayed!: number;
 
+  /** Copie dans l'instance les champs fournis. */
   constructor(entry: RankingEntry) {
     Object.assign(this, entry);
   }

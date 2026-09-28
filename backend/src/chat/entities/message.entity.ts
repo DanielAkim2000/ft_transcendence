@@ -27,6 +27,7 @@ export class MessageEntity {
   })
   createdAt!: Date;
 
+  /** Copie dans l'instance les champs fournis. */
   constructor(message: Partial<MessageEntity>) {
     Object.assign(this, message);
   }

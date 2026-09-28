@@ -5,6 +5,7 @@ const { execFileSync } = require('node:child_process');
 const path = require('node:path');
 
 const root = path.join(__dirname, '..');
+/** Exécute une commande dans le dossier backend en affichant sa sortie ; échoue si elle retourne une erreur. */
 const run = (cmd, args) =>
   execFileSync(cmd, args, { cwd: root, stdio: 'inherit' });
 

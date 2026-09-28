@@ -7,6 +7,7 @@ import { AppModule } from './../src/app.module';
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
 
+  /** Avant chaque test : compile le module de test et démarre l'application Nest. */
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -16,6 +17,7 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
+  /** Vérifie que GET / répond 200 avec « Hello World! ». */
   it('/ (GET)', () => {
     return request(app.getHttpServer())
       .get('/')
@@ -23,6 +25,7 @@ describe('AppController (e2e)', () => {
       .expect('Hello World!');
   });
 
+  /** Après chaque test : arrête l'application. */
   afterEach(async () => {
     await app.close();
   });

@@ -7,6 +7,10 @@ import {
 } from '../entities/match.entity';
 import type { EloPlayerInput, EloPlayerResult } from '../lib/elo';
 import type { Prisma } from '../../generated/prisma/client';
+import {
+  PageQueryDto,
+  pageOffset,
+} from '../../common/pagination/page-query.dto';
 
 const playerFields = {
   id: true,
@@ -35,13 +39,16 @@ const withTournament = {
   },
 } satisfies Prisma.MatchInclude;
 
-type MatchWithPlayers = Prisma.MatchGetPayload<{ include: typeof withPlayers }> & {
+type MatchWithPlayers = Prisma.MatchGetPayload<{
+  include: typeof withPlayers;
+}> & {
   tournamentTie?: {
     round: number;
     tournament: { id: string; name: string };
   } | null;
 };
 
+/** Filtre Prisma : matchs où l'utilisateur est l'un des (jusqu'à 4) joueurs. */
 const involvesUser = (userId: string): Prisma.MatchWhereInput => ({
   OR: [
     { teamAPlayer1Id: userId },
@@ -53,8 +60,10 @@ const involvesUser = (userId: string): Prisma.MatchWhereInput => ({
 
 @Injectable()
 export class MatchesRepository {
+  /** Injecte les dépendances : PrismaService. */
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Crée un match PENDING avec le challenger (et son coéquipier en 2v2) en équipe A et l'adversaire en équipe B. */
   async create(
     format: MatchFormat,
     challengerId: string,
@@ -73,6 +82,7 @@ export class MatchesRepository {
     return this.toEntity(match);
   }
 
+  /** Retrouve un match par son id avec ses joueurs, ou null. */
   async findById(id: string): Promise<MatchEntity | null> {
     const match = await this.prisma.match.findUnique({
       where: { id },
@@ -81,24 +91,87 @@ export class MatchesRepository {
     return match ? this.toEntity(match) : null;
   }
 
-  /** Historique de la ladder (défis) uniquement : les manches de tournoi ont leur propre page. */
-  async listForUser(userId: string): Promise<MatchEntity[]> {
-    const matches = await this.prisma.match.findMany({
-      where: { ...involvesUser(userId), tournamentTieId: null },
-      include: withPlayers,
-      orderBy: { updatedAt: 'desc' },
-    });
-    return matches.map((match) => this.toEntity(match));
+  /** Défis de la ladder (hors manches de tournoi, qui ont leur propre page) et hors défis refusés : une page, les plus récemment modifiés d'abord, plus le total. */
+  async listForUser(
+    userId: string,
+    page: PageQueryDto,
+  ): Promise<{ matches: MatchEntity[]; total: number }> {
+    const where: Prisma.MatchWhereInput = {
+      ...involvesUser(userId),
+      tournamentTieId: null,
+      status: { not: MatchStatus.DECLINED },
+    };
+    const [matches, total] = await this.prisma.$transaction([
+      this.prisma.match.findMany({
+        where,
+        include: withPlayers,
+        orderBy: { updatedAt: 'desc' },
+        skip: pageOffset(page),
+        take: page.limit,
+      }),
+      this.prisma.match.count({ where }),
+    ]);
+    return { matches: matches.map((match) => this.toEntity(match)), total };
   }
 
-  /** Historique complet : tous les matchs terminés (ladder + manches de tournoi). */
-  async listHistoryForUser(userId: string): Promise<MatchEntity[]> {
+  /** Historique complet : tous les matchs terminés (ladder + manches de tournoi), une page plus le total. */
+  async listHistoryForUser(
+    userId: string,
+    page: PageQueryDto,
+  ): Promise<{ matches: MatchEntity[]; total: number }> {
+    const where: Prisma.MatchWhereInput = {
+      ...involvesUser(userId),
+      status: MatchStatus.COMPLETED,
+    };
+    const [matches, total] = await this.prisma.$transaction([
+      this.prisma.match.findMany({
+        where,
+        include: withTournament,
+        orderBy: { createdAt: 'desc' },
+        skip: pageOffset(page),
+        take: page.limit,
+      }),
+      this.prisma.match.count({ where }),
+    ]);
+    return { matches: matches.map((match) => this.toEntity(match)), total };
+  }
+
+  /** Nombre de défis de la ladder qui attendent une action de l'utilisateur : répondre à un défi reçu, jouer un match accepté, ou valider un score soumis par l'équipe adverse. */
+  async countActionableForUser(userId: string): Promise<number> {
     const matches = await this.prisma.match.findMany({
-      where: { ...involvesUser(userId), status: MatchStatus.COMPLETED },
-      include: withTournament,
-      orderBy: { createdAt: 'desc' },
+      where: {
+        ...involvesUser(userId),
+        tournamentTieId: null,
+        status: {
+          in: [
+            MatchStatus.PENDING,
+            MatchStatus.ACCEPTED,
+            MatchStatus.PENDING_VALIDATION,
+          ],
+        },
+      },
+      select: {
+        status: true,
+        teamAPlayer1Id: true,
+        teamAPlayer2Id: true,
+        teamBPlayer1Id: true,
+        submittedById: true,
+      },
     });
-    return matches.map((match) => this.toEntity(match));
+    return matches.filter((match) => {
+      const status = match.status as MatchStatus;
+      if (status === MatchStatus.PENDING) {
+        return match.teamBPlayer1Id === userId;
+      }
+      if (status === MatchStatus.ACCEPTED) {
+        return true;
+      }
+      const teamAIds = [match.teamAPlayer1Id, match.teamAPlayer2Id];
+      const iAmTeamA = teamAIds.includes(userId);
+      const submitterIsTeamA =
+        match.submittedById !== null && teamAIds.includes(match.submittedById);
+      return match.submittedById !== null && iAmTeamA !== submitterIsTeamA;
+    }).length;
   }
 
   /** Atomique : seul le destinataire du défi peut le refuser, tant qu'il est en attente. */
@@ -184,6 +257,7 @@ export class MatchesRepository {
     if (!match) {
       return null;
     }
+    /** Type guard : écarte les joueurs absents (null), par exemple l'équipier d'un 1v1. */
     const notNull = (player: EloPlayerInput | null): player is EloPlayerInput =>
       player !== null;
     return {
@@ -192,6 +266,7 @@ export class MatchesRepository {
     };
   }
 
+  /** Enregistre en base les nouvelles notes Elo de chaque joueur, en une seule transaction. */
   // matchesPlayed/xp sont gérés exclusivement par BadgesService (recordGameResult) :
   // ne pas les incrémenter ici pour éviter un double comptage.
   async applyEloUpdates(results: EloPlayerResult[]): Promise<void> {
@@ -205,7 +280,9 @@ export class MatchesRepository {
     );
   }
 
+  /** Convertit une ligne Prisma en MatchEntity (équipes, scores, infos publiques des joueurs, infos de tournoi). */
   private toEntity(match: MatchWithPlayers): MatchEntity {
+    /** Réduit un joueur Prisma à ses champs publics (id, nom, avatar, note), ou null. */
     const publicPlayer = (
       player: {
         id: string;
@@ -251,6 +328,7 @@ export class MatchesRepository {
       tournamentId: match.tournamentTie?.tournament.id ?? null,
       tournamentName: match.tournamentTie?.tournament.name ?? null,
       tournamentRound: match.tournamentTie?.round ?? null,
+      tableId: match.tableId,
     });
   }
 }

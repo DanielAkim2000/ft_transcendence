@@ -45,6 +45,7 @@ export class ConversationEntity {
   })
   updatedAt!: Date;
 
+  /** Copie dans l'instance les champs fournis. */
   constructor(conversation: Partial<ConversationEntity>) {
     Object.assign(this, conversation);
   }

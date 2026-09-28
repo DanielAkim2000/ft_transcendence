@@ -14,9 +14,12 @@ import { MessageRepository } from '../repositories/message.repository';
 import { MessageEntity } from '../entities/message.entity';
 import { PaginationDto } from '../dtos/pagination.dto';
 import { ChatGateway } from '../chat.gateway';
+import { PageQueryDto } from '../../common/pagination/page-query.dto';
+import { Paginated, toPaginated } from '../../common/pagination/paginated';
 
 @Injectable()
 export class ChatService {
+  /** Injecte les dépendances : ConversationRepository, BlockRepository, MessageRepository, UsersService, ChatGateway. */
   constructor(
     private readonly conversationRepository: ConversationRepository,
     private readonly blockRepository: BlockRepository,
@@ -25,6 +28,7 @@ export class ChatService {
     private readonly chatGateway: ChatGateway,
   ) {}
 
+  /** Retourne la conversation entre deux utilisateurs ; en l'absence de conversation, ne la crée que s'ils sont amis et non bloqués. */
   async findOrCreateConversation(
     currentUserId: string,
     otherUserId: string,
@@ -58,6 +62,7 @@ export class ChatService {
     return conversation;
   }
 
+  /** Retrouve une conversation et vérifie que l'utilisateur en est participant (404 / 403 sinon). */
   async getConversation(
     currentUserId: string,
     conversationId: string,
@@ -78,6 +83,7 @@ export class ChatService {
     return conversation;
   }
 
+  /** Liste les conversations de l'utilisateur en y attachant leur dernier message. */
   async listConversations(
     currentUserId: string,
   ): Promise<ConversationEntity[]> {
@@ -98,6 +104,7 @@ export class ChatService {
     return conversations;
   }
 
+  /** Marque la conversation comme lue par l'utilisateur et prévient l'autre participant en temps réel. */
   async markConversationRead(
     currentUserId: string,
     conversationId: string,
@@ -111,6 +118,7 @@ export class ChatService {
     this.chatGateway.emitConversationRead(conversation, currentUserId, readAt);
   }
 
+  /** Bloque un utilisateur (pas soi-même, pas deux fois) et supprime l'amitié éventuelle entre les deux. */
   async blockUser(currentUserId: string, targetUserId: string): Promise<void> {
     if (currentUserId === targetUserId) {
       throw new BadRequestException('Cannot block yourself');
@@ -126,6 +134,7 @@ export class ChatService {
     );
   }
 
+  /** Retire le blocage d'un utilisateur ; 404 s'il n'était pas bloqué. */
   async unblockUser(
     currentUserId: string,
     targetUserId: string,
@@ -136,14 +145,38 @@ export class ChatService {
     await this.blockRepository.remove(currentUserId, targetUserId);
   }
 
-  async listBlockedUsers(currentUserId: string): Promise<UserEntity[]> {
-    const blocks = await this.blockRepository.listBlockedByUser(currentUserId);
+  /** Retourne les profils des utilisateurs bloqués par l'utilisateur. */
+  async listBlockedUsers(
+    currentUserId: string,
+    page: PageQueryDto,
+  ): Promise<Paginated<UserEntity>> {
+    const { blocks, total } = await this.blockRepository.listBlockedByUser(
+      currentUserId,
+      page,
+    );
     const users = await Promise.all(
       blocks.map((block) => this.usersService.findUserById(block.blockedId)),
     );
-    return users.filter((user): user is UserEntity => user !== null);
+    return toPaginated(
+      users.filter((user): user is UserEntity => user !== null),
+      total,
+      page,
+    );
   }
 
+  /** Indique si l'utilisateur connecté a bloqué l'utilisateur ciblé. */
+  async isBlockedByMe(
+    currentUserId: string,
+    targetUserId: string,
+  ): Promise<{ blocked: boolean }> {
+    return {
+      blocked:
+        (await this.blockRepository.findBlock(currentUserId, targetUserId)) !==
+        null,
+    };
+  }
+
+  /** Envoie un message dans une conversation, à condition que les deux soient amis et non bloqués, puis le diffuse en temps réel. */
   async sendMessage(
     currentUserId: string,
     conversationId: string,
@@ -178,6 +211,7 @@ export class ChatService {
     return message;
   }
 
+  /** Retourne une page de messages d'une conversation dont l'utilisateur est participant. */
   async getMessages(
     currentUserId: string,
     conversationId: string,

@@ -1,17 +1,27 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { MatchFormat } from '../../matches/entities/match.entity';
 
 export enum TableStatus {
   FREE = 'FREE',
   BUSY = 'BUSY',
 }
 
-export class TableOccupant {
+export class TablePlayer {
   @ApiProperty({ example: 'clx123456789' })
   id!: string;
   @ApiProperty({ example: 'John Doe' })
   displayname!: string;
   @ApiProperty({ example: '/uploads/avatars/john.png', nullable: true })
   avatarUrl!: string | null;
+}
+
+export class TableGroup {
+  @ApiProperty({ example: 'clx123456789' })
+  id!: string;
+  @ApiProperty({ description: 'Côté de la table (0 ou 1)', example: 0 })
+  slot!: number;
+  @ApiProperty({ type: [TablePlayer] })
+  players!: TablePlayer[];
 }
 
 export class TableTournamentTie {
@@ -32,17 +42,38 @@ export class TableEntity {
   @ApiProperty({ enum: TableStatus, example: TableStatus.FREE })
   status!: TableStatus;
   @ApiProperty({
+    enum: MatchFormat,
+    nullable: true,
+    description:
+      'Format fixé par le premier groupe ; null si la table est vide',
+  })
+  format!: MatchFormat | null;
+  @ApiProperty({
     description: 'Since when the table is occupied',
     example: '2026-01-01T12:00:00.000Z',
     nullable: true,
   })
   occupiedAt!: Date | null;
   @ApiProperty({
-    description: 'The player who declared the table occupied',
-    type: TableOccupant,
+    type: [TableGroup],
+    description: 'Groupes présents sur la table (0 à 2), un par côté',
+  })
+  groups!: TableGroup[];
+  @ApiProperty({
+    description: 'Match de table en cours (les 2 côtés sont occupés)',
     nullable: true,
   })
-  occupiedBy!: TableOccupant | null;
+  currentMatchId!: string | null;
+  @ApiProperty({
+    type: [String],
+    description: 'Joueurs ayant demandé la libération de la table',
+  })
+  releaseVoterIds!: string[];
+  @ApiProperty({
+    description: 'Défini quand la libération est actée : le score est attendu',
+    nullable: true,
+  })
+  endRequestedAt!: Date | null;
   @ApiProperty({
     description: 'Set while a tournament tie is being played on this table',
     type: TableTournamentTie,
@@ -50,6 +81,7 @@ export class TableEntity {
   })
   currentTournamentTie!: TableTournamentTie | null;
 
+  /** Copie dans l'instance les champs fournis. */
   constructor(table: Partial<TableEntity>) {
     Object.assign(this, table);
   }

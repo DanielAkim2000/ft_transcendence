@@ -73,6 +73,7 @@ export class UserEntity {
   })
   updatedAt!: Date;
 
+  /** Copie dans l'instance les champs fournis. */
   constructor(user: Partial<UserEntity>) {
     Object.assign(this, user);
   }

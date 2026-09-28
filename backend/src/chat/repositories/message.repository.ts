@@ -5,8 +5,10 @@ import type { Message as MessagePrisma } from '../../generated/prisma/client';
 
 @Injectable()
 export class MessageRepository {
+  /** Injecte les dépendances : PrismaService. */
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Crée un message et met à jour la date de la conversation, dans une même transaction. */
   async create(
     conversationId: string,
     senderId: string,
@@ -28,6 +30,7 @@ export class MessageRepository {
     return this.toEntity(message);
   }
 
+  /** Retourne les messages d'une conversation, du plus récent au plus ancien, limités à limit et paginés à partir d'un curseur (id du dernier message reçu). */
   async findByConversation(
     conversationId: string,
     limit: number,
@@ -43,6 +46,7 @@ export class MessageRepository {
     return messages.map((message) => this.toEntity(message));
   }
 
+  /** Retourne le dernier message de chacune des conversations données. */
   async findLastMessageByConversationIds(
     conversationIds: string[],
   ): Promise<MessageEntity[]> {
@@ -55,6 +59,7 @@ export class MessageRepository {
     return messages.map((message) => this.toEntity(message));
   }
 
+  /** Convertit un message Prisma en MessageEntity. */
   private toEntity(message: MessagePrisma): MessageEntity {
     return new MessageEntity({
       id: message.id,

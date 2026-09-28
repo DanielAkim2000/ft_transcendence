@@ -6,6 +6,7 @@ import { BadgesGateway } from './badges.gateway';
 import { BadgesRepository } from './repositories/badges.repository';
 import { BadgesService } from './services/badges.service';
 
+/** XP, niveaux et badges des joueurs. Exporte BadgesService. */
 @Module({
   imports: [PrismaModule, forwardRef(() => UsersModule)],
   controllers: [BadgesController],

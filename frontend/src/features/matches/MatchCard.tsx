@@ -5,9 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/components/ui/toast";
-import { useListFriendsQuery } from "@/features/users/usersApi";
+import { FriendPicker } from "@/features/users/FriendPicker";
 import { getErrorMessage } from "@/lib/get-error-message";
 import { getInitials, resolveAvatarUrl } from "@/lib/user";
 import { cn } from "@/lib/utils";
@@ -43,9 +42,7 @@ function AcceptTwoVTwoDialog({
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [teammateId, setTeammateId] = useState<string>("");
-  const { data: allFriends = [] } = useListFriendsQuery();
-  const teamAIds = new Set(match.teamA.map((player) => player.id));
-  const friends = allFriends.filter((friend) => !teamAIds.has(friend.id));
+  const teamAIds = match.teamA.map((player) => player.id);
   const [respond, { isLoading }] = useRespondMatchMutation();
 
   const submit = async () => {
@@ -79,24 +76,9 @@ function AcceptTwoVTwoDialog({
           <Dialog.Description className="mt-2 text-sm text-muted-foreground">
             {t("matches.pickTeammateDescription")}
           </Dialog.Description>
-          <RadioGroup
-            value={teammateId}
-            onValueChange={setTeammateId}
-            className="mt-4 flex flex-col gap-2"
-          >
-            {friends.map((friend) => (
-              <Label
-                key={friend.id}
-                className="flex items-center gap-2 border border-border p-2 text-sm"
-              >
-                <RadioGroupItem value={friend.id} />
-                {friend.displayname}
-              </Label>
-            ))}
-            {friends.length === 0 ? (
-              <p className="text-xs text-muted-foreground">{t("matches.noFriends")}</p>
-            ) : null}
-          </RadioGroup>
+          <div className="mt-4">
+            <FriendPicker value={teammateId} onChange={setTeammateId} excludeIds={teamAIds} />
+          </div>
           <div className="mt-5 flex justify-end gap-2">
             <Dialog.Close
               disabled={isLoading}

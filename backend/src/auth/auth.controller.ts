@@ -35,11 +35,13 @@ type SwitchResult =
 
 @Controller('auth')
 export class AuthController {
+  /** Injecte les dépendances : AuthService, ConfigService. */
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
   ) {}
 
+  /** POST /auth/register : crée un compte (email, nom, mot de passe), pose le cookie de refresh token et retourne l'utilisateur avec son access token. */
   @Post('register')
   async register(
     @Body() registerDto: RegisterDto,
@@ -56,6 +58,7 @@ export class AuthController {
     };
   }
 
+  /** POST /auth/login : vérifie email/mot de passe ; sans 2FA renvoie les tokens, avec 2FA pose un cookie de pré-authentification et attend le code. */
   @Post('login')
   async loginFromCredentials(
     @Body() loginDto: LoginDto,
@@ -78,10 +81,12 @@ export class AuthController {
     };
   }
 
+  /** GET /auth/42/login : point d'entrée qui redirige vers l'OAuth 42 (géré par le guard Passport). */
   @Get('42/login')
   @UseGuards(AuthGuard(FOURTY_TWO_STRATEGY))
   loginFrom42Profile() {}
 
+  /** GET /auth/42/callback : retour de l'OAuth 42 ; pose le cookie de refresh (ou de pré-authentification si 2FA) puis redirige vers le frontend. */
   @Get('42/callback')
   @UseGuards(AuthGuard(FOURTY_TWO_STRATEGY))
   async callback(
@@ -106,6 +111,7 @@ export class AuthController {
     res.redirect(callbackUrl.toString());
   }
 
+  /** POST /auth/refresh : fait tourner le refresh token du cookie et retourne un nouvel access token. */
   @Post('refresh')
   @UseGuards(RefreshTokenGuard)
   async refresh(
@@ -129,6 +135,7 @@ export class AuthController {
     };
   }
 
+  /** POST /auth/logout : révoque le refresh token courant et efface les cookies d'authentification. */
   @Post('logout')
   @UseGuards(RefreshTokenGuard)
   async logout(
@@ -149,12 +156,14 @@ export class AuthController {
     });
   }
 
+  /** GET /auth/me : retourne l'utilisateur authentifié. */
   @Get('me')
   @UseGuards(AccessTokenGuard)
   me(@Req() req: Request & { user: UserEntity }): UserEntity {
     return req.user;
   }
 
+  /** GET /auth/admin : route de test réservée aux administrateurs. */
   @Get('admin')
   @AuthRoles(Role.ADMIN)
   adminOnly(@Req() req: Request & { user: UserEntity }): {
@@ -164,6 +173,7 @@ export class AuthController {
     return { ok: true, role: req.user.role };
   }
 
+  /** POST /auth/2fa/verify : valide le code 2FA de la pré-authentification et ouvre la session (tokens et cookie de refresh). */
   @Post('2fa/verify')
   @UseGuards(PreAuthTokenGuard)
   async verify2fa(
@@ -184,12 +194,14 @@ export class AuthController {
     };
   }
 
+  /** GET /auth/2fa/pending : confirme qu'une pré-authentification 2FA valide est en cours. */
   @Get('2fa/pending')
   @UseGuards(PreAuthTokenGuard)
   pending2fa(): { pending: true } {
     return { pending: true };
   }
 
+  /** POST /auth/2fa/setup : génère un secret 2FA en attente et l'URL otpauth pour le QR code. */
   @Post('2fa/setup')
   @UseGuards(AccessTokenGuard)
   async setup2fa(@Req() req: Request & { user: UserEntity }): Promise<{
@@ -199,6 +211,7 @@ export class AuthController {
     return await this.authService.generate2faSecret(req.user);
   }
 
+  /** POST /auth/2fa/toggle : active ou désactive la 2FA après vérification d'un code ; retourne le nouvel état. */
   @Post('2fa/toggle')
   @UseGuards(AccessTokenGuard)
   async toggle2fa(
@@ -208,6 +221,7 @@ export class AuthController {
     return await this.authService.toggle2fa(req.user, dto.code);
   }
 
+  /** Indique si les cookies doivent être « secure » (production ou frontend en https). */
   private useSecureCookies(): boolean {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') ?? '';
     return (
@@ -216,6 +230,7 @@ export class AuthController {
     );
   }
 
+  /** Pose le cookie httpOnly du refresh token (durée depuis la config) et efface le cookie de pré-authentification. */
   private async setRefreshCookie(
     user: UserEntity,
     res: Response,
@@ -242,6 +257,7 @@ export class AuthController {
     });
   }
 
+  /** Pose le cookie httpOnly du token de pré-authentification 2FA (durée depuis la config). */
   private setPreAuthCookie(res: Response, preAuthToken: string): void {
     const expirationTime = this.configService.get<msStringValue>(
       'JWT_PRE_AUTH_TOKEN_EXPIRATION_TIME',

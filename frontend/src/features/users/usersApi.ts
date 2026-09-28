@@ -3,6 +3,7 @@ import { TAG_TYPES } from "@/constants/tagTypes";
 import { API_ROUTES } from "@/constants/apiRoutes";
 import { AUTH_ENDPOINTS, USERS_ENDPOINTS } from "@/constants/queryEndpoints";
 import { authApi, type User } from "@/features/auth/authApi";
+import type { PageArgs, Paginated } from "@/lib/pagination";
 import type {
   LanguagePreference,
   ThemePreference,
@@ -15,6 +16,33 @@ export type FriendshipStatus =
   | "friends"
   | "self";
 
+/** Relation d'amitié annotée par le backend sur chaque résultat de recherche. */
+export type SearchFriendshipStatus =
+  | "none"
+  | "pending_out"
+  | "pending_in"
+  | "friends";
+
+export type UserSearchResult = User & { friendshipStatus: SearchFriendshipStatus };
+
+export interface SearchUsersArgs extends PageArgs {
+  q?: string;
+}
+
+export interface ListFriendsArgs extends PageArgs {
+  q?: string;
+  online?: boolean;
+}
+
+/** Retire les paramètres non définis pour ne pas les envoyer dans l'URL. */
+function toParams(args: object | void): Record<string, string | number | boolean> {
+  const params: Record<string, string | number | boolean> = {};
+  for (const [key, value] of Object.entries(args ?? {})) {
+    if (value !== undefined && value !== "") params[key] = value as string | number | boolean;
+  }
+  return params;
+}
+
 export interface RankingEntry {
   id: string;
   displayname: string;
@@ -25,10 +53,13 @@ export interface RankingEntry {
 
 export const usersApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    [USERS_ENDPOINTS.SEARCH_USERS]: builder.query<User[], string | void>({
-      query: (q) => ({
+    [USERS_ENDPOINTS.SEARCH_USERS]: builder.query<
+      Paginated<UserSearchResult>,
+      SearchUsersArgs | void
+    >({
+      query: (args) => ({
         url: API_ROUTES.USERS,
-        params: q ? { q } : undefined,
+        params: toParams(args),
       }),
       providesTags: [TAG_TYPES.USERS],
     }),
@@ -100,16 +131,36 @@ export const usersApi = api.injectEndpoints({
       },
       invalidatesTags: [TAG_TYPES.AUTH, TAG_TYPES.USERS],
     }),
-    [USERS_ENDPOINTS.LIST_FRIENDS]: builder.query<User[], void>({
-      query: () => API_ROUTES.USERS_ME_FRIENDS,
+    // Amis, en ligne d'abord. Le tag "LIST" permet de rafraîchir uniquement ces
+    // listes quand la présence d'un ami change (l'ordre dépend de son statut).
+    [USERS_ENDPOINTS.LIST_FRIENDS]: builder.query<
+      Paginated<User>,
+      ListFriendsArgs | void
+    >({
+      query: (args) => ({
+        url: API_ROUTES.USERS_ME_FRIENDS,
+        params: toParams(args),
+      }),
+      providesTags: [{ type: TAG_TYPES.FRIENDS, id: "LIST" }],
+    }),
+    [USERS_ENDPOINTS.LIST_PENDING_FRIENDS]: builder.query<
+      Paginated<User>,
+      PageArgs | void
+    >({
+      query: (args) => ({
+        url: API_ROUTES.USERS_ME_FRIENDS_PENDING,
+        params: toParams(args),
+      }),
       providesTags: [TAG_TYPES.FRIENDS],
     }),
-    [USERS_ENDPOINTS.LIST_PENDING_FRIENDS]: builder.query<User[], void>({
-      query: () => API_ROUTES.USERS_ME_FRIENDS_PENDING,
-      providesTags: [TAG_TYPES.FRIENDS],
-    }),
-    [USERS_ENDPOINTS.LIST_OUTGOING_FRIENDS]: builder.query<User[], void>({
-      query: () => API_ROUTES.USERS_ME_FRIENDS_OUTGOING,
+    [USERS_ENDPOINTS.LIST_OUTGOING_FRIENDS]: builder.query<
+      Paginated<User>,
+      PageArgs | void
+    >({
+      query: (args) => ({
+        url: API_ROUTES.USERS_ME_FRIENDS_OUTGOING,
+        params: toParams(args),
+      }),
       providesTags: [TAG_TYPES.FRIENDS],
     }),
     [USERS_ENDPOINTS.SEND_FRIEND_REQUEST]: builder.mutation<User, string>({

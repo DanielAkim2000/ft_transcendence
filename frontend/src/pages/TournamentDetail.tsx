@@ -13,10 +13,15 @@ import {
 import { TieCard } from "@/features/tournaments/TieCard";
 import { translateRoundLabel } from "@/features/tournaments/tournamentHelpers";
 import { Button } from "@/components/ui/button";
+import { Pagination } from "@/components/pagination";
+import { useClampedPage } from "@/lib/use-clamped-page";
 import { Input } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { toast } from "@/components/ui/toast";
 import { getErrorMessage } from "@/lib/get-error-message";
+import { PageFallback } from "@/components/page-fallback";
+
+const PLAYER_SEARCH_PAGE_SIZE = 8;
 
 function isPowerOfTwo(n: number): boolean {
   return n >= 4 && (n & (n - 1)) === 0;
@@ -33,10 +38,18 @@ export const TournamentDetail = () => {
   const [cancelTournament] = useCancelTournamentMutation();
   const [query, setQuery] = useState("");
   const [pendingPlayer1, setPendingPlayer1] = useState<{ id: string; displayname: string } | null>(null);
-  const { data: searchResults = [] } = useSearchUsersQuery(query.trim() || undefined);
+  const [searchPage, setSearchPage] = useState(1);
+  const { data: searchData, isFetching: searching } = useSearchUsersQuery({
+    q: query.trim() || undefined,
+    page: searchPage,
+    limit: PLAYER_SEARCH_PAGE_SIZE,
+  });
+  useClampedPage(searchPage, searchData?.totalPages, setSearchPage);
+  const searchResults = searchData?.items ?? [];
   const q = query.trim().toLowerCase();
+  // L'utilisateur connecté n'apparaît pas dans la recherche : on l'ajoute en tête de la première page.
   const results =
-    me && (q === "" || me.displayname.toLowerCase().includes(q))
+    me && searchPage === 1 && (q === "" || me.displayname.toLowerCase().includes(q))
       ? [me, ...searchResults]
       : searchResults;
 
@@ -49,7 +62,7 @@ export const TournamentDetail = () => {
   };
 
   if (isLoading || !tournament) {
-    return <p className="text-sm text-muted-foreground">{t("common.loading")}</p>;
+    return <PageFallback />;
   }
 
   const isAdmin = me?.role === "ADMIN";
@@ -153,7 +166,10 @@ export const TournamentDetail = () => {
               ) : null}
               <Input
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setSearchPage(1);
+                }}
                 placeholder={t("tournaments.searchPlayer")}
                 disabled={addingEntry}
               />
@@ -172,6 +188,12 @@ export const TournamentDetail = () => {
                     </li>
                   ))}
               </ul>
+              <Pagination
+                page={searchData?.page ?? searchPage}
+                totalPages={searchData?.totalPages ?? 1}
+                onPageChange={setSearchPage}
+                disabled={searching}
+              />
               <Button
                 type="button"
                 disabled={launching || !isPowerOfTwo(tournament.entries.length)}

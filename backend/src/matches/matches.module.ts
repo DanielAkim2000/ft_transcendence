@@ -3,17 +3,20 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { UsersModule } from '../users/users.module';
 import { TournamentsModule } from '../tournaments/tournaments.module';
 import { BadgesModule } from '../badges/badges.module';
+import { QueueModule } from '../queue/queue.module';
 import { MatchesController } from './matches.controller';
 import { MatchesGateway } from './matches.gateway';
 import { MatchesRepository } from './repositories/matches.repository';
 import { MatchesService } from './services/matches.service';
 
+/** Défis et matchs : proposition, acceptation, score, validation/litige et calcul Elo. */
 @Module({
   imports: [
     PrismaModule,
     forwardRef(() => UsersModule),
     TournamentsModule,
     BadgesModule,
+    QueueModule,
   ],
   controllers: [MatchesController],
   providers: [MatchesService, MatchesRepository, MatchesGateway],

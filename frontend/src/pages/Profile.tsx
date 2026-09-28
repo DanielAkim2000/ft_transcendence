@@ -24,6 +24,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { PlayerBadgesCard } from "@/features/badges/PlayerBadgesCard";
 import { useState } from "react";
 import { ROUTES } from "@/constants/routes";
+import { PageFallback } from "@/components/page-fallback";
 
 export const Profile = () => {
   const { t } = useTranslation();
@@ -38,7 +39,7 @@ export const Profile = () => {
   const [justSentId, setJustSentId] = useState<string | null>(null);
 
   if (!id || isLoading) {
-    return <p className="text-muted-foreground">{t("common.loading")}</p>;
+    return <PageFallback />;
   }
 
   if (error || !data) {

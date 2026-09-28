@@ -22,16 +22,19 @@ export interface EloPlayerResult {
   ratingAfter: number;
 }
 
+/** Retourne le facteur K d'Elo : 40 pour un joueur de moins de 10 matchs, 20 sinon. */
 export function kFactor(matchesPlayed: number): number {
   return matchesPlayed < NEW_PLAYER_MATCH_THRESHOLD
     ? K_NEW_PLAYER
     : K_ESTABLISHED;
 }
 
+/** Probabilité de victoire attendue (0 à 1) d'une équipe face à une autre, selon la formule Elo. */
 function expectedScore(teamRating: number, opponentRating: number): number {
   return 1 / (1 + 10 ** ((opponentRating - teamRating) / 400));
 }
 
+/** Moyenne des notes d'une équipe. */
 function average(players: EloPlayerInput[]): number {
   return (
     players.reduce((sum, player) => sum + player.rating, 0) / players.length
@@ -50,6 +53,7 @@ export function computeEloUpdates(
   const expectedB = 1 - expectedA;
   const outcomeForTeamB = (1 - outcomeForTeamA) as MatchOutcome;
 
+  /** Calcule la nouvelle note de chaque joueur d'une équipe selon le résultat attendu et obtenu, avec son propre facteur K. */
   const applyTeam = (
     players: EloPlayerInput[],
     expected: number,

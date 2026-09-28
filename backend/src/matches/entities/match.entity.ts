@@ -66,7 +66,14 @@ export class MatchEntity {
   tournamentName!: string | null;
   @ApiProperty({ nullable: true, example: 1 })
   tournamentRound!: number | null;
+  @ApiProperty({
+    description:
+      'Set when the match was played on a table (queue or tournament)',
+    nullable: true,
+  })
+  tableId!: string | null;
 
+  /** Copie dans l'instance les champs fournis. */
   constructor(match: Partial<MatchEntity>) {
     Object.assign(this, match);
   }

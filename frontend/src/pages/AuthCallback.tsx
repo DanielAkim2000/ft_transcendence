@@ -1,13 +1,12 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
-import { useTranslation } from "react-i18next";
 import { setTwoFactorRequired } from "@/features/auth/authSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { useLazyCheck2faPendingQuery } from "@/features/auth/authApi";
 import { ROUTES } from "@/constants/routes";
+import { PageFallback } from "@/components/page-fallback";
 
 export const AuthCallback = () => {
-  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const accessToken = useAppSelector((s) => s.auth.accessToken);
@@ -42,8 +41,6 @@ export const AuthCallback = () => {
   }, [accessToken, check2faPending, dispatch, navigate]);
 
   return (
-    <div className="flex min-h-svh items-center justify-center px-4">
-      <p className="font-sans text-muted-foreground">{t("common.loading")}</p>
-    </div>
+    <PageFallback fullscreen />
   );
 };

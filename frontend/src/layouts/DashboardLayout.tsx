@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Outlet } from "react-router";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
@@ -8,6 +9,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { AppSidebar } from "@/components/app-sidebar";
 import { LegalLinks } from "@/components/legal-links";
+import { PageFallback } from "@/components/page-fallback";
 
 export const DashboardLayout = () => {
   return (
@@ -20,7 +22,9 @@ export const DashboardLayout = () => {
             <Separator orientation="vertical" className="mr-2 h-4" />
           </header>
           <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
-            <Outlet />
+            <Suspense fallback={<PageFallback />}>
+              <Outlet />
+            </Suspense>
           </div>
           <LegalLinks className="border-t border-border px-4 py-3 md:px-6" />
         </SidebarInset>

@@ -30,12 +30,14 @@ export class PresenceGateway
   private onlineUsers: Map<string, Set<string>> = new Map();
   @WebSocketServer()
   private server!: Server;
+  /** Injecte les dépendances : UsersService, JwtService. */
   constructor(
     @Inject(forwardRef(() => UsersService))
     private readonly userService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
 
+  /** Authentifie la connexion WebSocket via le JWT, enregistre la session, envoie au client la présence de ses amis et passe l'utilisateur en ligne à sa première session. */
   async handleConnection(client: PresenceSocket): Promise<void> {
     const accessToken = (client.handshake.auth as { access_token?: unknown })
       .access_token;
@@ -70,6 +72,7 @@ export class PresenceGateway
     }
   }
 
+  /** Retire la session fermée ; quand la dernière session de l'utilisateur se ferme, il passe hors ligne. */
   async handleDisconnect(client: PresenceSocket): Promise<void> {
     const userId = client.data.userId;
     if (typeof userId !== 'string' || !userId) {
@@ -87,30 +90,32 @@ export class PresenceGateway
     this.onlineUsers.delete(userId);
   }
 
+  /** Prévient tous les amis de l'utilisateur de son changement de statut (presence:update). */
   private async notifyFriends(
     userId: string,
     status: Status.ONLINE | Status.OFFLINE,
   ): Promise<void> {
-    const friends = await this.userService.listFriends(userId);
+    const friendIds = await this.userService.listFriendIds(userId);
 
-    for (const friend of friends) {
-      this.server.to(friend.id).emit('presence:update', {
+    for (const friendId of friendIds) {
+      this.server.to(friendId).emit('presence:update', {
         userId: userId,
         status,
       });
     }
   }
 
+  /** Envoie au client la liste de ses amis actuellement en ligne (presence:sync). */
   private async syncPresence(
     client: PresenceSocket,
     userId: string,
   ): Promise<void> {
-    const friends = await this.userService.listFriends(userId);
+    const friendIds = await this.userService.listFriendIds(userId);
 
-    const onlineFriends = friends
-      .filter((friend) => this.onlineUsers.has(friend.id))
-      .map((friend) => ({
-        userId: friend.id,
+    const onlineFriends = friendIds
+      .filter((friendId) => this.onlineUsers.has(friendId))
+      .map((friendId) => ({
+        userId: friendId,
         status: Status.ONLINE,
       }));
 
@@ -122,6 +127,7 @@ export class PresenceGateway
     this.server.to(userId).emit(event, payload);
   }
 
+  /** Enregistre le statut en ligne/hors ligne en base puis prévient les amis. */
   private async setUserPresence(
     userId: string,
     status: Status.ONLINE | Status.OFFLINE,

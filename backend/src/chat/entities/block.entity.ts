@@ -17,6 +17,7 @@ export class BlockEntity {
   })
   createdAt!: Date;
 
+  /** Copie dans l'instance les champs fournis. */
   constructor(block: Partial<BlockEntity>) {
     Object.assign(this, block);
   }

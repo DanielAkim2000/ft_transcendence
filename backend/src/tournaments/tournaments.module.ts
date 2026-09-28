@@ -9,6 +9,7 @@ import { TournamentsGateway } from './tournaments.gateway';
 import { TournamentsRepository } from './repositories/tournaments.repository';
 import { TournamentsService } from './services/tournaments.service';
 
+/** Tournois à élimination directe : entrées, tirage du tableau, rencontres et manches. Exporte TournamentsService. */
 @Module({
   imports: [
     PrismaModule,

@@ -27,11 +27,13 @@ export class MatchesGateway implements OnGatewayConnection {
   @WebSocketServer()
   private server!: Server;
 
+  /** Injecte les dépendances : UsersService, JwtService. */
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
 
+  /** Authentifie la connexion WebSocket via le JWT et fait rejoindre au client sa room personnelle (son userId) ; déconnecte si le token est absent ou invalide. */
   async handleConnection(client: MatchesSocket): Promise<void> {
     const accessToken = (client.handshake.auth as { access_token?: unknown })
       .access_token;
@@ -56,6 +58,7 @@ export class MatchesGateway implements OnGatewayConnection {
     }
   }
 
+  /** Envoie un événement au seul utilisateur ciblé (via sa room personnelle). */
   emitToUser(userId: string, event: string, payload: unknown): void {
     this.server.to(userId).emit(event, payload);
   }

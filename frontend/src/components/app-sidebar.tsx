@@ -4,7 +4,6 @@ import {
   LogOutIcon,
   MessageSquareIcon,
   SettingsIcon,
-  ShieldCheckIcon,
   SwordsIcon,
   TrophyIcon,
   UserIcon,
@@ -29,11 +28,9 @@ import {
 import { useLogoutMutation, useMeQuery } from "@/features/auth/authApi";
 import { useListConversationsQuery } from "@/features/chat/chatApi";
 import { useListPendingFriendsQuery } from "@/features/users/usersApi";
-import { useGetMyQueueEntryQuery } from "@/features/queue/queueApi";
-import { useListMatchesQuery } from "@/features/matches/matchesApi";
-import { needsMyAction } from "@/features/matches/matchHelpers";
-import { useListTournamentsQuery } from "@/features/tournaments/tournamentsApi";
-import { hasActiveTournamentAction } from "@/features/tournaments/tournamentHelpers";
+import { useGetMyQueueGroupQuery } from "@/features/queue/queueApi";
+import { useCountMatchActionsQuery } from "@/features/matches/matchesApi";
+import { useCountTournamentActionsQuery } from "@/features/tournaments/tournamentsApi";
 import { getInitials, resolveAvatarUrl } from "@/lib/user";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ROUTES } from "@/constants/routes";
@@ -46,18 +43,18 @@ export function AppSidebar() {
   const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
   const { data: conversations = [] } = useListConversationsQuery();
   const hasUnread = conversations.some((c) => c.unreadCount > 0);
-  const { data: pendingFriends = [] } = useListPendingFriendsQuery();
-  const hasPendingFriends = pendingFriends.length > 0;
-  const { data: myQueueEntry } = useGetMyQueueEntryQuery();
-  const isMyTurn = myQueueEntry?.status === "CALLED";
-  const { data: matches = [] } = useListMatchesQuery();
-  const hasMatchAction = user
-    ? matches.some((match) => needsMyAction(match, user.id))
-    : false;
-  const { data: tournaments = [] } = useListTournamentsQuery();
-  const hasTournamentAction = user
-    ? hasActiveTournamentAction(tournaments, user.id)
-    : false;
+  // Une seule demande suffit : seul le total compte pour la pastille.
+  const { data: pendingFriends } = useListPendingFriendsQuery({ limit: 1 });
+  const hasPendingFriends = (pendingFriends?.total ?? 0) > 0;
+  const { data: myQueueGroup } = useGetMyQueueGroupQuery();
+  const isMyTurn = myQueueGroup?.status === "CALLED";
+  const hasPendingInvite =
+    myQueueGroup?.status === "INVITING" &&
+    myQueueGroup.players.some((player) => player.id === user?.id && !player.isRequester);
+  const { data: matchActions } = useCountMatchActionsQuery();
+  const hasMatchAction = (matchActions?.count ?? 0) > 0;
+  const { data: tournamentActions } = useCountTournamentActionsQuery();
+  const hasTournamentAction = (tournamentActions?.count ?? 0) > 0;
 
   const items = [
     {
@@ -112,6 +109,7 @@ export function AppSidebar() {
     if (url === ROUTES.FRIENDS && hasPendingFriends)
       return t("friends.newRequests");
     if (url === ROUTES.TABLES && isMyTurn) return t("queue.yourTurnBadge");
+    if (url === ROUTES.TABLES && hasPendingInvite) return t("queue.inviteBadge");
     if (url === ROUTES.RANKING && hasMatchAction)
       return t("matches.actionNeededBadge");
     if (url === ROUTES.TOURNAMENTS && hasTournamentAction)

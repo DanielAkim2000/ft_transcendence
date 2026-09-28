@@ -1,11 +1,30 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TableEntity, TableStatus } from '../entities/table.entity';
+import { MatchFormat } from '../../matches/entities/match.entity';
 import type { Prisma } from '../../generated/prisma/client';
 
-const withOccupant = {
-  occupiedBy: {
-    select: { id: true, displayname: true, avatarUrl: true },
+const withState = {
+  queueGroups: {
+    where: { status: 'ON_TABLE' },
+    orderBy: { slot: 'asc' },
+    select: {
+      id: true,
+      slot: true,
+      members: {
+        orderBy: { isRequester: 'desc' },
+        select: {
+          user: { select: { id: true, displayname: true, avatarUrl: true } },
+        },
+      },
+    },
+  },
+  releaseVotes: { select: { userId: true } },
+  // Match de table en cours : les manches de tournoi ont leur propre suivi.
+  matchLegs: {
+    where: { status: 'ACCEPTED', tournamentTieId: null },
+    select: { id: true },
+    take: 1,
   },
   currentTournamentTie: {
     include: {
@@ -26,10 +45,11 @@ const withOccupant = {
   },
 } satisfies Prisma.TableInclude;
 
-type TableWithOccupant = Prisma.TableGetPayload<{
-  include: typeof withOccupant;
+type TableWithState = Prisma.TableGetPayload<{
+  include: typeof withState;
 }>;
 
+/** Construit le libellé d'une équipe de tournoi (« Joueur1 + Joueur2 » en double, nom seul en simple, « ? » si inconnue). */
 function entryLabel(
   entry: {
     player1: { displayname: string };
@@ -42,6 +62,7 @@ function entryLabel(
     : entry.player1.displayname;
 }
 
+/** Convertit un numéro de tour en libellé (FINAL, SEMI, QUARTER, ROUND_OF_16, sinon ROUND_n) selon le nombre total de tours. */
 function roundLabelFor(round: number, totalRounds: number | null): string {
   const distance = (totalRounds ?? round) - round;
   if (distance === 0) return 'FINAL';
@@ -53,64 +74,25 @@ function roundLabelFor(round: number, totalRounds: number | null): string {
 
 @Injectable()
 export class TablesRepository {
+  /** Injecte les dépendances : PrismaService. */
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Liste toutes les tables triées par nom, avec leurs groupes, le match en cours et la rencontre de tournoi en cours. */
   async list(): Promise<TableEntity[]> {
     const tables = await this.prisma.table.findMany({
       orderBy: { name: 'asc' },
-      include: withOccupant,
+      include: withState,
     });
     return tables.map((table) => this.toEntity(table));
   }
 
+  /** Retrouve une table par son id (avec groupes, match et rencontre de tournoi), ou null. */
   async findById(id: string): Promise<TableEntity | null> {
     const table = await this.prisma.table.findUnique({
       where: { id },
-      include: withOccupant,
+      include: withState,
     });
     return table ? this.toEntity(table) : null;
-  }
-
-  /** Atomique : ne réussit que si la table est encore libre et non réservée par un tournoi. */
-  async occupy(id: string, userId: string): Promise<boolean> {
-    const { count } = await this.prisma.table.updateMany({
-      where: { id, status: TableStatus.FREE, currentTournamentTieId: null },
-      data: {
-        status: TableStatus.BUSY,
-        occupiedAt: new Date(),
-        occupiedById: userId,
-      },
-    });
-    return count === 1;
-  }
-
-  /** Atomique : ne réussit que si la table est encore occupée par cet utilisateur. */
-  async release(id: string, userId: string): Promise<boolean> {
-    const { count } = await this.prisma.table.updateMany({
-      where: { id, status: TableStatus.BUSY, occupiedById: userId },
-      data: {
-        status: TableStatus.FREE,
-        occupiedAt: null,
-        occupiedById: null,
-      },
-    });
-    return count === 1;
-  }
-
-  /** Libération forcée (admin/système), quel que soit l'occupant actuel. */
-  async forceRelease(id: string): Promise<string | null> {
-    const table = await this.prisma.table.findUnique({
-      where: { id },
-      select: { occupiedById: true, status: true },
-    });
-    if (!table || table.status !== 'BUSY') {
-      return null;
-    }
-    await this.prisma.table.update({
-      where: { id },
-      data: { status: TableStatus.FREE, occupiedAt: null, occupiedById: null },
-    });
-    return table.occupiedById;
   }
 
   /** Atomique : réserve une table libre et non déjà réclamée pour une rencontre de tournoi. */
@@ -126,6 +108,7 @@ export class TablesRepository {
     return count === 1;
   }
 
+  /** Libère la table réclamée par la rencontre de tournoi donnée et la remet à FREE. */
   async releaseTournamentClaim(tieId: string): Promise<void> {
     await this.prisma.table.updateMany({
       where: { currentTournamentTieId: tieId },
@@ -133,7 +116,6 @@ export class TablesRepository {
         status: TableStatus.FREE,
         currentTournamentTieId: null,
         occupiedAt: null,
-        occupiedById: null,
       },
     });
   }
@@ -152,13 +134,22 @@ export class TablesRepository {
     return ids;
   }
 
-  private toEntity(table: TableWithOccupant): TableEntity {
+  /** Convertit une ligne Prisma en TableEntity, en calculant les libellés de la rencontre de tournoi en cours. */
+  private toEntity(table: TableWithState): TableEntity {
     return new TableEntity({
       id: table.id,
       name: table.name,
       status: table.status as TableStatus,
+      format: table.format as MatchFormat | null,
       occupiedAt: table.occupiedAt,
-      occupiedBy: table.occupiedBy,
+      groups: table.queueGroups.map((group) => ({
+        id: group.id,
+        slot: group.slot ?? 0,
+        players: group.members.map((member) => member.user),
+      })),
+      currentMatchId: table.matchLegs[0]?.id ?? null,
+      releaseVoterIds: table.releaseVotes.map((vote) => vote.userId),
+      endRequestedAt: table.endRequestedAt,
       currentTournamentTie: table.currentTournamentTie
         ? {
             id: table.currentTournamentTie.id,

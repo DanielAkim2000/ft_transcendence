@@ -2,11 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BlockEntity } from '../entities/block.entity';
 import type { Block as BlockPrisma } from '../../generated/prisma/client';
+import {
+  PageQueryDto,
+  pageOffset,
+} from '../../common/pagination/page-query.dto';
 
 @Injectable()
 export class BlockRepository {
+  /** Injecte les dépendances : PrismaService. */
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Enregistre le blocage de blockedId par blockerId. */
   async create(blockerId: string, blockedId: string): Promise<BlockEntity> {
     const block = await this.prisma.block.create({
       data: { blockerId, blockedId },
@@ -15,6 +21,7 @@ export class BlockRepository {
     return this.toEntity(block);
   }
 
+  /** Retrouve le blocage exact de blockedId par blockerId (dans ce sens), ou null. */
   async findBlock(
     blockerId: string,
     blockedId: string,
@@ -25,19 +32,32 @@ export class BlockRepository {
     return block ? this.toEntity(block) : null;
   }
 
+  /** Supprime le blocage de blockedId par blockerId. */
   async remove(blockerId: string, blockedId: string): Promise<void> {
     await this.prisma.block.deleteMany({
       where: { blockerId, blockedId },
     });
   }
 
-  async listBlockedByUser(userId: string): Promise<BlockEntity[]> {
-    const blocks = await this.prisma.block.findMany({
-      where: { blockerId: userId },
-    });
-    return blocks.map((block) => this.toEntity(block));
+  /** Liste une page des blocages émis par l'utilisateur (ceux qu'il a bloqués), les plus récents d'abord, plus le total. */
+  async listBlockedByUser(
+    userId: string,
+    page: PageQueryDto,
+  ): Promise<{ blocks: BlockEntity[]; total: number }> {
+    const where = { blockerId: userId };
+    const [blocks, total] = await this.prisma.$transaction([
+      this.prisma.block.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: pageOffset(page),
+        take: page.limit,
+      }),
+      this.prisma.block.count({ where }),
+    ]);
+    return { blocks: blocks.map((block) => this.toEntity(block)), total };
   }
 
+  /** Liste les blocages reçus par l'utilisateur (ceux qui l'ont bloqué). */
   async listBlockingUser(userId: string): Promise<BlockEntity[]> {
     const blocks = await this.prisma.block.findMany({
       where: { blockedId: userId },
@@ -45,6 +65,7 @@ export class BlockRepository {
     return blocks.map((block) => this.toEntity(block));
   }
 
+  /** Indique si l'un des deux utilisateurs a bloqué l'autre, dans un sens ou dans l'autre. */
   async isBlocked(userIdA: string, userIdB: string): Promise<boolean> {
     const block = await this.prisma.block.findFirst({
       where: {
@@ -58,6 +79,7 @@ export class BlockRepository {
     return block !== null;
   }
 
+  /** Convertit un blocage Prisma en BlockEntity. */
   private toEntity(block: BlockPrisma): BlockEntity {
     return new BlockEntity({
       blockerId: block.blockerId,

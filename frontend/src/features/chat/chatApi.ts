@@ -2,7 +2,6 @@ import { api } from "@/store/api";
 import { TAG_TYPES } from "@/constants/tagTypes";
 import { API_ROUTES } from "@/constants/apiRoutes";
 import { CHAT_ENDPOINTS } from "@/constants/queryEndpoints";
-import type { User } from "@/features/auth/authApi";
 
 export interface Message {
   id: string;
@@ -98,9 +97,10 @@ export const chatApi = api.injectEndpoints({
         );
       },
     }),
-    [CHAT_ENDPOINTS.LIST_BLOCKED]: builder.query<User[], void>({
-      query: () => API_ROUTES.CHAT_BLOCKS,
-      providesTags: [TAG_TYPES.BLOCKS],
+    // Indique si on a bloqué cet utilisateur (évite de charger toute la liste des blocages).
+    [CHAT_ENDPOINTS.IS_BLOCKED]: builder.query<{ blocked: boolean }, string>({
+      query: (userId) => API_ROUTES.chatBlock(userId),
+      providesTags: (_result, _error, userId) => [{ type: TAG_TYPES.BLOCKS, id: userId }],
     }),
     [CHAT_ENDPOINTS.BLOCK_USER]: builder.mutation<{ ok: true }, string>({
       query: (userId) => ({
@@ -191,7 +191,7 @@ export const {
   useGetMessagesQuery,
   useSendMessageMutation,
   useMarkConversationReadMutation,
-  useListBlockedQuery,
+  useIsBlockedQuery,
   useBlockUserMutation,
   useUnblockUserMutation,
 } = chatApi;

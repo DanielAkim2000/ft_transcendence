@@ -3,6 +3,7 @@ import { TAG_TYPES } from "@/constants/tagTypes";
 import { API_ROUTES } from "@/constants/apiRoutes";
 import { TOURNAMENTS_ENDPOINTS } from "@/constants/queryEndpoints";
 import type { MatchFormat, MatchStatus } from "@/features/matches/matchesApi";
+import type { PageArgs, Paginated } from "@/lib/pagination";
 
 export type TournamentStatus = "DRAFT" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
 export type TournamentTieStatus = "PENDING" | "READY" | "IN_PROGRESS" | "DONE";
@@ -59,9 +60,17 @@ export interface Tournament {
 
 export const tournamentsApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    [TOURNAMENTS_ENDPOINTS.LIST_TOURNAMENTS]: builder.query<Tournament[], void>({
-      query: () => API_ROUTES.TOURNAMENTS,
-      providesTags: [TAG_TYPES.TOURNAMENTS],
+    [TOURNAMENTS_ENDPOINTS.LIST_TOURNAMENTS]: builder.query<
+      Paginated<Tournament>,
+      PageArgs | void
+    >({
+      query: (args) => ({ url: API_ROUTES.TOURNAMENTS, params: args ?? undefined }),
+      providesTags: [{ type: TAG_TYPES.TOURNAMENTS, id: "LIST" }],
+    }),
+    // Nombre de manches à jouer ou valider (pastille de la barre latérale).
+    [TOURNAMENTS_ENDPOINTS.COUNT_TOURNAMENT_ACTIONS]: builder.query<{ count: number }, void>({
+      query: () => API_ROUTES.TOURNAMENTS_PENDING_ACTIONS,
+      providesTags: [{ type: TAG_TYPES.TOURNAMENTS, id: "LIST" }],
     }),
     [TOURNAMENTS_ENDPOINTS.GET_TOURNAMENT]: builder.query<Tournament, string>({
       query: (id) => API_ROUTES.tournament(id),
@@ -113,19 +122,8 @@ export const tournamentsApi = api.injectEndpoints({
 
 type Dispatch = (action: unknown) => unknown;
 
-/** Remplace un tournoi dans les deux caches (liste + détail) — réponse websocket. */
+/** Un tournoi a changé (websocket) : on met à jour son détail dans le cache et on recharge les listes, paginées côté backend. */
 export function applyTournamentToCache(dispatch: Dispatch, tournament: Tournament) {
-  dispatch(
-    tournamentsApi.util.updateQueryData(
-      TOURNAMENTS_ENDPOINTS.LIST_TOURNAMENTS,
-      undefined,
-      (draft) => {
-        const index = draft.findIndex((entry) => entry.id === tournament.id);
-        if (index === -1) draft.unshift(tournament);
-        else draft[index] = tournament;
-      },
-    ),
-  );
   dispatch(
     tournamentsApi.util.updateQueryData(
       TOURNAMENTS_ENDPOINTS.GET_TOURNAMENT,
@@ -133,11 +131,15 @@ export function applyTournamentToCache(dispatch: Dispatch, tournament: Tournamen
       () => tournament,
     ),
   );
+  dispatch(
+    tournamentsApi.util.invalidateTags([{ type: TAG_TYPES.TOURNAMENTS, id: "LIST" }]),
+  );
   dispatch(tournamentsApi.util.invalidateTags([TAG_TYPES.TABLES, TAG_TYPES.QUEUE]));
 }
 
 export const {
   useListTournamentsQuery,
+  useCountTournamentActionsQuery,
   useGetTournamentQuery,
   useCreateTournamentMutation,
   useAddTournamentEntryMutation,

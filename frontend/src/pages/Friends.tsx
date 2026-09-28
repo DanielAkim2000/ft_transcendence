@@ -1,4 +1,4 @@
-import { useState, type ReactNode, useMemo } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -7,18 +7,20 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   useAcceptFriendRequestMutation,
   useListFriendsQuery,
-  useListOutgoingFriendsQuery,
   useListPendingFriendsQuery,
   useRemoveFriendMutation,
   useSearchUsersQuery,
   useSendFriendRequestMutation,
 } from "@/features/users/usersApi";
+import { Pagination } from "@/components/pagination";
+import { useClampedPage } from "@/lib/use-clamped-page";
 import type { User } from "@/features/auth/authApi";
 import { getInitials, resolveAvatarUrl } from "@/lib/user";
 import { getErrorMessage } from "@/lib/get-error-message";
 import { toast } from "@/components/ui/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ROUTES } from "@/constants/routes";
+import { ListSkeleton } from "@/components/skeletons";
 
 function UserRow({
   user,
@@ -81,18 +83,35 @@ function UserRow({
   );
 }
 
+const FRIENDS_PAGE_SIZE = 10;
+const PENDING_PAGE_SIZE = 5;
+const SEARCH_PAGE_SIZE = 10;
+
 export const Friends = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
-  const { data: friends = [], isLoading: friendsLoading } =
-    useListFriendsQuery();
-  const { data: pending = [], isLoading: pendingLoading } =
-    useListPendingFriendsQuery();
-  const { data: outgoing = [] } = useListOutgoingFriendsQuery();
-  const { data: results = [], isFetching: searchLoading } = useSearchUsersQuery(
-    query.trim() || undefined,
-  );
+  const [friendsPage, setFriendsPage] = useState(1);
+  const [pendingPage, setPendingPage] = useState(1);
+  const [searchPage, setSearchPage] = useState(1);
+  const {
+    data: friends,
+    isLoading: friendsLoading,
+    isFetching: friendsFetching,
+  } = useListFriendsQuery({ page: friendsPage, limit: FRIENDS_PAGE_SIZE });
+  const {
+    data: pending,
+    isLoading: pendingLoading,
+    isFetching: pendingFetching,
+  } = useListPendingFriendsQuery({ page: pendingPage, limit: PENDING_PAGE_SIZE });
+  const { data: results, isFetching: searchLoading } = useSearchUsersQuery({
+    q: query.trim() || undefined,
+    page: searchPage,
+    limit: SEARCH_PAGE_SIZE,
+  });
+  useClampedPage(friendsPage, friends?.totalPages, setFriendsPage);
+  useClampedPage(pendingPage, pending?.totalPages, setPendingPage);
+  useClampedPage(searchPage, results?.totalPages, setSearchPage);
   const [sendRequest] = useSendFriendRequestMutation();
   const [acceptRequest] = useAcceptFriendRequestMutation();
   const [removeFriend] = useRemoveFriendMutation();
@@ -107,24 +126,6 @@ export const Friends = () => {
       setActionError(getErrorMessage(error, t("friends.actionFailed")));
     }
   };
-
-  const onlineFriends = useMemo(
-    () => friends.filter((u) => u.isOnline),
-    [friends],
-  );
-  const offlineFriends = useMemo(
-    () => friends.filter((u) => !u.isOnline),
-    [friends],
-  );
-  const friendIds = useMemo(() => new Set(friends.map((u) => u.id)), [friends]);
-  const pendingIds = useMemo(
-    () => new Set(pending.map((u) => u.id)),
-    [pending],
-  );
-  const outgoingIds = useMemo(
-    () => new Set(outgoing.map((u) => u.id)),
-    [outgoing],
-  );
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
@@ -143,17 +144,17 @@ export const Friends = () => {
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          {t("friends.pendingTitle")} · {pending.length}
+          {t("friends.pendingTitle")} · {pending?.total ?? 0}
         </h2>
         {pendingLoading ? (
-          <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
-        ) : pending.length === 0 ? (
+          <ListSkeleton count={2} action />
+        ) : (pending?.total ?? 0) === 0 ? (
           <p className="text-sm text-muted-foreground">
             {t("friends.noPending")}
           </p>
         ) : (
           <ul className="flex flex-col gap-2">
-            {pending.map((user) => (
+            {pending?.items.map((user) => (
               <UserRow
                 key={user.id}
                 user={user}
@@ -185,66 +186,66 @@ export const Friends = () => {
             ))}
           </ul>
         )}
+        <Pagination
+          page={pending?.page ?? pendingPage}
+          totalPages={pending?.totalPages ?? 1}
+          onPageChange={setPendingPage}
+          disabled={pendingFetching}
+        />
       </section>
 
-      {friendsLoading ? (
-        <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
-      ) : friends.length === 0 ? (
-        <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            {t("friends.listTitle")}
-          </h2>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          {t("friends.listTitle")} · {friends?.total ?? 0}
+        </h2>
+        {friendsLoading ? (
+          <ListSkeleton count={FRIENDS_PAGE_SIZE / 2} action />
+        ) : (friends?.total ?? 0) === 0 ? (
           <p className="text-sm text-muted-foreground">
             {t("friends.noFriends")}
           </p>
-        </section>
-      ) : (
-        [
-          { key: "online", title: t("friends.onlineTitle"), list: onlineFriends },
-          { key: "offline", title: t("friends.offlineTitle"), list: offlineFriends },
-        ]
-          .filter((group) => group.list.length > 0)
-          .map((group) => (
-            <section key={group.key} className="flex flex-col gap-3">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                {group.title} · {group.list.length}
-              </h2>
-              <ul className="flex flex-col gap-2">
-                {group.list.map((user) => (
-                  <UserRow
-                    key={user.id}
-                    user={user}
-                    showPresence
-                    actions={
-                      <>
-                        <Button
-                          size="sm"
-                          onClick={() => navigate(ROUTES.chatWith(user.id))}
-                        >
-                          {t("friends.message")}
-                        </Button>
-                        <ConfirmDialog
-                          title={t("confirm.removeFriendTitle")}
-                          description={t("confirm.removeFriendDescription", {
-                            name: user.displayname,
-                          })}
-                          confirmLabel={t("friends.remove")}
-                          onConfirm={() =>
-                            run(() => removeFriend(user.id).unwrap())
-                          }
-                        >
-                          <Button size="sm" variant="outline">
-                            {t("friends.remove")}
-                          </Button>
-                        </ConfirmDialog>
-                      </>
-                    }
-                  />
-                ))}
-              </ul>
-            </section>
-          ))
-      )}
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {friends?.items.map((user) => (
+              <UserRow
+                key={user.id}
+                user={user}
+                showPresence
+                actions={
+                  <>
+                    <Button
+                      size="sm"
+                      onClick={() => navigate(ROUTES.chatWith(user.id))}
+                    >
+                      {t("friends.message")}
+                    </Button>
+                    <ConfirmDialog
+                      title={t("confirm.removeFriendTitle")}
+                      description={t("confirm.removeFriendDescription", {
+                        name: user.displayname,
+                      })}
+                      confirmLabel={t("friends.remove")}
+                      onConfirm={() =>
+                        run(() => removeFriend(user.id).unwrap())
+                      }
+                    >
+                      <Button size="sm" variant="outline">
+                        {t("friends.remove")}
+                      </Button>
+                    </ConfirmDialog>
+                  </>
+                }
+              />
+            ))}
+          </ul>
+        )}
+        <Pagination
+          page={friends?.page ?? friendsPage}
+          totalPages={friends?.totalPages ?? 1}
+          onPageChange={setFriendsPage}
+          disabled={friendsFetching}
+        />
+      </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
@@ -252,24 +253,27 @@ export const Friends = () => {
         </h2>
         <Input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setSearchPage(1);
+          }}
           placeholder={t("friends.searchPlaceholder")}
         />
-        {searchLoading ? (
-          <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+        {searchLoading && !results ? (
+          <ListSkeleton count={SEARCH_PAGE_SIZE / 2} action />
         ) : (
           <ul className="flex flex-col gap-2">
-            {results.map((user) => (
+            {results?.items.map((user) => (
               <UserRow
                 key={user.id}
                 user={user}
-                showPresence={friendIds.has(user.id)}
+                showPresence={user.friendshipStatus === "friends"}
                 actions={
-                  friendIds.has(user.id) ? (
+                  user.friendshipStatus === "friends" ? (
                     <span className="text-xs text-muted-foreground">
                       {t("friends.already")}
                     </span>
-                  ) : pendingIds.has(user.id) ? (
+                  ) : user.friendshipStatus === "pending_in" ? (
                     <>
                       <Button
                         size="sm"
@@ -294,7 +298,8 @@ export const Friends = () => {
                         </Button>
                       </ConfirmDialog>
                     </>
-                  ) : outgoingIds.has(user.id) || justSentIds.has(user.id) ? (
+                  ) : user.friendshipStatus === "pending_out" ||
+                    justSentIds.has(user.id) ? (
                     <Button size="sm" variant="outline" disabled>
                       {justSentIds.has(user.id)
                         ? t("friends.inviteSent")
@@ -322,6 +327,12 @@ export const Friends = () => {
             ))}
           </ul>
         )}
+        <Pagination
+          page={results?.page ?? searchPage}
+          totalPages={results?.totalPages ?? 1}
+          onPageChange={setSearchPage}
+          disabled={searchLoading}
+        />
       </section>
     </div>
   );

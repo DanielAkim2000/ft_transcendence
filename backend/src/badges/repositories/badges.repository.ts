@@ -16,8 +16,10 @@ import { Prisma } from '../../generated/prisma/client';
 
 @Injectable()
 export class BadgesRepository {
+  /** Injecte les dépendances : PrismaService. */
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Enregistre une victoire : +1 match, +1 victoire, XP de partie et de victoire, série de victoires incrémentée (et meilleure série mise à jour). */
   async recordWin(userId: string): Promise<void> {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
@@ -36,6 +38,7 @@ export class BadgesRepository {
     });
   }
 
+  /** Enregistre une défaite : +1 match, XP de participation, série de victoires remise à zéro. */
   async recordLoss(userId: string): Promise<void> {
     await this.prisma.user.update({
       where: { id: userId },
@@ -47,6 +50,7 @@ export class BadgesRepository {
     });
   }
 
+  /** Enregistre un match nul : +1 match, XP de participation, série de victoires remise à zéro. */
   async recordDraw(userId: string): Promise<void> {
     await this.prisma.user.update({
       where: { id: userId },
@@ -58,6 +62,7 @@ export class BadgesRepository {
     });
   }
 
+  /** Ajoute un montant d'XP bonus à l'utilisateur. */
   async addBonusXp(userId: string, amount: number): Promise<void> {
     await this.prisma.user.update({
       where: { id: userId },
@@ -65,6 +70,7 @@ export class BadgesRepository {
     });
   }
 
+  /** Retourne les statistiques de jeu de l'utilisateur (victoires, matchs, séries), ou null s'il n'existe pas. */
   async getStats(userId: string) {
     return this.prisma.user.findUnique({
       where: { id: userId },
@@ -93,6 +99,7 @@ export class BadgesRepository {
     }
   }
 
+  /** Construit le profil complet du joueur (XP, niveau, progression, stats, badges obtenus), ou null s'il n'existe pas. */
   async getProfile(userId: string): Promise<PlayerBadgesProfile | null> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },

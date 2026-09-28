@@ -10,6 +10,10 @@ import {
 import { MatchFormat, MatchStatus } from '../../matches/entities/match.entity';
 import { roundLabel, resolveTie, type TieLeg } from '../lib/bracket';
 import type { Prisma } from '../../generated/prisma/client';
+import {
+  PageQueryDto,
+  pageOffset,
+} from '../../common/pagination/page-query.dto';
 
 const playerFields = {
   id: true,
@@ -72,8 +76,10 @@ type EntryWithPlayers = TournamentWithAll['entries'][number];
 
 @Injectable()
 export class TournamentsRepository {
+  /** Injecte les dépendances : PrismaService. */
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Crée un tournoi en brouillon avec ses entrées initiales (seed attribué dans l'ordre). */
   async create(
     name: string,
     format: MatchFormat,
@@ -100,6 +106,7 @@ export class TournamentsRepository {
     return this.toEntity(tournament);
   }
 
+  /** Ajoute une entrée au tournoi avec le seed suivant (dernier seed + 1). */
   async addEntry(
     tournamentId: string,
     player1Id: string,
@@ -120,6 +127,7 @@ export class TournamentsRepository {
     });
   }
 
+  /** Supprime une entrée du tournoi ; retourne false si elle n'existe pas. */
   async removeEntry(tournamentId: string, entryId: string): Promise<boolean> {
     const { count } = await this.prisma.tournamentEntry.deleteMany({
       where: { id: entryId, tournamentId },
@@ -127,6 +135,7 @@ export class TournamentsRepository {
     return count > 0;
   }
 
+  /** Retrouve un tournoi complet (entrées, rencontres) par id, ou null. */
   async findById(id: string): Promise<TournamentEntity | null> {
     const tournament = await this.prisma.tournament.findUnique({
       where: { id },
@@ -135,12 +144,42 @@ export class TournamentsRepository {
     return tournament ? this.toEntity(tournament) : null;
   }
 
-  async listAll(): Promise<TournamentEntity[]> {
-    const tournaments = await this.prisma.tournament.findMany({
-      include: withAll,
-      orderBy: { createdAt: 'desc' },
+  /** Liste une page de tournois (les plus récents d'abord) avec leurs détails, plus le total. */
+  async listPage(
+    page: PageQueryDto,
+  ): Promise<{ tournaments: TournamentEntity[]; total: number }> {
+    const [tournaments, total] = await this.prisma.$transaction([
+      this.prisma.tournament.findMany({
+        include: withAll,
+        orderBy: { createdAt: 'desc' },
+        skip: pageOffset(page),
+        take: page.limit,
+      }),
+      this.prisma.tournament.count(),
+    ]);
+    return {
+      tournaments: tournaments.map((tournament) => this.toEntity(tournament)),
+      total,
+    };
+  }
+
+  /** Nombre de manches (dans un tournoi en cours) que l'utilisateur doit jouer ou valider. */
+  countActiveLegsForUser(userId: string): Promise<number> {
+    return this.prisma.match.count({
+      where: {
+        OR: [
+          { teamAPlayer1Id: userId },
+          { teamAPlayer2Id: userId },
+          { teamBPlayer1Id: userId },
+          { teamBPlayer2Id: userId },
+        ],
+        tournamentTieId: { not: null },
+        status: {
+          in: [MatchStatus.ACCEPTED, MatchStatus.PENDING_VALIDATION],
+        },
+        tournamentTie: { tournament: { status: TournamentStatus.IN_PROGRESS } },
+      },
     });
-    return tournaments.map((tournament) => this.toEntity(tournament));
   }
 
   /** Statut DRAFT requis pour être lancé (vérifié par le service). */
@@ -180,6 +219,7 @@ export class TournamentsRepository {
     ]);
   }
 
+  /** Passe le tournoi en statut CANCELLED. */
   async cancel(tournamentId: string): Promise<void> {
     await this.prisma.tournament.update({
       where: { id: tournamentId },
@@ -187,6 +227,7 @@ export class TournamentsRepository {
     });
   }
 
+  /** Passe le tournoi en COMPLETED et enregistre la date de fin. */
   async complete(tournamentId: string): Promise<void> {
     await this.prisma.tournament.update({
       where: { id: tournamentId },
@@ -206,6 +247,7 @@ export class TournamentsRepository {
     });
   }
 
+  /** Retrouve une rencontre avec ses deux entrées, ses manches (triées) et son tournoi. */
   async findTieById(tieId: string) {
     return this.prisma.tournamentTie.findUnique({
       where: { id: tieId },
@@ -218,6 +260,7 @@ export class TournamentsRepository {
     });
   }
 
+  /** Retrouve la rencontre d'un tournoi à partir de son tour et de son emplacement dans le tableau. */
   async findTieByRoundSlot(tournamentId: string, round: number, slot: number) {
     return this.prisma.tournamentTie.findUnique({
       where: { tournamentId_round_slot: { tournamentId, round, slot } },
@@ -225,6 +268,7 @@ export class TournamentsRepository {
     });
   }
 
+  /** Retourne l'id de la rencontre et de la table d'une manche, ou null si le match n'appartient pas à un tournoi. */
   async findLegMeta(
     matchId: string,
   ): Promise<{ tieId: string; tableId: string | null } | null> {
@@ -268,6 +312,7 @@ export class TournamentsRepository {
     return match.id;
   }
 
+  /** Remet une rencontre au statut READY (prête à être jouée sur une table). */
   markTieReady(tieId: string): Promise<unknown> {
     return this.prisma.tournamentTie.update({
       where: { id: tieId },
@@ -275,6 +320,7 @@ export class TournamentsRepository {
     });
   }
 
+  /** Clôt une rencontre : statut DONE, entrée gagnante et points attribués. */
   async markTieDone(
     tieId: string,
     winnerEntryId: string,
@@ -316,6 +362,7 @@ export class TournamentsRepository {
     return false;
   }
 
+  /** Ajoute les points de tournoi à la note de chaque joueur gagnant. */
   async awardRatingBonus(userIds: string[], points: number): Promise<void> {
     await this.prisma.user.updateMany({
       where: { id: { in: userIds } },
@@ -361,6 +408,7 @@ export class TournamentsRepository {
     });
   }
 
+  /** Convertit un tournoi Prisma en TournamentEntity (rencontres converties ; le champion est le vainqueur de la finale une fois le tournoi terminé). */
   private toEntity(tournament: TournamentWithAll): TournamentEntity {
     const totalRounds = tournament.totalRounds ?? 0;
     const ties = tournament.ties.map((tie) =>
@@ -387,6 +435,7 @@ export class TournamentsRepository {
     });
   }
 
+  /** Convertit une entrée Prisma en TournamentEntryEntity. */
   private entryToEntity(entry: EntryWithPlayers): TournamentEntryEntity {
     return new TournamentEntryEntity({
       id: entry.id,
@@ -397,6 +446,7 @@ export class TournamentsRepository {
     });
   }
 
+  /** Convertit une rencontre Prisma en TournamentTieEntity : libellé du tour, manche active, manches jouées/nécessaires et score cumulé. */
   private tieToEntity(
     tie: TieWithDetails,
     totalRounds: number,

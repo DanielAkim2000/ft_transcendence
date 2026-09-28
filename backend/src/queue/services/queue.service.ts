@@ -1,178 +1,584 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { QueueRepository } from '../repositories/queue.repository';
 import {
-  QueueEntryEntity,
-  QueueEntryStatus,
-} from '../entities/queue-entry.entity';
+  QueueGroupEntity,
+  QueueGroupStatus,
+} from '../entities/queue-group.entity';
 import { QueueGateway } from '../queue.gateway';
+import { TablesService } from '../../tables/services/tables.service';
+import { TableEntity } from '../../tables/entities/table.entity';
+import { UsersService } from '../../users/services/users.services';
+import { MatchFormat } from '../../matches/entities/match.entity';
 import { Prisma } from '../../generated/prisma/client';
 
-/** Temps laissé pour prendre la table une fois appelé (règle métier : 2-3 min). */
+/** Temps laissé à un groupe appelé pour confirmer sa présence à la table (règle métier : 2-3 min). */
 export const QUEUE_TIMEOUT_MS = 2 * 60 * 1000;
+/** Temps laissé à un ami pour accepter l'invitation en 2v2. */
+export const INVITE_TIMEOUT_MS = 60 * 1000;
+/** Temps laissé aux joueurs pour saisir le score après la libération de la table, sinon le match est annulé. */
+export const SCORE_ENTRY_TIMEOUT_MS = 10 * 60 * 1000;
+/** Nombre de joueurs distincts qui doivent cliquer sur « libérer la table » pour arrêter le match. */
+export const RELEASE_VOTES_REQUIRED = 2;
 
 @Injectable()
-export class QueueService {
+export class QueueService implements OnModuleInit {
+  private readonly logger = new Logger(QueueService.name);
   private readonly timers = new Map<string, NodeJS.Timeout>();
 
+  /** Injecte les dépendances : QueueRepository, QueueGateway, TablesService, UsersService. */
   constructor(
     private readonly queueRepository: QueueRepository,
     private readonly queueGateway: QueueGateway,
+    private readonly tablesService: TablesService,
+    private readonly usersService: UsersService,
   ) {}
 
-  listForTable(tableId: string): Promise<QueueEntryEntity[]> {
-    return this.queueRepository.listActiveForTable(tableId);
+  /** Réarme les délais (appel, invitation, saisie du score) qui étaient en cours avant un redémarrage. */
+  async onModuleInit(): Promise<void> {
+    try {
+      for (const group of await this.queueRepository.listCalled()) {
+        const remaining = group.expiresAt
+          ? Math.max(0, group.expiresAt.getTime() - Date.now())
+          : 0;
+        this.scheduleCallExpiry(group.id, group.tableId, remaining);
+      }
+      for (const group of await this.queueRepository.listInviting()) {
+        this.scheduleInviteExpiry(group.id, group.tableId);
+      }
+      for (const tableId of await this.queueRepository.listEndRequestedTableIds()) {
+        this.scheduleScoreTimeout(tableId);
+      }
+    } catch (error) {
+      this.logger.error(`Could not restore queue timers: ${error}`);
+    }
   }
 
-  getMyEntry(userId: string): Promise<QueueEntryEntity | null> {
-    return this.queueRepository.findActiveForUser(userId);
+  /** Liste les groupes en file (en attente ou appelés) d'une table, dans l'ordre d'arrivée. */
+  listForTable(tableId: string): Promise<QueueGroupEntity[]> {
+    return this.queueRepository.listQueue(tableId);
   }
 
-  async join(userId: string, tableId: string): Promise<QueueEntryEntity> {
-    const table = await this.queueRepository.getTableStatus(tableId);
+  /** Retourne le groupe actif de l'utilisateur (invité, en file, appelé ou sur la table), ou null. */
+  getMyGroup(userId: string): Promise<QueueGroupEntity | null> {
+    return this.queueRepository.findActiveGroupForUser(userId);
+  }
+
+  /** Crée un groupe pour l'utilisateur sur une table : le premier groupe d'une table vide fixe le format, les suivants le suivent ; en 2v2 l'ami choisi reçoit une invitation, sinon le groupe entre directement en file. */
+  async join(
+    userId: string,
+    tableId: string,
+    format: MatchFormat | undefined,
+    teammateId: string | undefined,
+  ): Promise<QueueGroupEntity> {
+    const table = await this.queueRepository.getTable(tableId);
     if (!table) {
       throw new NotFoundException('Table not found');
     }
     if (table.claimedByTournament) {
       throw new ConflictException('Table reserved for an ongoing tournament');
     }
-    const hasActiveQueue = await this.queueRepository.hasActiveQueue(tableId);
-    if (table.status === 'FREE' && !hasActiveQueue) {
-      throw new ConflictException('Table is free, take it directly');
+    if (await this.queueRepository.findActiveGroupForUser(userId)) {
+      throw new ConflictException('You are already on a table or in a queue');
     }
-    if (await this.queueRepository.findActiveForUser(userId)) {
-      throw new ConflictException('You are already in a queue');
+    if (table.format && format && format !== table.format) {
+      throw new ConflictException(`This table is playing ${table.format}`);
     }
+    const groupFormat = table.format ?? format;
+    if (!groupFormat) {
+      throw new BadRequestException(
+        'format is required when the table is empty',
+      );
+    }
+    const isTwoVTwo = groupFormat === MatchFormat.TWO_V_TWO;
+    if (isTwoVTwo) {
+      await this.assertValidTeammate(userId, teammateId);
+    }
+
+    let group: QueueGroupEntity | null;
     try {
-      const entry = await this.queueRepository.create(tableId, userId);
-      await this.publish(tableId);
-      return entry;
+      group = await this.queueRepository.createGroup({
+        tableId,
+        format: groupFormat,
+        requesterId: userId,
+        teammateId: isTwoVTwo ? teammateId : undefined,
+        status: isTwoVTwo
+          ? QueueGroupStatus.INVITING
+          : QueueGroupStatus.WAITING,
+      });
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        throw new ConflictException('You are already in a queue');
+        throw new ConflictException(
+          'You or your teammate is already on a table or in a queue',
+        );
       }
       throw error;
     }
+    if (!group) {
+      throw new ConflictException('This table is playing another format');
+    }
+
+    if (isTwoVTwo && teammateId) {
+      this.scheduleInviteExpiry(group.id, tableId);
+      const requester = group.players.find((player) => player.isRequester);
+      this.queueGateway.emitToUser(teammateId, 'queue:invite', {
+        groupId: group.id,
+        tableId,
+        from: requester?.displayname ?? '?',
+      });
+      await this.tablesService.publish(tableId);
+      return group;
+    }
+
+    await this.advance(tableId, group.id);
+    return (await this.queueRepository.findGroupById(group.id)) ?? group;
   }
 
-  async cancel(userId: string, entryId: string): Promise<void> {
-    const entry = await this.queueRepository.findById(entryId);
-    if (!entry) {
-      throw new NotFoundException('Queue entry not found');
+  /** Le coéquipier invité accepte (le groupe entre en file) ou refuse (le groupe est annulé et le demandeur prévenu). */
+  async respondToInvite(
+    userId: string,
+    groupId: string,
+    accept: boolean,
+  ): Promise<QueueGroupEntity | null> {
+    const group = await this.getGroup(groupId);
+    if (group.status !== QueueGroupStatus.INVITING) {
+      throw new ConflictException('This invitation is no longer pending');
     }
-    if (entry.requester.id !== userId) {
-      throw new ForbiddenException('Not your queue entry');
+    const me = group.players.find((player) => player.id === userId);
+    if (!me || me.isRequester) {
+      throw new ForbiddenException('You are not invited to this group');
     }
-    if (!(await this.queueRepository.cancel(entryId, userId))) {
-      throw new ConflictException('Queue entry already resolved');
+    this.clearTimer(`invite:${groupId}`);
+
+    if (!accept) {
+      if (
+        !(await this.queueRepository.finishGroup(
+          groupId,
+          QueueGroupStatus.CANCELLED,
+          [QueueGroupStatus.INVITING],
+        ))
+      ) {
+        throw new ConflictException('This invitation is no longer pending');
+      }
+      await this.queueRepository.syncTableState(group.tableId);
+      this.queueGateway.emitToUsers(
+        group.players.filter((p) => p.isRequester).map((p) => p.id),
+        'queue:inviteDeclined',
+        { tableId: group.tableId, by: me.displayname },
+      );
+      await this.tablesService.publish(group.tableId);
+      return null;
     }
-    this.clearTimer(entryId);
-    await this.publish(entry.tableId);
-    if (entry.status === QueueEntryStatus.CALLED) {
-      await this.advanceQueue(entry.tableId);
+
+    if (!(await this.queueRepository.acceptInvite(groupId, userId))) {
+      throw new ConflictException('This invitation is no longer pending');
     }
+    await this.advance(group.tableId, groupId);
+    return this.queueRepository.findGroupById(groupId);
   }
 
-  /** Réservation en cours pour cette table, s'il y en a une (appelée par TablesService.occupy). */
-  getActiveReservation(tableId: string): Promise<QueueEntryEntity | null> {
-    return this.queueRepository.findActiveCalledForTable(tableId);
+  /** Un groupe appelé confirme sa présence : il prend sa place sur la table (et le match démarre si l'autre côté est occupé). */
+  async confirm(userId: string, groupId: string): Promise<QueueGroupEntity> {
+    const group = await this.getGroup(groupId);
+    this.assertMember(group, userId);
+    if (group.status !== QueueGroupStatus.CALLED) {
+      throw new ConflictException('This group has not been called');
+    }
+    if (!(await this.placeOnTable(groupId))) {
+      throw new ConflictException('No free spot on this table');
+    }
+    await this.publishQueue(group.tableId);
+    return (await this.queueRepository.findGroupById(groupId)) ?? group;
   }
 
-  /** Appelé par TablesService après une occupation réussie. */
-  async onTableOccupied(tableId: string, userId: string): Promise<void> {
-    const called = await this.queueRepository.findActiveCalledForTable(tableId);
-    if (!called || called.requester.id !== userId) {
+  /** Un membre quitte : invitation ou file annulée (le suivant est appelé si le groupe l'était), ou sortie d'un groupe seul sur la table. Impossible en plein match : il faut libérer la table. */
+  async leave(userId: string, groupId: string): Promise<void> {
+    const group = await this.getGroup(groupId);
+    this.assertMember(group, userId);
+    if (group.status === QueueGroupStatus.ON_TABLE) {
+      if (await this.queueRepository.findCurrentMatchId(group.tableId)) {
+        throw new ConflictException(
+          'A match is in progress: release the table instead',
+        );
+      }
+    }
+    const finalStatus =
+      group.status === QueueGroupStatus.ON_TABLE
+        ? QueueGroupStatus.DONE
+        : QueueGroupStatus.CANCELLED;
+    if (
+      !(await this.queueRepository.finishGroup(groupId, finalStatus, [
+        QueueGroupStatus.INVITING,
+        QueueGroupStatus.WAITING,
+        QueueGroupStatus.CALLED,
+        QueueGroupStatus.ON_TABLE,
+      ]))
+    ) {
+      throw new ConflictException('This group is already resolved');
+    }
+    this.clearTimer(`invite:${groupId}`);
+    this.clearTimer(`call:${groupId}`);
+    this.queueGateway.emitToUsers(
+      group.players.filter((p) => p.id !== userId).map((p) => p.id),
+      'queue:groupClosed',
+      { tableId: group.tableId, by: userId },
+    );
+    await this.queueRepository.syncTableState(group.tableId);
+    await this.advance(group.tableId);
+  }
+
+  /** Vote « libérer la table » d'un joueur du match (un second appel retire son vote) ; à 2 votes distincts le match s'arrête et le score est demandé. */
+  async toggleReleaseVote(
+    userId: string,
+    tableId: string,
+  ): Promise<TableEntity> {
+    const table = await this.queueRepository.getTable(tableId);
+    if (!table) {
+      throw new NotFoundException('Table not found');
+    }
+    const groups = await this.queueRepository.listOnTable(tableId);
+    if (!groups.some((group) => group.userIds.includes(userId))) {
+      throw new ForbiddenException('You are not playing on this table');
+    }
+    const matchId = await this.queueRepository.findCurrentMatchId(tableId);
+    if (!matchId) {
+      throw new ConflictException('No match in progress on this table');
+    }
+    if (table.endRequestedAt) {
+      throw new ConflictException(
+        'The table is already released: enter the score',
+      );
+    }
+    const votes = await this.queueRepository.toggleReleaseVote(tableId, userId);
+    if (
+      votes >= RELEASE_VOTES_REQUIRED &&
+      (await this.queueRepository.markEndRequested(tableId))
+    ) {
+      this.scheduleScoreTimeout(tableId);
+      this.queueGateway.emitToUsers(
+        groups.flatMap((group) => group.userIds),
+        'table:scoreRequired',
+        { tableId, matchId },
+      );
+    }
+    return this.tablesService.publish(tableId);
+  }
+
+  /** Appelé par MatchesService quand le score d'un match de table est soumis : le groupe perdant sort ; le gagnant reste si un groupe attend (il est alors appelé), sinon la table est libérée. */
+  async onMatchScored(matchId: string): Promise<void> {
+    const match = await this.queueRepository.getMatchInfo(matchId);
+    if (
+      !match?.tableId ||
+      match.tournamentTieId ||
+      match.scoreA === null ||
+      match.scoreB === null
+    ) {
       return;
     }
-    if (await this.queueRepository.markDone(called.id)) {
-      this.clearTimer(called.id);
-      await this.publish(tableId);
+    const tableId = match.tableId;
+    const groups = await this.queueRepository.listOnTable(tableId);
+    const winnerCaptain =
+      match.scoreA > match.scoreB ? match.teamAPlayer1Id : match.teamBPlayer1Id;
+    const winner = groups.find((group) =>
+      group.userIds.includes(winnerCaptain),
+    );
+    const loser = groups.find((group) => group !== winner);
+    if (!winner || !loser) {
+      await this.queueRepository.syncTableState(tableId);
+      return;
     }
+
+    this.clearTimer(`score:${tableId}`);
+    await this.queueRepository.finishGroup(loser.id, QueueGroupStatus.DONE, [
+      QueueGroupStatus.ON_TABLE,
+    ]);
+    const someoneWaiting =
+      (await this.queueRepository.countWaiting(tableId)) > 0;
+    if (!someoneWaiting) {
+      await this.queueRepository.finishGroup(winner.id, QueueGroupStatus.DONE, [
+        QueueGroupStatus.ON_TABLE,
+      ]);
+    }
+    await this.queueRepository.syncTableState(tableId);
+    this.queueGateway.emitToUsers(loser.userIds, 'table:matchEnded', {
+      tableId,
+      stays: false,
+    });
+    this.queueGateway.emitToUsers(winner.userIds, 'table:matchEnded', {
+      tableId,
+      stays: someoneWaiting,
+    });
+    await this.advance(tableId);
   }
 
-  /** Appelé par TablesService après une libération réussie. */
-  onTableFreed(tableId: string): Promise<void> {
-    return this.advanceQueue(tableId);
-  }
-
-  /** Vide la file d'une table qu'un tournoi vient de réquisitionner. */
-  async clearForTable(tableId: string): Promise<void> {
-    const entries = await this.queueRepository.cancelAllForTable(tableId);
-    for (const entry of entries) {
-      this.clearTimer(entry.id);
-      this.queueGateway.emitToUser(entry.requester.id, 'queue:expired', {
+  /** Vide une table qu'un tournoi vient de réquisitionner (file, groupes sur la table, match en cours) et retourne les joueurs qui étaient sur la table. */
+  async clearForTable(tableId: string): Promise<string[]> {
+    const cancelled = await this.queueRepository.cancelAllForTable(tableId);
+    this.clearTimer(`score:${tableId}`);
+    for (const group of cancelled) {
+      this.clearTimer(`invite:${group.id}`);
+      this.clearTimer(`call:${group.id}`);
+      this.queueGateway.emitToUsers(group.userIds, 'queue:expired', {
         tableId,
         reason: 'tournament',
       });
     }
-    if (entries.length > 0) {
-      await this.publish(tableId);
+    if (cancelled.length > 0) {
+      await this.publishQueue(tableId);
+      await this.tablesService.publish(tableId);
+    }
+    return cancelled
+      .filter((group) => group.onTable)
+      .flatMap((group) => group.userIds);
+  }
+
+  /** Vérifie l'ami invité : présent, différent du demandeur, existant, ami confirmé, et libre (pas déjà dans un groupe). */
+  private async assertValidTeammate(
+    userId: string,
+    teammateId: string | undefined,
+  ): Promise<void> {
+    if (!teammateId) {
+      throw new BadRequestException('teammateId is required for 2v2');
+    }
+    if (teammateId === userId) {
+      throw new BadRequestException('Invalid teammate');
+    }
+    if (!(await this.usersService.findUserById(teammateId))) {
+      throw new NotFoundException('Teammate not found');
+    }
+    if (
+      (await this.usersService.getFriendshipStatus(userId, teammateId)) !==
+      'friends'
+    ) {
+      throw new ForbiddenException('Your teammate must be one of your friends');
+    }
+    if (await this.queueRepository.findActiveGroupForUser(teammateId)) {
+      throw new ConflictException(
+        'Your friend is already on a table or in a queue',
+      );
     }
   }
 
-  private async advanceQueue(tableId: string): Promise<void> {
-    const table = await this.queueRepository.getTableStatus(tableId);
-    if (!table || table.status !== 'FREE' || table.claimedByTournament) {
-      return;
+  /** Place le groupe sur la table, lance le match si les 2 côtés sont occupés et diffuse la table ; false s'il n'y a plus de place. */
+  private async placeOnTable(groupId: string): Promise<boolean> {
+    const placed = await this.queueRepository.placeOnTable(groupId);
+    if (!placed) {
+      return false;
     }
-    if (await this.queueRepository.findActiveCalledForTable(tableId)) {
-      return;
-    }
-    const next = await this.queueRepository.findNextWaiting(tableId);
-    if (!next) {
-      return;
-    }
-    const expiresAt = new Date(Date.now() + QUEUE_TIMEOUT_MS);
-    if (!(await this.queueRepository.markCalled(next.id, expiresAt))) {
-      return;
-    }
-    this.scheduleExpiry(next.id, tableId);
-    this.queueGateway.emitToUser(next.requester.id, 'queue:called', {
-      tableId,
-      expiresAt,
-    });
-    await this.publish(tableId);
-  }
-
-  private scheduleExpiry(entryId: string, tableId: string): void {
-    const timer = setTimeout(() => {
-      void this.handleExpiry(entryId, tableId);
-    }, QUEUE_TIMEOUT_MS);
-    this.timers.set(entryId, timer);
-  }
-
-  private async handleExpiry(entryId: string, tableId: string): Promise<void> {
-    this.timers.delete(entryId);
-    const entry = await this.queueRepository.findById(entryId);
-    if (!(await this.queueRepository.markExpired(entryId))) {
-      return;
-    }
-    if (entry) {
-      this.queueGateway.emitToUser(entry.requester.id, 'queue:expired', {
-        tableId,
+    this.clearTimer(`call:${groupId}`);
+    const started = await this.queueRepository.startMatchIfReady(
+      placed.tableId,
+    );
+    await this.tablesService.publish(placed.tableId);
+    if (started) {
+      this.queueGateway.emitToUsers(started.playerIds, 'table:matchStarted', {
+        tableId: placed.tableId,
+        matchId: started.matchId,
       });
     }
-    await this.publish(tableId);
-    await this.advanceQueue(tableId);
+    return true;
   }
 
-  private clearTimer(entryId: string): void {
-    const timer = this.timers.get(entryId);
-    if (timer) {
-      clearTimeout(timer);
-      this.timers.delete(entryId);
+  /** Fait avancer la file : place directement le groupe `directGroupId` s'il est en tête et qu'un côté est libre sans personne d'appelé, puis appelle autant de groupes en attente qu'il y a de côtés libres. */
+  private async advance(
+    tableId: string,
+    directGroupId?: string,
+  ): Promise<void> {
+    const table = await this.queueRepository.getTable(tableId);
+    if (!table || table.claimedByTournament) {
+      return;
+    }
+    const onTable = await this.queueRepository.countOnTable(tableId);
+    let called = await this.queueRepository.countCalled(tableId);
+
+    if (directGroupId && onTable < 2 && called === 0) {
+      const head = await this.queueRepository.findNextWaiting(tableId);
+      if (
+        head?.id === directGroupId &&
+        (await this.placeOnTable(directGroupId))
+      ) {
+        await this.publishQueue(tableId);
+        return;
+      }
+    }
+
+    while (onTable + called < 2) {
+      const next = await this.queueRepository.findNextWaiting(tableId);
+      if (!next) {
+        break;
+      }
+      const expiresAt = new Date(Date.now() + QUEUE_TIMEOUT_MS);
+      if (!(await this.queueRepository.markCalled(next.id, expiresAt))) {
+        break;
+      }
+      this.scheduleCallExpiry(next.id, tableId, QUEUE_TIMEOUT_MS);
+      this.queueGateway.emitToUsers(
+        next.players.map((player) => player.id),
+        'queue:called',
+        { tableId, groupId: next.id, expiresAt },
+      );
+      called++;
+    }
+    await this.publishQueue(tableId);
+    await this.tablesService.publish(tableId);
+  }
+
+  /** Programme l'expiration d'un groupe appelé. */
+  private scheduleCallExpiry(
+    groupId: string,
+    tableId: string,
+    delayMs: number,
+  ): void {
+    this.setTimer(`call:${groupId}`, delayMs, () =>
+      this.handleCallExpiry(groupId, tableId),
+    );
+  }
+
+  /** Programme l'annulation d'une invitation restée sans réponse. */
+  private scheduleInviteExpiry(groupId: string, tableId: string): void {
+    this.setTimer(`invite:${groupId}`, INVITE_TIMEOUT_MS, () =>
+      this.handleInviteExpiry(groupId, tableId),
+    );
+  }
+
+  /** Programme l'annulation du match si le score n'est pas saisi après la libération de la table. */
+  private scheduleScoreTimeout(tableId: string): void {
+    this.setTimer(`score:${tableId}`, SCORE_ENTRY_TIMEOUT_MS, () =>
+      this.handleScoreTimeout(tableId),
+    );
+  }
+
+  /** Marque le groupe comme expiré s'il est toujours appelé, prévient ses joueurs et appelle le suivant. */
+  private async handleCallExpiry(
+    groupId: string,
+    tableId: string,
+  ): Promise<void> {
+    const group = await this.queueRepository.findGroupById(groupId);
+    if (
+      !(await this.queueRepository.finishGroup(
+        groupId,
+        QueueGroupStatus.EXPIRED,
+        [QueueGroupStatus.CALLED],
+      ))
+    ) {
+      return;
+    }
+    if (group) {
+      this.queueGateway.emitToUsers(
+        group.players.map((player) => player.id),
+        'queue:expired',
+        { tableId },
+      );
+    }
+    await this.queueRepository.syncTableState(tableId);
+    await this.advance(tableId);
+  }
+
+  /** Annule le groupe dont le coéquipier n'a pas répondu à temps et prévient les deux joueurs. */
+  private async handleInviteExpiry(
+    groupId: string,
+    tableId: string,
+  ): Promise<void> {
+    const group = await this.queueRepository.findGroupById(groupId);
+    if (
+      !(await this.queueRepository.finishGroup(
+        groupId,
+        QueueGroupStatus.CANCELLED,
+        [QueueGroupStatus.INVITING],
+      ))
+    ) {
+      return;
+    }
+    if (group) {
+      this.queueGateway.emitToUsers(
+        group.players.map((player) => player.id),
+        'queue:expired',
+        { tableId, reason: 'invite' },
+      );
+    }
+    await this.queueRepository.syncTableState(tableId);
+    await this.tablesService.publish(tableId);
+  }
+
+  /** Score jamais saisi : le match est annulé, les deux groupes sortent et la file avance. */
+  private async handleScoreTimeout(tableId: string): Promise<void> {
+    const table = await this.queueRepository.getTable(tableId);
+    if (!table?.endRequestedAt) {
+      return;
+    }
+    const matchId = await this.queueRepository.findCurrentMatchId(tableId);
+    const groups = await this.queueRepository.listOnTable(tableId);
+    if (matchId) {
+      await this.queueRepository.cancelMatch(matchId);
+    }
+    for (const group of groups) {
+      await this.queueRepository.finishGroup(group.id, QueueGroupStatus.DONE, [
+        QueueGroupStatus.ON_TABLE,
+      ]);
+    }
+    await this.queueRepository.syncTableState(tableId);
+    this.queueGateway.emitToUsers(
+      groups.flatMap((group) => group.userIds),
+      'table:matchCancelled',
+      { tableId, matchId },
+    );
+    await this.advance(tableId);
+  }
+
+  /** Retrouve un groupe par id ou lève une NotFoundException. */
+  private async getGroup(groupId: string): Promise<QueueGroupEntity> {
+    const group = await this.queueRepository.findGroupById(groupId);
+    if (!group) {
+      throw new NotFoundException('Queue group not found');
+    }
+    return group;
+  }
+
+  /** Lève une ForbiddenException si l'utilisateur ne fait pas partie du groupe. */
+  private assertMember(group: QueueGroupEntity, userId: string): void {
+    if (!group.players.some((player) => player.id === userId)) {
+      throw new ForbiddenException('Not your group');
     }
   }
 
-  private async publish(tableId: string): Promise<void> {
-    const entries = await this.queueRepository.listActiveForTable(tableId);
-    this.queueGateway.emitQueueUpdate(tableId, entries);
+  /** Diffuse en temps réel la liste à jour de la file d'une table à tous les clients. */
+  private async publishQueue(tableId: string): Promise<void> {
+    const groups = await this.queueRepository.listQueue(tableId);
+    this.queueGateway.emitQueueUpdate(tableId, groups);
+  }
+
+  /** Arme (en remplaçant l'éventuel précédent) un minuteur dont les erreurs sont journalisées au lieu de faire tomber le process. */
+  private setTimer(
+    key: string,
+    delayMs: number,
+    task: () => Promise<void>,
+  ): void {
+    this.clearTimer(key);
+    const timer = setTimeout(() => {
+      this.timers.delete(key);
+      task().catch((error: unknown) =>
+        this.logger.error(`Timer ${key} failed: ${String(error)}`),
+      );
+    }, delayMs);
+    this.timers.set(key, timer);
+  }
+
+  /** Annule et oublie un minuteur, s'il existe. */
+  private clearTimer(key: string): void {
+    const timer = this.timers.get(key);
+    if (timer) {
+      clearTimeout(timer);
+      this.timers.delete(key);
+    }
   }
 }

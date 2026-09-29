@@ -4,6 +4,7 @@ import { UsersModule } from '../users/users.module';
 import { TablesModule } from '../tables/tables.module';
 import { QueueModule } from '../queue/queue.module';
 import { BadgesModule } from '../badges/badges.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { TournamentsController } from './tournaments.controller';
 import { TournamentsGateway } from './tournaments.gateway';
 import { TournamentsRepository } from './repositories/tournaments.repository';
@@ -17,6 +18,7 @@ import { TournamentsService } from './services/tournaments.service';
     TablesModule,
     QueueModule,
     BadgesModule,
+    NotificationsModule,
   ],
   controllers: [TournamentsController],
   providers: [TournamentsService, TournamentsRepository, TournamentsGateway],

@@ -1,8 +1,9 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useMeQuery } from "@/features/auth/authApi";
 import { useListConversationsQuery, type Conversation } from "@/features/chat/chatApi";
 import { useListTablesQuery } from "@/features/tables/tablesApi";
@@ -11,10 +12,15 @@ import {
   useGetUserQuery,
   useListFriendsQuery,
   useListPendingFriendsQuery,
+  useSearchUsersQuery,
 } from "@/features/users/usersApi";
 import { getInitials, resolveAvatarUrl } from "@/lib/user";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
+
+const SEARCH_RESULTS_LIMIT = 6;
+/** Laisse le temps à un clic sur un résultat d'être enregistré avant que le flou ne referme la liste. */
+const SEARCH_BLUR_DELAY_MS = 150;
 
 function Panel({
   title,
@@ -96,6 +102,91 @@ function RecentConversation({
   );
 }
 
+/** Barre de recherche de joueurs, à l'accueil : résultats en direct sous le champ, comme une invite de commande ("/"). */
+function PlayerSearch() {
+  const { t } = useTranslation();
+  const [query, setQuery] = useState("");
+  const [focused, setFocused] = useState(false);
+  const trimmed = query.trim();
+  const { data, isFetching } = useSearchUsersQuery(
+    { q: trimmed, limit: SEARCH_RESULTS_LIMIT },
+    { skip: trimmed.length === 0 },
+  );
+  const open = focused && trimmed.length > 0;
+  const results = data?.items ?? [];
+
+  return (
+    <div className="relative w-full max-w-md">
+      <div className="flex h-9 items-center gap-2 border border-border bg-card px-3 transition-colors focus-within:border-primary/60">
+        <span aria-hidden className="font-mono text-xs text-primary">
+          /
+        </span>
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setTimeout(() => setFocused(false), SEARCH_BLUR_DELAY_MS)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              setQuery("");
+              e.currentTarget.blur();
+            }
+          }}
+          placeholder={t("home.searchPlaceholder")}
+          aria-label={t("home.searchLabel")}
+          className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+        />
+      </div>
+
+      {open ? (
+        <div className="absolute z-20 mt-1 w-full border border-border bg-card shadow-lg">
+          {isFetching ? (
+            <div role="status" aria-live="polite" className="flex flex-col gap-3 p-3">
+              <span className="sr-only">{t("common.loading")}</span>
+              {Array.from({ length: 3 }, (_, index) => (
+                <div key={index} className="flex items-center gap-3">
+                  <Skeleton className="size-8 shrink-0 rounded-full" />
+                  <Skeleton className="h-3.5 w-28" />
+                </div>
+              ))}
+            </div>
+          ) : results.length === 0 ? (
+            <p className="px-3 py-3 text-sm text-muted-foreground">
+              {t("home.searchNoResults")}
+            </p>
+          ) : (
+            <ul className="flex flex-col p-1">
+              {results.map((user) => (
+                <li key={user.id}>
+                  <Link
+                    to={ROUTES.profile(user.id)}
+                    className="flex items-center gap-3 px-2 py-2 hover:bg-accent"
+                  >
+                    <Avatar className="size-8">
+                      <AvatarImage src={resolveAvatarUrl(user.avatarUrl)} alt={user.displayname} />
+                      <AvatarFallback className="text-xs">
+                        {getInitials(user.displayname)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                      {user.displayname}
+                    </span>
+                    {user.friendshipStatus === "friends" ? (
+                      <span className="shrink-0 text-[10px] uppercase tracking-wider text-primary">
+                        {t("friends.already")}
+                      </span>
+                    ) : null}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export const Home = () => {
   const { t, i18n } = useTranslation();
   const { data: me } = useMeQuery();
@@ -127,6 +218,8 @@ export const Home = () => {
           {today} · {t("home.onlineCount", { count: onlineCount })}
         </p>
       </header>
+
+      <PlayerSearch />
 
       {pendingCount > 0 ? (
         <div className="flex items-center justify-between gap-3 border border-primary/60 bg-primary/10 px-4 py-3">

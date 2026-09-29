@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 import { PresenceModule } from '../presence/presence.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { UserRepository } from './repositories/users.repository';
 import { UsersService } from './services/users.services';
 import { UsersController } from './users.controller';
@@ -12,6 +13,7 @@ import { UsersController } from './users.controller';
     PrismaModule,
     forwardRef(() => AuthModule),
     forwardRef(() => PresenceModule),
+    forwardRef(() => NotificationsModule),
   ],
   controllers: [UsersController],
   providers: [UsersService, UserRepository],

@@ -11,4 +11,5 @@ export const TAG_TYPES = {
   MATCHES: "Matches",
   TOURNAMENTS: "Tournaments",
   BADGES: "Badges",
+  NOTIFICATIONS: "Notifications",
 };

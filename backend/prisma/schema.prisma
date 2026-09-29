@@ -77,6 +77,36 @@ enum FriendshipStatus {
   ACCEPTED
 }
 
+// Historique persistant des notifications personnelles (hors chat, qui a déjà
+// son propre système de non-lus). Un événement temps réel qui concerne un
+// utilisateur précis crée aussi une ligne ici ; `data` porte tout ce qu'il
+// faut pour l'afficher sans requête supplémentaire (noms déjà résolus).
+enum NotificationType {
+  FRIEND_REQUEST
+  MATCH_PROPOSED
+  MATCH_ACCEPTED
+  MATCH_DECLINED
+  MATCH_SCORE_SUBMITTED
+  MATCH_COMPLETED
+  MATCH_DISPUTED
+  QUEUE_INVITE
+  QUEUE_INVITE_DECLINED
+  QUEUE_GROUP_CLOSED
+  QUEUE_CALLED
+  QUEUE_EXPIRED
+  TABLE_MATCH_STARTED
+  TABLE_SCORE_REQUIRED
+  TABLE_MATCH_ENDED
+  TABLE_MATCH_CANCELLED
+  TOURNAMENT_LAUNCHED
+  TOURNAMENT_TABLE_RECLAIMED
+  TOURNAMENT_TIE_STARTED
+  TOURNAMENT_TIE_WON
+  TOURNAMENT_ELIMINATED
+  TOURNAMENT_COMPLETED
+  BADGE_EARNED
+}
+
 enum ThemePreference {
   light
   dark
@@ -147,6 +177,7 @@ model User {
   blocksReceived             Block[]            @relation("BlocksReceived")
   queueMemberships           QueueGroupMember[]
   releaseVotes               TableReleaseVote[]
+  notifications              Notification[]
   matchesAsTeamAPlayer1      Match[]            @relation("MatchTeamAPlayer1")
   matchesAsTeamAPlayer2      Match[]            @relation("MatchTeamAPlayer2")
   matchesAsTeamBPlayer1      Match[]            @relation("MatchTeamBPlayer1")
@@ -397,4 +428,16 @@ model UserBadge {
 
   @@unique([userId, code])
   @@index([userId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  data      Json
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read, createdAt])
 }

@@ -75,9 +75,6 @@ export function MatchHistoryList({ meId }: { meId: string }) {
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-        {t("matches.history")}
-      </h2>
       {isLoading ? (
         <ListSkeleton count={HISTORY_PAGE_SIZE / 2} action />
       ) : history.length === 0 ? (

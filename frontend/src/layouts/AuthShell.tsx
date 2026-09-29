@@ -1,12 +1,11 @@
-import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { LegalLinks } from "@/components/legal-links";
 import { GridBackdrop } from "@/components/grid-backdrop";
+import { Logo } from "@/components/logo";
 import { setLanguage } from "@/features/settings/settingsSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 export function AuthShell({ children }: { children: React.ReactNode }) {
-  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const language = useAppSelector((s) => s.settings.language);
 
@@ -16,10 +15,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
 
       <main className="relative z-10 w-full max-w-md animate-in fade-in slide-in-from-bottom-2 duration-500">
         <div className="mb-6 flex items-center justify-between gap-3">
-          <p className="font-heading text-xs font-bold tracking-[0.2em] text-primary uppercase">
-            {">_ "}
-            {t("common.brand")}
-          </p>
+          <Logo className="text-base" />
           <div className="flex gap-1">
             {(["en", "fr", "es"] as const).map((lng) => (
               <Button

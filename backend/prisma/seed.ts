@@ -287,29 +287,29 @@ function playMatch({
 // dessinent un vrai classement (Alice en forme, Bob solide, Ewan/Ivan
 // débutants qui galèrent, etc.) avant même le tournoi.
 const LADDER_RESULTS = [
-  ['seed_alice', 'seed_ivan', 11, 3],
-  ['seed_bob', 'seed_charlie', 11, 7],
-  ['seed_diana', 'seed_ewan', 11, 9],
-  ['seed_gabriel', 'seed_fatima', 11, 5],
-  ['seed_helena', 'seed_ivan', 11, 6],
-  ['seed_alice', 'seed_bob', 11, 8],
-  ['seed_charlie', 'seed_diana', 11, 9],
-  ['seed_gabriel', 'seed_helena', 11, 4],
-  ['seed_fatima', 'seed_ewan', 11, 10],
-  ['seed_alice', 'seed_charlie', 11, 2],
-  ['seed_bob', 'seed_ivan', 11, 5],
-  ['seed_diana', 'seed_fatima', 11, 8],
-  ['seed_gabriel', 'seed_ewan', 11, 6],
-  ['seed_helena', 'seed_charlie', 11, 9],
-  ['seed_alice', 'seed_diana', 11, 7],
-  ['seed_bob', 'seed_gabriel', 11, 9],
-  ['seed_fatima', 'seed_helena', 11, 10],
-  ['seed_alice', 'seed_ewan', 11, 3],
-  ['seed_gabriel', 'seed_diana', 11, 8],
-  ['seed_bob', 'seed_fatima', 11, 6],
-  ['seed_alice', 'seed_helena', 11, 5],
-  ['seed_charlie', 'seed_ivan', 11, 9],
-  ['seed_alice', 'seed_gabriel', 11, 9],
+  ['seed_alice', 'seed_ivan', 10, 3],
+  ['seed_bob', 'seed_charlie', 10, 7],
+  ['seed_diana', 'seed_ewan', 10, 9],
+  ['seed_gabriel', 'seed_fatima', 10, 5],
+  ['seed_helena', 'seed_ivan', 10, 6],
+  ['seed_alice', 'seed_bob', 10, 8],
+  ['seed_charlie', 'seed_diana', 10, 9],
+  ['seed_gabriel', 'seed_helena', 10, 4],
+  ['seed_fatima', 'seed_ewan', 10, 9],
+  ['seed_alice', 'seed_charlie', 10, 2],
+  ['seed_bob', 'seed_ivan', 10, 5],
+  ['seed_diana', 'seed_fatima', 10, 8],
+  ['seed_gabriel', 'seed_ewan', 10, 6],
+  ['seed_helena', 'seed_charlie', 10, 9],
+  ['seed_alice', 'seed_diana', 10, 7],
+  ['seed_bob', 'seed_gabriel', 10, 9],
+  ['seed_fatima', 'seed_helena', 10, 9],
+  ['seed_alice', 'seed_ewan', 10, 3],
+  ['seed_gabriel', 'seed_diana', 10, 8],
+  ['seed_bob', 'seed_fatima', 10, 6],
+  ['seed_alice', 'seed_helena', 10, 5],
+  ['seed_charlie', 'seed_ivan', 10, 9],
+  ['seed_alice', 'seed_gabriel', 10, 9],
 ];
 
 LADDER_RESULTS.forEach(([a, b, scoreA, scoreB], index) => {
@@ -407,7 +407,7 @@ const t1r1s0 = tournamentTie1v1({
   slot: 0,
   entryA: t1EntryByPlayer['seed_alice'],
   entryB: t1EntryByPlayer['seed_ivan'],
-  scoreA: 11,
+  scoreA: 10,
   scoreB: 2,
   at: daysAgo(5),
   tableId: 'table_a',
@@ -418,7 +418,7 @@ const t1r1s1 = tournamentTie1v1({
   slot: 1,
   entryA: t1EntryByPlayer['seed_bob'],
   entryB: t1EntryByPlayer['seed_charlie'],
-  scoreA: 11,
+  scoreA: 10,
   scoreB: 6,
   at: daysAgo(5),
   tableId: 'table_b',
@@ -429,7 +429,7 @@ const t1r1s2 = tournamentTie1v1({
   slot: 2,
   entryA: t1EntryByPlayer['seed_diana'],
   entryB: t1EntryByPlayer['seed_ewan'],
-  scoreA: 11,
+  scoreA: 10,
   scoreB: 7,
   at: daysAgo(5),
   tableId: 'table_a',
@@ -441,7 +441,7 @@ const t1r1s3 = tournamentTie1v1({
   entryA: t1EntryByPlayer['seed_fatima'],
   entryB: t1EntryByPlayer['seed_gabriel'],
   scoreA: 8,
-  scoreB: 11,
+  scoreB: 10,
   at: daysAgo(5),
   tableId: 'table_b',
 });
@@ -461,7 +461,7 @@ const t1r2s0 = tournamentTie1v1({
     t1EntryByPlayer['seed_bob'],
     t1EntryByPlayer['seed_charlie'],
   ),
-  scoreA: 11,
+  scoreA: 10,
   scoreB: 7,
   at: daysAgo(4),
   tableId: 'table_a',
@@ -481,7 +481,7 @@ const t1r2s1 = tournamentTie1v1({
     t1EntryByPlayer['seed_gabriel'],
   ),
   scoreA: 7,
-  scoreB: 11,
+  scoreB: 10,
   at: daysAgo(4),
   tableId: 'table_b',
 });
@@ -516,7 +516,7 @@ const t1r3s0 = tournamentTie1v1({
       t1EntryByPlayer['seed_gabriel'],
     ),
   ),
-  scoreA: 11,
+  scoreA: 10,
   scoreB: 9,
   at: daysAgo(3),
   tableId: 'table_a',
@@ -573,7 +573,7 @@ const tournament2: any = {
 const { id: t2LegId, winnerEntrySide: t2WinnerSide } = playMatch({
   teamAIds: ['seed_bob', 'seed_charlie'],
   teamBIds: ['seed_diana', 'seed_ewan'],
-  scoreA: 11,
+  scoreA: 10,
   scoreB: 9,
   at: daysAgo(2),
   format: 'TWO_V_TWO',
@@ -656,7 +656,7 @@ const tournament3: any = {
 playMatch({
   teamAIds: ['seed_helena'],
   teamBIds: ['seed_alice'],
-  scoreA: 11,
+  scoreA: 10,
   scoreB: 8,
   at: daysAgo(1),
 });
@@ -713,7 +713,7 @@ const liveMatches = [
     teamAPlayer2Id: null,
     teamBPlayer1Id: 'seed_fatima',
     teamBPlayer2Id: null,
-    scoreA: 11,
+    scoreA: 10,
     scoreB: 7,
     submittedById: 'seed_diana',
     validatedById: null,
@@ -733,7 +733,7 @@ const liveMatches = [
     teamAPlayer2Id: null,
     teamBPlayer1Id: 'seed_helena',
     teamBPlayer2Id: null,
-    scoreA: 11,
+    scoreA: 10,
     scoreB: 9,
     submittedById: 'seed_ewan',
     validatedById: null,
@@ -1180,10 +1180,17 @@ async function main() {
           });
         }
 
-        // Nettoie d'anciens groupes de démo restés sur les tables (les
-        // membres partent en cascade avec les utilisateurs supprimés plus haut).
+        // Repart d'une file/table vide sur table_a et table_b : au-delà des
+        // groupes de démo (nettoyés en cascade avec les utilisateurs plus
+        // haut), on efface aussi tout résidu d'utilisation réelle de l'app
+        // (parties jouées pendant les tests), sans quoi un groupe ON_TABLE
+        // oublié entrerait en conflit avec l'index unique (tableId, slot).
+        const tableIds = tables.map((t) => t.id);
+        await tx.tableReleaseVote.deleteMany({
+          where: { tableId: { in: tableIds } },
+        });
         await tx.queueGroup.deleteMany({
-          where: { id: { startsWith: 'seed_qg_' } },
+          where: { tableId: { in: tableIds } },
         });
 
         for (const q of queueGroups) {

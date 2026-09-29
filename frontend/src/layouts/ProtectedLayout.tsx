@@ -7,6 +7,7 @@ import { QueueBootstrap } from "@/features/queue/QueueBootstrap";
 import { MatchesBootstrap } from "@/features/matches/MatchesBootstrap";
 import { TournamentsBootstrap } from "@/features/tournaments/TournamentsBootstrap";
 import { BadgesBootstrap } from "@/features/badges/BadgesBootstrap";
+import { NotificationsBootstrap } from "@/features/notifications/NotificationsBootstrap";
 import { SettingsBootstrap } from "@/features/settings/SettingsBootstrap";
 import { ROUTES } from "@/constants/routes";
 
@@ -26,7 +27,9 @@ export const ProtectedLayout = () => {
               <MatchesBootstrap>
                 <TournamentsBootstrap>
                   <BadgesBootstrap>
-                    <Outlet />
+                    <NotificationsBootstrap>
+                      <Outlet />
+                    </NotificationsBootstrap>
                   </BadgesBootstrap>
                 </TournamentsBootstrap>
               </MatchesBootstrap>

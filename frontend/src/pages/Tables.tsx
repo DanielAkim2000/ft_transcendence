@@ -380,11 +380,14 @@ function TableActions({
   const [vote, { isLoading: voting }] = useVoteReleaseTableMutation();
   const [leave, { isLoading: leaving }] = useLeaveQueueGroupMutation();
   const [showScore, setShowScore] = useState(false);
-  const playing = table.groups.some((group) =>
-    group.players.some((player) => player.id === meId),
+  const playerIds = new Set(
+    table.groups.flatMap((group) => group.players.map((player) => player.id)),
   );
+  const playing = meId ? playerIds.has(meId) : false;
   const myGroupHere = myGroup?.tableId === table.id ? myGroup : null;
   const hasVoted = meId ? table.releaseVoterIds.includes(meId) : false;
+  const playerVoteCount = table.releaseVoterIds.filter((id) => playerIds.has(id)).length;
+  const externalVoteCount = table.releaseVoterIds.length - playerVoteCount;
   const queueEmpty = !myGroup;
   const canJoin = queueEmpty && !table.currentTournamentTie;
 
@@ -398,9 +401,9 @@ function TableActions({
           </>
         ) : (
           <>
-            {table.releaseVoterIds.length > 0 ? (
+            {playerVoteCount > 0 ? (
               <p className="text-center text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                {t("tables.releaseVotes", { count: table.releaseVoterIds.length })}
+                {t("tables.releaseVotes", { count: playerVoteCount })}
               </p>
             ) : null}
             {hasVoted ? (
@@ -471,17 +474,60 @@ function TableActions({
     );
   }
 
-  if (canJoin) {
-    return (
-      <JoinDialog table={table}>
-        <Button type="button" className="w-full">
-          {table.groups.length === 0 && !table.format ? t("tables.take") : t("queue.join")}
+  // Spectateur (ou joueur en file ailleurs) : peut signaler la table comme
+  // abandonnée (2 votes distincts d'utilisateurs extérieurs au match
+  // suffisent à l'annuler) et/ou rejoindre la file de cette table.
+  const externalVoteBlock = table.currentMatchId ? (
+    <div className="flex flex-col gap-2">
+      {externalVoteCount > 0 ? (
+        <p className="text-center text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+          {t("tables.forceReleaseVotes", { count: externalVoteCount })}
+        </p>
+      ) : null}
+      {hasVoted ? (
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          disabled={voting}
+          onClick={() => void run(() => vote(table.id).unwrap())}
+        >
+          {t("tables.cancelRelease")}
         </Button>
-      </JoinDialog>
-    );
+      ) : (
+        <ConfirmDialog
+          title={t("tables.forceReleaseTitle")}
+          description={t("tables.forceReleaseDescription", { name: table.name })}
+          confirmLabel={t("tables.reportFree")}
+          loading={voting}
+          onConfirm={() => run(() => vote(table.id).unwrap())}
+        >
+          <Button type="button" variant="outline" className="w-full">
+            {t("tables.reportFree")}
+          </Button>
+        </ConfirmDialog>
+      )}
+    </div>
+  ) : null;
+
+  const joinBlock = canJoin ? (
+    <JoinDialog table={table}>
+      <Button type="button" className="w-full">
+        {table.groups.length === 0 && !table.format ? t("tables.take") : t("queue.join")}
+      </Button>
+    </JoinDialog>
+  ) : null;
+
+  if (!externalVoteBlock && !joinBlock) {
+    return null;
   }
 
-  return null;
+  return (
+    <div className="flex flex-col gap-3">
+      {externalVoteBlock}
+      {joinBlock}
+    </div>
+  );
 }
 
 function TableCard({

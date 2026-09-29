@@ -18,11 +18,17 @@ export class TablesService {
 
   /** Relit la table, la diffuse via la gateway et la retourne (appelé par la file après chaque changement d'état). */
   async publish(tableId: string): Promise<TableEntity> {
+    const table = await this.getById(tableId);
+    this.tablesGateway.emitTableUpdate(table);
+    return table;
+  }
+
+  /** Retrouve une table par id sans la diffuser (usage interne, ex. libellé pour une notification). */
+  async getById(tableId: string): Promise<TableEntity> {
     const table = await this.tablesRepository.findById(tableId);
     if (!table) {
       throw new NotFoundException('Table not found');
     }
-    this.tablesGateway.emitTableUpdate(table);
     return table;
   }
 

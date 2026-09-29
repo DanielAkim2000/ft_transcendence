@@ -10,6 +10,8 @@ import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { UserRepository } from '../repositories/users.repository';
 import { PresenceGateway } from '../../presence/presence.gateway';
+import { NotificationsService } from '../../notifications/services/notifications.service';
+import { NotificationType } from '../../notifications/entities/notification.entity';
 import { RefreshToken, Status, UserEntity } from '../entities/users.entity';
 import { Profile42Dto } from '../../auth/dtos/profile42.dto';
 import { RegisterDto } from '../../auth/dtos/register.dto';
@@ -27,11 +29,13 @@ export type UserWithFriendship = UserEntity & {
 
 @Injectable()
 export class UsersService {
-  /** Injecte les dépendances : UserRepository, PresenceGateway. */
+  /** Injecte les dépendances : UserRepository, PresenceGateway, NotificationsService. */
   constructor(
     private readonly userRepository: UserRepository,
     @Inject(forwardRef(() => PresenceGateway))
     private readonly presenceGateway: PresenceGateway,
+    @Inject(forwardRef(() => NotificationsService))
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /** Retrouve un utilisateur par id, ou null. */
@@ -189,6 +193,11 @@ export class UsersService {
       this.presenceGateway.emitToUser(addresseeId, 'friend:request', {
         userId: requester.id,
       });
+      await this.notificationsService.create(
+        addresseeId,
+        NotificationType.FRIEND_REQUEST,
+        { fromId: requester.id, fromName: requester.displayname },
+      );
       return addressee;
     }
     if (existing.status === 'ACCEPTED') {

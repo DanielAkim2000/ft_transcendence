@@ -18,6 +18,11 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      // Rien sur la console en éval : passer par lib/logger.ts (seul fichier
+      // autorisé, via un eslint-disable ciblé) plutôt que console.* directement.
+      'no-console': 'error',
+    },
   },
   {
     // shadcn/ui exporte des variants et hooks à côté des composants

@@ -52,6 +52,10 @@ export const API_ROUTES = {
 
   badges: (userId: string) => `/badges/${userId}`,
 
+  NOTIFICATIONS: "/notifications",
+  NOTIFICATIONS_UNREAD_COUNT: "/notifications/unread-count",
+  NOTIFICATIONS_READ_ALL: "/notifications/read-all",
+
   CHAT_CONVERSATIONS: "/chat/conversations",
   CHAT_BLOCKS: "/chat/blocks",
   chatMessages: (conversationId: string) =>

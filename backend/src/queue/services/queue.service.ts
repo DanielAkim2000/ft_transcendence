@@ -18,6 +18,8 @@ import { TableEntity } from '../../tables/entities/table.entity';
 import { UsersService } from '../../users/services/users.services';
 import { MatchFormat } from '../../matches/entities/match.entity';
 import { Prisma } from '../../generated/prisma/client';
+import { NotificationsService } from '../../notifications/services/notifications.service';
+import { NotificationType } from '../../notifications/entities/notification.entity';
 
 /** Temps laissé à un groupe appelé pour confirmer sa présence à la table (règle métier : 2-3 min). */
 export const QUEUE_TIMEOUT_MS = 2 * 60 * 1000;
@@ -25,7 +27,7 @@ export const QUEUE_TIMEOUT_MS = 2 * 60 * 1000;
 export const INVITE_TIMEOUT_MS = 60 * 1000;
 /** Temps laissé aux joueurs pour saisir le score après la libération de la table, sinon le match est annulé. */
 export const SCORE_ENTRY_TIMEOUT_MS = 10 * 60 * 1000;
-/** Nombre de joueurs distincts qui doivent cliquer sur « libérer la table » pour arrêter le match. */
+/** Nombre de votes distincts (d'une même catégorie) nécessaires pour agir sur « libérer la table ». */
 export const RELEASE_VOTES_REQUIRED = 2;
 
 @Injectable()
@@ -33,12 +35,13 @@ export class QueueService implements OnModuleInit {
   private readonly logger = new Logger(QueueService.name);
   private readonly timers = new Map<string, NodeJS.Timeout>();
 
-  /** Injecte les dépendances : QueueRepository, QueueGateway, TablesService, UsersService. */
+  /** Injecte les dépendances : QueueRepository, QueueGateway, TablesService, UsersService, NotificationsService. */
   constructor(
     private readonly queueRepository: QueueRepository,
     private readonly queueGateway: QueueGateway,
     private readonly tablesService: TablesService,
     private readonly usersService: UsersService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /** Réarme les délais (appel, invitation, saisie du score) qui étaient en cours avant un redémarrage. */
@@ -136,7 +139,17 @@ export class QueueService implements OnModuleInit {
         tableId,
         from: requester?.displayname ?? '?',
       });
-      await this.tablesService.publish(tableId);
+      const table = await this.tablesService.publish(tableId);
+      await this.notificationsService.create(
+        teammateId,
+        NotificationType.QUEUE_INVITE,
+        {
+          tableId,
+          tableName: table.name,
+          fromName: requester?.displayname ?? '?',
+          groupId: group.id,
+        },
+      );
       return group;
     }
 
@@ -176,7 +189,16 @@ export class QueueService implements OnModuleInit {
         'queue:inviteDeclined',
         { tableId: group.tableId, by: me.displayname },
       );
-      await this.tablesService.publish(group.tableId);
+      const table = await this.tablesService.publish(group.tableId);
+      await this.notificationsService.createForUsers(
+        group.players.filter((p) => p.isRequester).map((p) => p.id),
+        NotificationType.QUEUE_INVITE_DECLINED,
+        {
+          tableId: group.tableId,
+          tableName: table.name,
+          byName: me.displayname,
+        },
+      );
       return null;
     }
 
@@ -228,16 +250,28 @@ export class QueueService implements OnModuleInit {
     }
     this.clearTimer(`invite:${groupId}`);
     this.clearTimer(`call:${groupId}`);
-    this.queueGateway.emitToUsers(
-      group.players.filter((p) => p.id !== userId).map((p) => p.id),
-      'queue:groupClosed',
-      { tableId: group.tableId, by: userId },
-    );
+    const remainingIds = group.players
+      .filter((p) => p.id !== userId)
+      .map((p) => p.id);
+    this.queueGateway.emitToUsers(remainingIds, 'queue:groupClosed', {
+      tableId: group.tableId,
+      by: userId,
+    });
+    if (remainingIds.length > 0) {
+      const byName =
+        group.players.find((p) => p.id === userId)?.displayname ?? '?';
+      const table = await this.tablesService.getById(group.tableId);
+      await this.notificationsService.createForUsers(
+        remainingIds,
+        NotificationType.QUEUE_GROUP_CLOSED,
+        { tableId: group.tableId, tableName: table.name, byName },
+      );
+    }
     await this.queueRepository.syncTableState(group.tableId);
     await this.advance(group.tableId);
   }
 
-  /** Vote « libérer la table » d'un joueur du match (un second appel retire son vote) ; à 2 votes distincts le match s'arrête et le score est demandé. */
+  /** Vote « libérer la table », ouvert à n'importe quel utilisateur connecté (un second appel retire son propre vote) : à 2 joueurs du match distincts, le score est demandé ; à 2 utilisateurs distincts extérieurs au match (spectateurs, file d'attente…), la table est jugée abandonnée et le match est annulé sur-le-champ, sans score. */
   async toggleReleaseVote(
     userId: string,
     tableId: string,
@@ -245,10 +279,6 @@ export class QueueService implements OnModuleInit {
     const table = await this.queueRepository.getTable(tableId);
     if (!table) {
       throw new NotFoundException('Table not found');
-    }
-    const groups = await this.queueRepository.listOnTable(tableId);
-    if (!groups.some((group) => group.userIds.includes(userId))) {
-      throw new ForbiddenException('You are not playing on this table');
     }
     const matchId = await this.queueRepository.findCurrentMatchId(tableId);
     if (!matchId) {
@@ -259,17 +289,35 @@ export class QueueService implements OnModuleInit {
         'The table is already released: enter the score',
       );
     }
-    const votes = await this.queueRepository.toggleReleaseVote(tableId, userId);
+    const voterIds = await this.queueRepository.toggleReleaseVote(
+      tableId,
+      userId,
+    );
+    const groups = await this.queueRepository.listOnTable(tableId);
+    const onTableUserIds = new Set(groups.flatMap((group) => group.userIds));
+    const playerVotes = voterIds.filter((id) => onTableUserIds.has(id));
+    const externalVotes = voterIds.filter((id) => !onTableUserIds.has(id));
+
     if (
-      votes >= RELEASE_VOTES_REQUIRED &&
+      playerVotes.length >= RELEASE_VOTES_REQUIRED &&
       (await this.queueRepository.markEndRequested(tableId))
     ) {
       this.scheduleScoreTimeout(tableId);
-      this.queueGateway.emitToUsers(
-        groups.flatMap((group) => group.userIds),
-        'table:scoreRequired',
-        { tableId, matchId },
+      const recipients = groups.flatMap((group) => group.userIds);
+      this.queueGateway.emitToUsers(recipients, 'table:scoreRequired', {
+        tableId,
+        matchId,
+      });
+      const publishedTable = await this.tablesService.getById(tableId);
+      await this.notificationsService.createForUsers(
+        recipients,
+        NotificationType.TABLE_SCORE_REQUIRED,
+        { tableId, tableName: publishedTable.name, matchId },
       );
+    } else if (externalVotes.length >= RELEASE_VOTES_REQUIRED) {
+      // Table jugée abandonnée par des tiers : pas de score possible, on
+      // annule directement plutôt que de l'attendre des joueurs.
+      await this.forceCancelMatch(tableId, matchId, 'externalRelease');
     }
     return this.tablesService.publish(tableId);
   }
@@ -318,6 +366,17 @@ export class QueueService implements OnModuleInit {
       tableId,
       stays: someoneWaiting,
     });
+    const publishedTable = await this.tablesService.getById(tableId);
+    await this.notificationsService.createForUsers(
+      loser.userIds,
+      NotificationType.TABLE_MATCH_ENDED,
+      { tableId, tableName: publishedTable.name, stays: false },
+    );
+    await this.notificationsService.createForUsers(
+      winner.userIds,
+      NotificationType.TABLE_MATCH_ENDED,
+      { tableId, tableName: publishedTable.name, stays: someoneWaiting },
+    );
     await this.advance(tableId);
   }
 
@@ -325,15 +384,21 @@ export class QueueService implements OnModuleInit {
   async clearForTable(tableId: string): Promise<string[]> {
     const cancelled = await this.queueRepository.cancelAllForTable(tableId);
     this.clearTimer(`score:${tableId}`);
-    for (const group of cancelled) {
-      this.clearTimer(`invite:${group.id}`);
-      this.clearTimer(`call:${group.id}`);
-      this.queueGateway.emitToUsers(group.userIds, 'queue:expired', {
-        tableId,
-        reason: 'tournament',
-      });
-    }
     if (cancelled.length > 0) {
+      const table = await this.tablesService.getById(tableId);
+      for (const group of cancelled) {
+        this.clearTimer(`invite:${group.id}`);
+        this.clearTimer(`call:${group.id}`);
+        this.queueGateway.emitToUsers(group.userIds, 'queue:expired', {
+          tableId,
+          reason: 'tournament',
+        });
+        await this.notificationsService.createForUsers(
+          group.userIds,
+          NotificationType.QUEUE_EXPIRED,
+          { tableId, tableName: table.name, reason: 'tournament' },
+        );
+      }
       await this.publishQueue(tableId);
       await this.tablesService.publish(tableId);
     }
@@ -379,12 +444,21 @@ export class QueueService implements OnModuleInit {
     const started = await this.queueRepository.startMatchIfReady(
       placed.tableId,
     );
-    await this.tablesService.publish(placed.tableId);
+    const publishedTable = await this.tablesService.publish(placed.tableId);
     if (started) {
       this.queueGateway.emitToUsers(started.playerIds, 'table:matchStarted', {
         tableId: placed.tableId,
         matchId: started.matchId,
       });
+      await this.notificationsService.createForUsers(
+        started.playerIds,
+        NotificationType.TABLE_MATCH_STARTED,
+        {
+          tableId: placed.tableId,
+          tableName: publishedTable.name,
+          matchId: started.matchId,
+        },
+      );
     }
     return true;
   }
@@ -422,10 +496,17 @@ export class QueueService implements OnModuleInit {
         break;
       }
       this.scheduleCallExpiry(next.id, tableId, QUEUE_TIMEOUT_MS);
-      this.queueGateway.emitToUsers(
-        next.players.map((player) => player.id),
-        'queue:called',
-        { tableId, groupId: next.id, expiresAt },
+      const calledIds = next.players.map((player) => player.id);
+      this.queueGateway.emitToUsers(calledIds, 'queue:called', {
+        tableId,
+        groupId: next.id,
+        expiresAt,
+      });
+      const publishedTable = await this.tablesService.getById(tableId);
+      await this.notificationsService.createForUsers(
+        calledIds,
+        NotificationType.QUEUE_CALLED,
+        { tableId, tableName: publishedTable.name },
       );
       called++;
     }
@@ -474,10 +555,13 @@ export class QueueService implements OnModuleInit {
       return;
     }
     if (group) {
-      this.queueGateway.emitToUsers(
-        group.players.map((player) => player.id),
-        'queue:expired',
-        { tableId },
+      const recipients = group.players.map((player) => player.id);
+      this.queueGateway.emitToUsers(recipients, 'queue:expired', { tableId });
+      const table = await this.tablesService.getById(tableId);
+      await this.notificationsService.createForUsers(
+        recipients,
+        NotificationType.QUEUE_EXPIRED,
+        { tableId, tableName: table.name },
       );
     }
     await this.queueRepository.syncTableState(tableId);
@@ -500,37 +584,61 @@ export class QueueService implements OnModuleInit {
       return;
     }
     if (group) {
-      this.queueGateway.emitToUsers(
-        group.players.map((player) => player.id),
-        'queue:expired',
-        { tableId, reason: 'invite' },
+      const recipients = group.players.map((player) => player.id);
+      this.queueGateway.emitToUsers(recipients, 'queue:expired', {
+        tableId,
+        reason: 'invite',
+      });
+      const table = await this.tablesService.getById(tableId);
+      await this.notificationsService.createForUsers(
+        recipients,
+        NotificationType.QUEUE_EXPIRED,
+        { tableId, tableName: table.name, reason: 'invite' },
       );
     }
     await this.queueRepository.syncTableState(tableId);
     await this.tablesService.publish(tableId);
   }
 
-  /** Score jamais saisi : le match est annulé, les deux groupes sortent et la file avance. */
+  /** Score jamais saisi dans le délai : le match est annulé et la table repart à zéro. */
   private async handleScoreTimeout(tableId: string): Promise<void> {
     const table = await this.queueRepository.getTable(tableId);
     if (!table?.endRequestedAt) {
       return;
     }
     const matchId = await this.queueRepository.findCurrentMatchId(tableId);
-    const groups = await this.queueRepository.listOnTable(tableId);
-    if (matchId) {
-      await this.queueRepository.cancelMatch(matchId);
+    if (!matchId) {
+      return;
     }
+    await this.forceCancelMatch(tableId, matchId, 'timeout');
+  }
+
+  /** Annule un match de table sans score (délai de saisie écoulé, ou table jugée abandonnée par des tiers) : les deux groupes sortent, la table est remise à zéro et la file avance. */
+  private async forceCancelMatch(
+    tableId: string,
+    matchId: string,
+    reason: 'timeout' | 'externalRelease',
+  ): Promise<void> {
+    this.clearTimer(`score:${tableId}`);
+    const groups = await this.queueRepository.listOnTable(tableId);
+    await this.queueRepository.cancelMatch(matchId);
     for (const group of groups) {
       await this.queueRepository.finishGroup(group.id, QueueGroupStatus.DONE, [
         QueueGroupStatus.ON_TABLE,
       ]);
     }
     await this.queueRepository.syncTableState(tableId);
-    this.queueGateway.emitToUsers(
-      groups.flatMap((group) => group.userIds),
-      'table:matchCancelled',
-      { tableId, matchId },
+    const recipients = groups.flatMap((group) => group.userIds);
+    this.queueGateway.emitToUsers(recipients, 'table:matchCancelled', {
+      tableId,
+      matchId,
+      reason,
+    });
+    const table = await this.tablesService.getById(tableId);
+    await this.notificationsService.createForUsers(
+      recipients,
+      NotificationType.TABLE_MATCH_CANCELLED,
+      { tableId, tableName: table.name, reason },
     );
     await this.advance(tableId);
   }

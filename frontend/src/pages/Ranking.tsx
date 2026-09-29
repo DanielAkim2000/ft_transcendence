@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Dialog } from "@base-ui/react/dialog";
+import { Link } from "react-router";
+import { ROUTES } from "@/constants/routes";
 import { useMeQuery } from "@/features/auth/authApi";
 import { useGetRankingQuery, type RankingEntry } from "@/features/users/usersApi";
 import { FriendPicker } from "@/features/users/FriendPicker";
@@ -8,7 +10,6 @@ import { Pagination } from "@/components/pagination";
 import { useClampedPage } from "@/lib/use-clamped-page";
 import { useListMatchesQuery, useProposeMatchMutation, type MatchFormat } from "@/features/matches/matchesApi";
 import { MatchCard } from "@/features/matches/MatchCard";
-import { MatchHistoryList } from "@/features/matches/MatchHistoryList";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -174,9 +175,17 @@ export const Ranking = () => {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-          {t("matches.myMatches")}
-        </h2>
+        <div className="flex items-baseline justify-between gap-2">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            {t("matches.myMatches")}
+          </h2>
+          <Link
+            to={ROUTES.HISTORY}
+            className="text-xs text-primary underline-offset-2 hover:underline"
+          >
+            {t("matches.viewHistory")}
+          </Link>
+        </div>
         {matchesLoading ? (
           <ListSkeleton count={3} avatar={false} action />
         ) : activeMatches.length === 0 ? (
@@ -195,8 +204,6 @@ export const Ranking = () => {
           disabled={matchesFetching}
         />
       </section>
-
-      {me ? <MatchHistoryList meId={me.id} /> : null}
     </div>
   );
 };

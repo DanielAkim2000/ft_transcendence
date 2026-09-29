@@ -19,6 +19,8 @@ import {
 } from "./matchesApi";
 import { teamOf } from "./matchHelpers";
 
+const TARGET_SCORE = 10;
+
 function TeamNames({ team }: { team: MatchPlayer[] }) {
   return (
     <span className="flex flex-wrap items-center gap-1.5">
@@ -125,10 +127,19 @@ export function MatchCard({ match, meId }: { match: Match; meId: string }) {
   const decline = () => run(() => respond({ matchId: match.id, accept: false }).unwrap());
   const acceptSolo = () => run(() => respond({ matchId: match.id, accept: true }).unwrap());
 
+  const a = Number(scoreA);
+  const b = Number(scoreB);
+  const scoreFilled = scoreA !== "" && scoreB !== "";
+  const scoreValid =
+    scoreFilled &&
+    Number.isInteger(a) &&
+    Number.isInteger(b) &&
+    a >= 0 &&
+    b >= 0 &&
+    ((a === TARGET_SCORE && b < TARGET_SCORE) || (b === TARGET_SCORE && a < TARGET_SCORE));
+
   const submit = () => {
-    const a = Number(scoreA);
-    const b = Number(scoreB);
-    if (!Number.isInteger(a) || !Number.isInteger(b) || a < 0 || b < 0) return;
+    if (!scoreValid) return;
     void run(() => submitScore({ matchId: match.id, scoreA: a, scoreB: b }).unwrap());
   };
 
@@ -174,39 +185,46 @@ export function MatchCard({ match, meId }: { match: Match; meId: string }) {
       ) : null}
 
       {match.status === "ACCEPTED" ? (
-        <div className="flex items-end gap-2">
-          <div className="flex flex-col gap-1">
-            <Label className="text-[10px] uppercase text-muted-foreground">
-              {t("matches.scoreOfTeamA")}
-            </Label>
-            <Input
-              type="number"
-              min={0}
-              className="w-16"
-              value={scoreA}
-              onChange={(e) => setScoreA(e.target.value)}
-            />
+        <div className="flex flex-col gap-2">
+          <div className="flex items-end gap-2">
+            <div className="flex flex-col gap-1">
+              <Label className="text-[10px] uppercase text-muted-foreground">
+                {t("matches.scoreOfTeamA")}
+              </Label>
+              <Input
+                type="number"
+                min={0}
+                max={TARGET_SCORE}
+                className="w-16"
+                value={scoreA}
+                onChange={(e) => setScoreA(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <Label className="text-[10px] uppercase text-muted-foreground">
+                {t("matches.scoreOfTeamB")}
+              </Label>
+              <Input
+                type="number"
+                min={0}
+                max={TARGET_SCORE}
+                className="w-16"
+                value={scoreB}
+                onChange={(e) => setScoreB(e.target.value)}
+              />
+            </div>
+            <Button type="button" size="sm" disabled={submitting || !scoreValid} onClick={submit}>
+              {t("matches.submitScore")}
+            </Button>
           </div>
-          <div className="flex flex-col gap-1">
-            <Label className="text-[10px] uppercase text-muted-foreground">
-              {t("matches.scoreOfTeamB")}
-            </Label>
-            <Input
-              type="number"
-              min={0}
-              className="w-16"
-              value={scoreB}
-              onChange={(e) => setScoreB(e.target.value)}
-            />
-          </div>
-          <Button
-            type="button"
-            size="sm"
-            disabled={submitting || scoreA === "" || scoreB === ""}
-            onClick={submit}
+          <p
+            className={cn(
+              "text-[11px]",
+              scoreFilled && !scoreValid ? "text-destructive" : "text-muted-foreground",
+            )}
           >
-            {t("matches.submitScore")}
-          </Button>
+            {scoreFilled && !scoreValid ? t("tables.scoreInvalid") : t("tables.scoreHint")}
+          </p>
         </div>
       ) : null}
 

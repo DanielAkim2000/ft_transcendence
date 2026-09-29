@@ -14,7 +14,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: new ConsoleLogger({
-      prefix: 'FT_TRANSCENDANCE',
+      prefix: '42_BABY',
       colors: true,
       logLevels: ['error', 'warn', 'log', 'verbose', 'debug', 'verbose'],
       timestamp: true,

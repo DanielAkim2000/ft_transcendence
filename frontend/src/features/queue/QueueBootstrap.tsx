@@ -115,10 +115,14 @@ export const QueueBootstrap = ({ children }: { children: React.ReactNode }) => {
       });
     };
 
-    const onMatchCancelled = () => {
+    const onMatchCancelled = (payload: { reason?: string }) => {
       refresh();
       refreshMatches();
-      toast.add({ title: i18n.t("queue.matchCancelledToast"), type: "error" });
+      const key =
+        payload.reason === "externalRelease"
+          ? "queue.matchClosedByOthersToast"
+          : "queue.matchCancelledToast";
+      toast.add({ title: i18n.t(key), type: "error" });
     };
 
     const onReconnect = () => refresh();

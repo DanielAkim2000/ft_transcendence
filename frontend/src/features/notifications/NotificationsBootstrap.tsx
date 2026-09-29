@@ -1,0 +1,39 @@
+import { useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { selectAccessToken } from "../auth/authSlice";
+import { connect, disconnect } from "./notificationsSocket";
+import { notificationsApi } from "./notificationsApi";
+import { TAG_TYPES } from "@/constants/tagTypes";
+
+/**
+ * Tient à jour le compteur de non-lus et la liste de l'historique.
+ * Les toasts « en direct » restent affichés par les bootstraps de chaque
+ * feature (chat excepté) ; ce bootstrap ne fait que synchroniser la pastille
+ * et la page /notifications avec ce que le backend vient de persister.
+ */
+export const NotificationsBootstrap = ({ children }: { children: React.ReactNode }) => {
+  const accessToken = useAppSelector(selectAccessToken);
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    if (!accessToken) {
+      disconnect();
+      return;
+    }
+    const socket = connect(accessToken);
+    const refresh = () =>
+      dispatch(notificationsApi.util.invalidateTags([TAG_TYPES.NOTIFICATIONS]));
+
+    socket.on("notifications:new", refresh);
+    socket.on("notifications:read", refresh);
+    socket.io.on("reconnect", refresh);
+    return () => {
+      socket.off("notifications:new", refresh);
+      socket.off("notifications:read", refresh);
+      socket.io.off("reconnect", refresh);
+      disconnect();
+    };
+  }, [accessToken, dispatch]);
+
+  return <>{children}</>;
+};

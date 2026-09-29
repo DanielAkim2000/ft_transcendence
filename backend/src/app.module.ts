@@ -11,6 +11,7 @@ import { QueueModule } from './queue/queue.module';
 import { MatchesModule } from './matches/matches.module';
 import { TournamentsModule } from './tournaments/tournaments.module';
 import { BadgesModule } from './badges/badges.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 /** Module racine : charge la config (.env), le JWT global (access token, 1 h) et tous les modules fonctionnels de l'application. */
 @Module({
@@ -37,6 +38,7 @@ import { BadgesModule } from './badges/badges.module';
     MatchesModule,
     TournamentsModule,
     BadgesModule,
+    NotificationsModule,
   ],
   controllers: [],
   providers: [],

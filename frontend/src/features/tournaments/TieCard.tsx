@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 import type { TournamentEntry, TournamentTie } from "./tournamentsApi";
 import { translateRoundLabel } from "./tournamentHelpers";
 
+const TARGET_SCORE = 10;
+
 function entryName(entry: TournamentEntry | null, t: (key: string) => string): string {
   if (!entry) return t("tournaments.tbd");
   return entry.player2
@@ -60,11 +62,19 @@ export function TieCard({ tie, meId }: { tie: TournamentTie; meId?: string }) {
     }
   };
 
+  const a = Number(scoreA);
+  const b = Number(scoreB);
+  const scoreFilled = scoreA !== "" && scoreB !== "";
+  const scoreValid =
+    scoreFilled &&
+    Number.isInteger(a) &&
+    Number.isInteger(b) &&
+    a >= 0 &&
+    b >= 0 &&
+    ((a === TARGET_SCORE && b < TARGET_SCORE) || (b === TARGET_SCORE && a < TARGET_SCORE));
+
   const submit = () => {
-    if (!tie.activeLegId) return;
-    const a = Number(scoreA);
-    const b = Number(scoreB);
-    if (!Number.isInteger(a) || !Number.isInteger(b) || a < 0 || b < 0) return;
+    if (!tie.activeLegId || !scoreValid) return;
     void run(() => submitScore({ matchId: tie.activeLegId!, scoreA: a, scoreB: b }).unwrap());
   };
 
@@ -100,22 +110,46 @@ export function TieCard({ tie, meId }: { tie: TournamentTie; meId?: string }) {
       ) : null}
 
       {tie.status === "IN_PROGRESS" && tie.activeLegStatus === "ACCEPTED" && myEntry ? (
-        <div className="flex items-end gap-2">
-          <div className="flex flex-col gap-1">
-            <Label className="text-[10px] uppercase text-muted-foreground">
-              {t("matches.scoreOfTeamA")}
-            </Label>
-            <Input type="number" min={0} className="w-16" value={scoreA} onChange={(e) => setScoreA(e.target.value)} />
+        <div className="flex flex-col gap-2">
+          <div className="flex items-end gap-2">
+            <div className="flex flex-col gap-1">
+              <Label className="text-[10px] uppercase text-muted-foreground">
+                {t("matches.scoreOfTeamA")}
+              </Label>
+              <Input
+                type="number"
+                min={0}
+                max={TARGET_SCORE}
+                className="w-16"
+                value={scoreA}
+                onChange={(e) => setScoreA(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <Label className="text-[10px] uppercase text-muted-foreground">
+                {t("matches.scoreOfTeamB")}
+              </Label>
+              <Input
+                type="number"
+                min={0}
+                max={TARGET_SCORE}
+                className="w-16"
+                value={scoreB}
+                onChange={(e) => setScoreB(e.target.value)}
+              />
+            </div>
+            <Button type="button" size="sm" disabled={submitting || !scoreValid} onClick={submit}>
+              {t("matches.submitScore")}
+            </Button>
           </div>
-          <div className="flex flex-col gap-1">
-            <Label className="text-[10px] uppercase text-muted-foreground">
-              {t("matches.scoreOfTeamB")}
-            </Label>
-            <Input type="number" min={0} className="w-16" value={scoreB} onChange={(e) => setScoreB(e.target.value)} />
-          </div>
-          <Button type="button" size="sm" disabled={submitting || scoreA === "" || scoreB === ""} onClick={submit}>
-            {t("matches.submitScore")}
-          </Button>
+          <p
+            className={cn(
+              "text-[11px]",
+              scoreFilled && !scoreValid ? "text-destructive" : "text-muted-foreground",
+            )}
+          >
+            {scoreFilled && !scoreValid ? t("tables.scoreInvalid") : t("tables.scoreHint")}
+          </p>
         </div>
       ) : null}
 

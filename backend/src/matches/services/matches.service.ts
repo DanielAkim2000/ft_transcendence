@@ -20,19 +20,21 @@ import { BadgesService } from '../../badges/services/badges.service';
 import { QueueService } from '../../queue/services/queue.service';
 import { PageQueryDto } from '../../common/pagination/page-query.dto';
 import { Paginated, toPaginated } from '../../common/pagination/paginated';
+import { NotificationsService } from '../../notifications/services/notifications.service';
+import { NotificationType } from '../../notifications/entities/notification.entity';
 
 /** Délai pour valider un score soumis (règle métier : litige si non validé à temps). */
 export const SCORE_VALIDATION_TIMEOUT_MS = 10 * 60 * 1000;
 
-/** Points nécessaires pour gagner un match de table : le score final est donc toujours 10-x, sans égalité possible. */
-export const TABLE_MATCH_TARGET_SCORE = 10;
+/** Points nécessaires pour gagner un match, quel qu'il soit (défi, table, manche de tournoi) : le score final est donc toujours 10-x, sans égalité possible. */
+export const MATCH_TARGET_SCORE = 10;
 
 @Injectable()
 export class MatchesService {
   private readonly logger = new Logger(MatchesService.name);
   private readonly timers = new Map<string, NodeJS.Timeout>();
 
-  /** Injecte les dépendances : MatchesRepository, MatchesGateway, UsersService, TournamentsService, BadgesService, QueueService. */
+  /** Injecte les dépendances : MatchesRepository, MatchesGateway, UsersService, TournamentsService, BadgesService, QueueService, NotificationsService. */
   constructor(
     private readonly matchesRepository: MatchesRepository,
     private readonly matchesGateway: MatchesGateway,
@@ -40,6 +42,7 @@ export class MatchesService {
     private readonly tournamentsService: TournamentsService,
     private readonly badgesService: BadgesService,
     private readonly queueService: QueueService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /** Liste une page des défis de ladder de l'utilisateur (hors manches de tournoi et défis refusés). */
@@ -111,6 +114,11 @@ export class MatchesService {
       format === MatchFormat.TWO_V_TWO ? teammateId : undefined,
     );
     this.matchesGateway.emitToUser(opponentId, 'match:proposed', match);
+    await this.notificationsService.create(
+      opponentId,
+      NotificationType.MATCH_PROPOSED,
+      { matchId: match.id, fromName: match.teamA[0]?.displayname ?? '?' },
+    );
     return match;
   }
 
@@ -135,6 +143,16 @@ export class MatchesService {
       }
       const updated = await this.getMatch(matchId);
       this.matchesGateway.emitToMatch(updated, 'match:responded', updated);
+      // Seul le camp du challenger se soucie d'un refus : le destinataire
+      // sait déjà qu'il vient de refuser.
+      await this.notificationsService.createForUsers(
+        updated.teamA.map((player) => player.id),
+        NotificationType.MATCH_DECLINED,
+        {
+          matchId: updated.id,
+          opponentName: updated.teamB[0]?.displayname ?? '?',
+        },
+      );
       return updated;
     }
 
@@ -163,6 +181,18 @@ export class MatchesService {
     }
     const updated = await this.getMatch(matchId);
     this.matchesGateway.emitToMatch(updated, 'match:responded', updated);
+    // Tout le monde sauf celui qui vient d'accepter (challenger, et son
+    // éventuel coéquipier ; le sien aussi, si 2v2).
+    await this.notificationsService.createForUsers(
+      [...updated.teamA, ...updated.teamB]
+        .map((player) => player.id)
+        .filter((id) => id !== userId),
+      NotificationType.MATCH_ACCEPTED,
+      {
+        matchId: updated.id,
+        opponentName: updated.teamB[0]?.displayname ?? '?',
+      },
+    );
     return updated;
   }
 
@@ -178,12 +208,12 @@ export class MatchesService {
     if (match.status !== MatchStatus.ACCEPTED) {
       throw new ConflictException('Match is not ready for a score');
     }
-    const isTableMatch = match.tableId !== null && !match.tournamentTieId;
-    if (isTableMatch && !this.isValidTableScore(scoreA, scoreB)) {
+    if (!this.isValidScore(scoreA, scoreB)) {
       throw new BadRequestException(
-        `A match ends at ${TABLE_MATCH_TARGET_SCORE} points: the score must be ${TABLE_MATCH_TARGET_SCORE}-x with x below ${TABLE_MATCH_TARGET_SCORE}`,
+        `A match ends at ${MATCH_TARGET_SCORE} points: the score must be ${MATCH_TARGET_SCORE}-x with x from 0 to ${MATCH_TARGET_SCORE - 1} (no draw)`,
       );
     }
+    const isTableMatch = match.tableId !== null && !match.tournamentTieId;
     const validationExpiresAt = new Date(
       Date.now() + SCORE_VALIDATION_TIMEOUT_MS,
     );
@@ -212,12 +242,23 @@ export class MatchesService {
     }
     const updated = await this.getMatch(matchId);
     this.matchesGateway.emitToMatch(updated, 'match:scoreSubmitted', updated);
+    await this.notificationsService.createForUsers(
+      [...updated.teamA, ...updated.teamB]
+        .map((player) => player.id)
+        .filter((id) => id !== userId),
+      NotificationType.MATCH_SCORE_SUBMITTED,
+      {
+        matchId: updated.id,
+        scoreA: updated.scoreA ?? 0,
+        scoreB: updated.scoreB ?? 0,
+      },
+    );
     return updated;
   }
 
-  /** Vrai si l'un des deux camps a exactement 10 points et l'autre moins (pas d'égalité en match de table). */
-  private isValidTableScore(scoreA: number, scoreB: number): boolean {
-    const target = TABLE_MATCH_TARGET_SCORE;
+  /** Vrai si l'un des deux camps a exactement 10 points et l'autre moins (jamais d'égalité). */
+  private isValidScore(scoreA: number, scoreB: number): boolean {
+    const target = MATCH_TARGET_SCORE;
     return (
       (scoreA === target && scoreB < target) ||
       (scoreB === target && scoreA < target)
@@ -250,6 +291,7 @@ export class MatchesService {
       }
       const updated = await this.getMatch(matchId);
       this.matchesGateway.emitToMatch(updated, 'match:disputed', updated);
+      await this.notifyDisputed(updated);
       if (updated.tournamentTieId) {
         await this.tournamentsService.handleLegDisputed(matchId);
       }
@@ -269,7 +311,38 @@ export class MatchesService {
     }
     const updated = await this.getMatch(matchId);
     this.matchesGateway.emitToMatch(updated, 'match:completed', updated);
+    await this.notifyCompleted(updated);
     return updated;
+  }
+
+  /** Notifie chaque participant du résultat final, victoire ou défaite selon son propre camp. */
+  private async notifyCompleted(match: MatchEntity): Promise<void> {
+    for (const player of [...match.teamA, ...match.teamB]) {
+      const team = this.teamOf(match, player.id);
+      const myScore = team === 'A' ? match.scoreA : match.scoreB;
+      const otherScore = team === 'A' ? match.scoreB : match.scoreA;
+      const won =
+        myScore !== null && otherScore !== null && myScore > otherScore;
+      await this.notificationsService.create(
+        player.id,
+        NotificationType.MATCH_COMPLETED,
+        {
+          matchId: match.id,
+          scoreA: match.scoreA ?? 0,
+          scoreB: match.scoreB ?? 0,
+          won,
+        },
+      );
+    }
+  }
+
+  /** Notifie tous les participants du litige (score contesté ou jamais validé à temps). */
+  private async notifyDisputed(match: MatchEntity): Promise<void> {
+    await this.notificationsService.createForUsers(
+      [...match.teamA, ...match.teamB].map((player) => player.id),
+      NotificationType.MATCH_DISPUTED,
+      { matchId: match.id },
+    );
   }
 
   /** Calcule et applique les nouvelles notes Elo des joueurs, puis enregistre le résultat (victoire, défaite ou nul) pour les badges et l'XP. */
@@ -349,6 +422,7 @@ export class MatchesService {
     }
     const updated = await this.getMatch(matchId);
     this.matchesGateway.emitToMatch(updated, 'match:disputed', updated);
+    await this.notifyDisputed(updated);
     if (updated.tournamentTieId) {
       await this.tournamentsService.handleLegDisputed(matchId);
     }

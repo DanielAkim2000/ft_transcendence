@@ -20,6 +20,8 @@ const Friends = lazyPage(() => import("@/pages/Friends"), "Friends");
 const Chat = lazyPage(() => import("@/pages/Chat"), "Chat");
 const Tables = lazyPage(() => import("@/pages/Tables"), "Tables");
 const Ranking = lazyPage(() => import("@/pages/Ranking"), "Ranking");
+const History = lazyPage(() => import("@/pages/History"), "History");
+const Notifications = lazyPage(() => import("@/pages/Notifications"), "Notifications");
 const Tournaments = lazyPage(() => import("@/pages/Tournaments"), "Tournaments");
 const TournamentNew = lazyPage(() => import("@/pages/TournamentNew"), "TournamentNew");
 const TournamentDetail = lazyPage(() => import("@/pages/TournamentDetail"), "TournamentDetail");
@@ -44,11 +46,13 @@ function App() {
             <Route path={ROUTES.CHAT} element={<Chat />} />
             <Route path={ROUTES.TABLES} element={<Tables />} />
             <Route path={ROUTES.RANKING} element={<Ranking />} />
+            <Route path={ROUTES.HISTORY} element={<History />} />
             <Route path={ROUTES.TOURNAMENTS_NEW} element={<TournamentNew />} />
             <Route path={ROUTES.TOURNAMENTS} element={<Tournaments />} />
             <Route path={ROUTES.TOURNAMENT_BY_ID} element={<TournamentDetail />} />
             <Route path={ROUTES.SETTINGS} element={<Settings />} />
             <Route path={ROUTES.SETTINGS_2FA} element={<TwoFactorSettings />} />
+            <Route path={ROUTES.NOTIFICATIONS} element={<Notifications />} />
           </Route>
         </Route>
       </Routes>

@@ -13,6 +13,8 @@ export const ROUTES = {
   CHAT: "/chat",
   TABLES: "/tables",
   RANKING: "/ranking",
+  HISTORY: "/history",
+  NOTIFICATIONS: "/notifications",
   TOURNAMENTS: "/tournaments",
   TOURNAMENTS_NEW: "/tournaments/new",
   TOURNAMENT_BY_ID: "/tournaments/:id",

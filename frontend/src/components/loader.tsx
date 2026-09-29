@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
 
 type LoaderProps = {
@@ -16,14 +17,7 @@ export function Loader({ label, className }: LoaderProps) {
       aria-live="polite"
       className={cn("flex flex-col items-center gap-4 animate-loader-in", className)}
     >
-      <p className="font-heading text-xs font-bold tracking-[0.2em] text-primary uppercase">
-        {">_ "}
-        {t("common.brand")}
-        <span
-          aria-hidden
-          className="ml-1 inline-block h-3 w-1.5 translate-y-0.5 bg-primary animate-loader-blink motion-reduce:animate-none"
-        />
-      </p>
+      <Logo cursor className="text-sm" />
       <div aria-hidden className="relative h-0.5 w-44 overflow-hidden bg-border">
         <span className="absolute inset-y-0 left-0 w-1/3 bg-primary animate-loader-slide motion-reduce:animate-none" />
       </div>

@@ -1,6 +1,6 @@
 {
   "common": {
-    "brand": "transcendence",
+    "brand": "42baby",
     "or": "or",
     "loading": "Loading…",
     "logout": "Log out",
@@ -88,10 +88,13 @@
     "review": "Review",
     "seeAll": "see all",
     "noOnline": "No friends online right now.",
-    "recentMessages": "Recent messages"
+    "recentMessages": "Recent messages",
+    "searchLabel": "Search for a player",
+    "searchPlaceholder": "search a player…",
+    "searchNoResults": "No players found."
   },
   "nav": {
-    "menu": "Menu",
+    "menu": "Play",
     "home": "Home",
     "profile": "Profile",
     "friends": "Friends",
@@ -100,7 +103,11 @@
     "chat": "Chat",
     "tables": "Tables",
     "ranking": "Ranking",
-    "tournaments": "Tournaments"
+    "tournaments": "Tournaments",
+    "history": "History",
+    "notifications": "Notifications",
+    "groupSocial": "Social",
+    "groupAccount": "Account"
   },
   "settings": {
     "title": "Settings",
@@ -306,6 +313,10 @@
     "releaseDescription": "{{name}} stops as soon as a second player of the match also asks to free it. You will then have to enter the final score.",
     "releaseVotes": "{{count}}/2 asked to free the table",
     "cancelRelease": "Cancel my request",
+    "reportFree": "Report table as free",
+    "forceReleaseTitle": "Report the table as free?",
+    "forceReleaseDescription": "Use this if nobody is actually playing on {{name}}. Once a second user outside the match also confirms, the ongoing match is cancelled with no score and the table resets.",
+    "forceReleaseVotes": "{{count}}/2 outside users report the table as free",
     "enterScore": "Enter the score",
     "scoreTitle": "Final score",
     "scoreRequired": "The table is being freed: enter the final score of the match.",
@@ -347,7 +358,8 @@
     "scoreRequiredToast": "The table was freed: enter the final score.",
     "staysToast": "You stay on the table, the next group is coming.",
     "leavesToast": "You leave the table.",
-    "matchCancelledToast": "No score entered in time: the match was cancelled."
+    "matchCancelledToast": "No score entered in time: the match was cancelled.",
+    "matchClosedByOthersToast": "The match was cancelled: outside users reported the table as free."
   },
   "matches": {
     "history": "Match history",
@@ -395,7 +407,8 @@
     "scoreSubmittedToast": "Score submitted ({{a}}-{{b}}), waiting for the opponent to validate.",
     "wonToast": "You won {{a}}-{{b}}! Your rating was updated.",
     "lostToast": "You lost {{a}}-{{b}}. Your rating was updated.",
-    "disputedToast": "The score was disputed, no rating change."
+    "disputedToast": "The score was disputed, no rating change.",
+    "viewHistory": "View full history"
   },
   "tournaments": {
     "title": "Tournaments",
@@ -443,6 +456,41 @@
     "tieWonToast": "You advance to the next round in {{name}}!",
     "eliminatedToast": "You've been eliminated from {{name}}.",
     "completedToast": "The {{name}} tournament is over!"
+  },
+  "notifications": {
+    "markAllRead": "Mark all as read",
+    "empty": "No notifications yet.",
+    "unreadBadge": "Unread",
+    "items": {
+      "friendRequest": "{{fromName}} sent you a friend request.",
+      "matchProposed": "{{fromName}} challenges you.",
+      "matchAccepted": "{{opponentName}} accepted your challenge.",
+      "matchDeclined": "{{opponentName}} declined your challenge.",
+      "matchScoreSubmitted": "Score submitted: {{scoreA}}-{{scoreB}}.",
+      "matchCompletedWon": "Win {{scoreA}}-{{scoreB}}.",
+      "matchCompletedLost": "Loss {{scoreA}}-{{scoreB}}.",
+      "matchDisputed": "Your match score is disputed.",
+      "queueInvite": "{{fromName}} invites you to play 2v2 on {{tableName}}.",
+      "queueInviteDeclined": "{{byName}} declined your invitation on {{tableName}}.",
+      "queueGroupClosed": "{{byName}} left your group on {{tableName}}.",
+      "queueCalled": "It was your turn on {{tableName}}.",
+      "queueExpiredCall": "You didn't confirm in time, you lost your spot on {{tableName}}.",
+      "queueExpiredInvite": "The invitation on {{tableName}} expired without an answer.",
+      "queueExpiredTournament": "A tournament took over {{tableName}}, your spot was cancelled.",
+      "tableMatchStarted": "Your match started on {{tableName}}.",
+      "tableScoreRequired": "Table {{tableName}} was freed, a score was expected.",
+      "tableMatchEndedStays": "You stayed on {{tableName}}, the next group arrived.",
+      "tableMatchEndedLeaves": "You left {{tableName}}.",
+      "tableMatchCancelledTimeout": "No score entered in time on {{tableName}}: the match was cancelled.",
+      "tableMatchCancelledExternal": "The match on {{tableName}} was cancelled: outside users reported the table as free.",
+      "tournamentLaunched": "The {{tournamentName}} tournament started.",
+      "tournamentTableReclaimed": "The {{tournamentName}} tournament took over {{tableName}}.",
+      "tournamentTieStarted": "Your {{tournamentName}} tie is starting.",
+      "tournamentTieWon": "Tie won in {{tournamentName}} (round {{round}}).",
+      "tournamentEliminated": "Eliminated from {{tournamentName}} (round {{round}}).",
+      "tournamentCompleted": "The {{tournamentName}} tournament is over.",
+      "badgeEarned": "Badge unlocked: {{name}}."
+    }
   },
   "badges": {
     "title": "Progress",

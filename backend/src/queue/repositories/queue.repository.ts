@@ -385,15 +385,19 @@ export class QueueRepository {
     ]);
   }
 
-  /** Ajoute ou retire le vote « libérer la table » de l'utilisateur et retourne le nombre de votes. */
-  async toggleReleaseVote(tableId: string, userId: string): Promise<number> {
+  /** Ajoute ou retire le vote « libérer la table » de l'utilisateur et retourne les ids de tous les votants (n'importe qui peut voter, pas seulement les joueurs). */
+  async toggleReleaseVote(tableId: string, userId: string): Promise<string[]> {
     const { count } = await this.prisma.tableReleaseVote.deleteMany({
       where: { tableId, userId },
     });
     if (count === 0) {
       await this.prisma.tableReleaseVote.create({ data: { tableId, userId } });
     }
-    return this.prisma.tableReleaseVote.count({ where: { tableId } });
+    const votes = await this.prisma.tableReleaseVote.findMany({
+      where: { tableId },
+      select: { userId: true },
+    });
+    return votes.map((vote) => vote.userId);
   }
 
   /** Atomique : marque la fin de match demandée ; false si elle l'était déjà. */

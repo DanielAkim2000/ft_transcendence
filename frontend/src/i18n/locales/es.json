@@ -1,6 +1,6 @@
 {
   "common": {
-    "brand": "transcendence",
+    "brand": "42baby",
     "or": "o",
     "loading": "Cargando…",
     "logout": "Cerrar sesión",
@@ -88,10 +88,13 @@
     "review": "Ver",
     "seeAll": "ver todo",
     "noOnline": "Ningún amigo en línea por ahora.",
-    "recentMessages": "Mensajes recientes"
+    "recentMessages": "Mensajes recientes",
+    "searchLabel": "Buscar un jugador",
+    "searchPlaceholder": "buscar un jugador…",
+    "searchNoResults": "No se encontraron jugadores."
   },
   "nav": {
-    "menu": "Menú",
+    "menu": "Jugar",
     "home": "Inicio",
     "profile": "Perfil",
     "friends": "Amigos",
@@ -100,7 +103,11 @@
     "chat": "Chat",
     "tables": "Mesas",
     "ranking": "Clasificación",
-    "tournaments": "Torneos"
+    "tournaments": "Torneos",
+    "history": "Historial",
+    "notifications": "Notificaciones",
+    "groupSocial": "Social",
+    "groupAccount": "Cuenta"
   },
   "settings": {
     "title": "Ajustes",
@@ -306,6 +313,10 @@
     "releaseDescription": "{{name}} se detiene en cuanto un segundo jugador del partido también pide liberarla. Después tendrás que introducir el marcador final.",
     "releaseVotes": "{{count}}/2 piden liberar la mesa",
     "cancelRelease": "Cancelar mi solicitud",
+    "reportFree": "Marcar la mesa como libre",
+    "forceReleaseTitle": "¿Marcar la mesa como libre?",
+    "forceReleaseDescription": "Úsalo si nadie está jugando realmente en {{name}}. En cuanto un segundo usuario ajeno al partido lo confirme también, el partido en curso se cancela sin marcador y la mesa se reinicia.",
+    "forceReleaseVotes": "{{count}}/2 usuarios ajenos marcan la mesa como libre",
     "enterScore": "Introducir el marcador",
     "scoreTitle": "Marcador final",
     "scoreRequired": "La mesa se está liberando: introduce el marcador final del partido.",
@@ -347,7 +358,8 @@
     "scoreRequiredToast": "La mesa fue liberada: introduce el marcador final.",
     "staysToast": "Te quedas en la mesa, llega el siguiente grupo.",
     "leavesToast": "Dejas la mesa.",
-    "matchCancelledToast": "Marcador no introducido a tiempo: el partido fue cancelado."
+    "matchCancelledToast": "Marcador no introducido a tiempo: el partido fue cancelado.",
+    "matchClosedByOthersToast": "El partido fue cancelado: usuarios ajenos marcaron la mesa como libre."
   },
   "matches": {
     "history": "Historial de partidos",
@@ -395,7 +407,8 @@
     "scoreSubmittedToast": "Resultado enviado ({{a}}-{{b}}), esperando la validación del oponente.",
     "wonToast": "¡Ganaste {{a}}-{{b}}! Tu clasificación se actualizó.",
     "lostToast": "Perdiste {{a}}-{{b}}. Tu clasificación se actualizó.",
-    "disputedToast": "El resultado fue impugnado, sin cambio de clasificación."
+    "disputedToast": "El resultado fue impugnado, sin cambio de clasificación.",
+    "viewHistory": "Ver historial completo"
   },
   "tournaments": {
     "title": "Torneos",
@@ -443,6 +456,41 @@
     "tieWonToast": "¡Avanzas a la siguiente ronda en {{name}}!",
     "eliminatedToast": "Has sido eliminado del torneo {{name}}.",
     "completedToast": "¡El torneo {{name}} ha terminado!"
+  },
+  "notifications": {
+    "markAllRead": "Marcar todo como leído",
+    "empty": "No hay notificaciones por ahora.",
+    "unreadBadge": "No leídas",
+    "items": {
+      "friendRequest": "{{fromName}} te envió una solicitud de amistad.",
+      "matchProposed": "{{fromName}} te desafía.",
+      "matchAccepted": "{{opponentName}} aceptó tu desafío.",
+      "matchDeclined": "{{opponentName}} rechazó tu desafío.",
+      "matchScoreSubmitted": "Marcador enviado: {{scoreA}}-{{scoreB}}.",
+      "matchCompletedWon": "Victoria {{scoreA}}-{{scoreB}}.",
+      "matchCompletedLost": "Derrota {{scoreA}}-{{scoreB}}.",
+      "matchDisputed": "El marcador de tu partido está en disputa.",
+      "queueInvite": "{{fromName}} te invita a jugar 2v2 en {{tableName}}.",
+      "queueInviteDeclined": "{{byName}} rechazó tu invitación en {{tableName}}.",
+      "queueGroupClosed": "{{byName}} dejó tu grupo en {{tableName}}.",
+      "queueCalled": "Era tu turno en {{tableName}}.",
+      "queueExpiredCall": "No confirmaste a tiempo, perdiste tu lugar en {{tableName}}.",
+      "queueExpiredInvite": "La invitación en {{tableName}} expiró sin respuesta.",
+      "queueExpiredTournament": "Un torneo tomó {{tableName}}, tu lugar fue cancelado.",
+      "tableMatchStarted": "Tu partido empezó en {{tableName}}.",
+      "tableScoreRequired": "La mesa {{tableName}} fue liberada, se esperaba un marcador.",
+      "tableMatchEndedStays": "Te quedaste en {{tableName}}, llegó el siguiente grupo.",
+      "tableMatchEndedLeaves": "Dejaste {{tableName}}.",
+      "tableMatchCancelledTimeout": "Marcador no introducido a tiempo en {{tableName}}: el partido fue cancelado.",
+      "tableMatchCancelledExternal": "El partido en {{tableName}} fue cancelado: usuarios ajenos marcaron la mesa como libre.",
+      "tournamentLaunched": "El torneo {{tournamentName}} comenzó.",
+      "tournamentTableReclaimed": "El torneo {{tournamentName}} tomó {{tableName}}.",
+      "tournamentTieStarted": "Tu manga de {{tournamentName}} está comenzando.",
+      "tournamentTieWon": "Manga ganada en {{tournamentName}} (ronda {{round}}).",
+      "tournamentEliminated": "Eliminado de {{tournamentName}} (ronda {{round}}).",
+      "tournamentCompleted": "El torneo {{tournamentName}} terminó.",
+      "badgeEarned": "Insignia desbloqueada: {{name}}."
+    }
   },
   "badges": {
     "title": "Progresión",

@@ -82,3 +82,10 @@ export const TOURNAMENTS_ENDPOINTS = {
 export const BADGES_ENDPOINTS = {
   GET_BADGES: "getBadges",
 } as const;
+
+/** Noms des endpoints RTK Query — notificationsApi */
+export const NOTIFICATIONS_ENDPOINTS = {
+  LIST_NOTIFICATIONS: "listNotifications",
+  COUNT_UNREAD_NOTIFICATIONS: "countUnreadNotifications",
+  MARK_ALL_NOTIFICATIONS_READ: "markAllNotificationsRead",
+} as const;

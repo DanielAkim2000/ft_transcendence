@@ -26,12 +26,14 @@ import {
 
 import { PageQueryDto } from '../../common/pagination/page-query.dto';
 import { Paginated, toPaginated } from '../../common/pagination/paginated';
+import { NotificationsService } from '../../notifications/services/notifications.service';
+import { NotificationType } from '../../notifications/entities/notification.entity';
 
 const MIN_ENTRIES = 4;
 
 @Injectable()
 export class TournamentsService {
-  /** Injecte les dépendances : TournamentsRepository, TournamentsGateway, UsersService, TablesService, QueueService, BadgesService. */
+  /** Injecte les dépendances : TournamentsRepository, TournamentsGateway, UsersService, TablesService, QueueService, BadgesService, NotificationsService. */
   constructor(
     private readonly tournamentsRepository: TournamentsRepository,
     private readonly tournamentsGateway: TournamentsGateway,
@@ -39,6 +41,7 @@ export class TournamentsService {
     private readonly tablesService: TablesService,
     private readonly queueService: QueueService,
     private readonly badgesService: BadgesService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /** Liste une page de tournois. */
@@ -181,6 +184,16 @@ export class TournamentsService {
           },
         );
       }
+      await this.notificationsService.createForUsers(
+        previousPlayerIds,
+        NotificationType.TOURNAMENT_TABLE_RECLAIMED,
+        {
+          tableId: table.id,
+          tableName: table.name,
+          tournamentId,
+          tournamentName: tournament.name,
+        },
+      );
     }
 
     const updated = await this.getById(tournamentId);
@@ -191,6 +204,11 @@ export class TournamentsService {
       participantIds,
       'tournament:launched',
       updated,
+    );
+    await this.notificationsService.createForUsers(
+      participantIds,
+      NotificationType.TOURNAMENT_LAUNCHED,
+      { tournamentId, tournamentName: updated.name },
     );
     this.tournamentsGateway.broadcast('tournament:updated', updated);
 
@@ -304,6 +322,11 @@ export class TournamentsService {
         'tournament:completed',
         updated,
       );
+      await this.notificationsService.createForUsers(
+        allParticipantIds,
+        NotificationType.TOURNAMENT_COMPLETED,
+        { tournamentId: tie.tournamentId, tournamentName: updated.name },
+      );
       this.tournamentsGateway.broadcast('tournament:updated', updated);
       return;
     }
@@ -340,12 +363,30 @@ export class TournamentsService {
       tournamentId: tie.tournamentId,
       round: tie.round,
     });
-    this.tournamentsGateway.emitToUsers(
-      [loserEntry.player1Id, loserEntry.player2Id].filter(
-        (id): id is string => !!id,
-      ),
-      'tournament:eliminated',
-      { tournamentId: tie.tournamentId, round: tie.round },
+    await this.notificationsService.createForUsers(
+      winnerIds,
+      NotificationType.TOURNAMENT_TIE_WON,
+      {
+        tournamentId: tie.tournamentId,
+        tournamentName: tie.tournament.name,
+        round: tie.round,
+      },
+    );
+    const loserIds = [loserEntry.player1Id, loserEntry.player2Id].filter(
+      (id): id is string => !!id,
+    );
+    this.tournamentsGateway.emitToUsers(loserIds, 'tournament:eliminated', {
+      tournamentId: tie.tournamentId,
+      round: tie.round,
+    });
+    await this.notificationsService.createForUsers(
+      loserIds,
+      NotificationType.TOURNAMENT_ELIMINATED,
+      {
+        tournamentId: tie.tournamentId,
+        tournamentName: tie.tournament.name,
+        round: tie.round,
+      },
     );
     const updated = await this.getById(tie.tournamentId);
     this.tournamentsGateway.broadcast('tournament:updated', updated);
@@ -430,6 +471,11 @@ export class TournamentsService {
           tableId,
           legNumber: nextLegNumber,
         },
+      );
+      await this.notificationsService.createForUsers(
+        participantIds,
+        NotificationType.TOURNAMENT_TIE_STARTED,
+        { tournamentId, tournamentName: tournament.name },
       );
     }
 

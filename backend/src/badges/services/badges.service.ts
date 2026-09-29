@@ -6,6 +6,8 @@ import {
   GIANT_SLAYER_RATING_GAP,
   XP_PER_TOURNAMENT_WIN_BONUS,
 } from '../lib/xp';
+import { NotificationsService } from '../../notifications/services/notifications.service';
+import { NotificationType } from '../../notifications/entities/notification.entity';
 
 export interface GameResultInput {
   winnerIds: string[];
@@ -18,10 +20,11 @@ export interface GameResultInput {
 
 @Injectable()
 export class BadgesService {
-  /** Injecte les dépendances : BadgesRepository, BadgesGateway. */
+  /** Injecte les dépendances : BadgesRepository, BadgesGateway, NotificationsService. */
   constructor(
     private readonly badgesRepository: BadgesRepository,
     private readonly badgesGateway: BadgesGateway,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /** Enregistre le résultat d'une partie : stats/XP des gagnants et perdants, badges de jalons, et badge « tombeur » si les gagnants ont battu une équipe nettement mieux classée. */
@@ -99,6 +102,11 @@ export class BadgesService {
   private async tryAward(userId: string, code: BadgeCode): Promise<void> {
     if (await this.badgesRepository.award(userId, code)) {
       this.badgesGateway.emitToUser(userId, 'badges:earned', { code });
+      await this.notificationsService.create(
+        userId,
+        NotificationType.BADGE_EARNED,
+        { code },
+      );
     }
   }
 }

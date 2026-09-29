@@ -1,6 +1,6 @@
 {
   "common": {
-    "brand": "transcendence",
+    "brand": "42baby",
     "or": "ou",
     "loading": "Chargement…",
     "logout": "Se déconnecter",
@@ -88,10 +88,13 @@
     "review": "Voir",
     "seeAll": "tout voir",
     "noOnline": "Aucun ami en ligne pour le moment.",
-    "recentMessages": "Messages récents"
+    "recentMessages": "Messages récents",
+    "searchLabel": "Rechercher un joueur",
+    "searchPlaceholder": "chercher un joueur…",
+    "searchNoResults": "Aucun joueur trouvé."
   },
   "nav": {
-    "menu": "Menu",
+    "menu": "Jouer",
     "home": "Accueil",
     "profile": "Profil",
     "friends": "Amis",
@@ -100,7 +103,11 @@
     "chat": "Chat",
     "tables": "Tables",
     "ranking": "Classement",
-    "tournaments": "Tournois"
+    "tournaments": "Tournois",
+    "history": "Historique",
+    "notifications": "Notifications",
+    "groupSocial": "Social",
+    "groupAccount": "Compte"
   },
   "settings": {
     "title": "Paramètres",
@@ -306,6 +313,10 @@
     "releaseDescription": "{{name}} s’arrête dès qu’un second joueur du match demande aussi à la libérer. Vous devrez alors saisir le score final.",
     "releaseVotes": "{{count}}/2 demandent à libérer la table",
     "cancelRelease": "Annuler ma demande",
+    "reportFree": "Signaler la table comme libre",
+    "forceReleaseTitle": "Signaler la table comme libre ?",
+    "forceReleaseDescription": "À utiliser si personne ne joue vraiment sur {{name}}. Dès qu’un deuxième utilisateur extérieur au match confirme aussi, le match en cours est annulé sans score et la table repart à zéro.",
+    "forceReleaseVotes": "{{count}}/2 utilisateurs extérieurs signalent la table libre",
     "enterScore": "Saisir le score",
     "scoreTitle": "Score final",
     "scoreRequired": "La table est en cours de libération : saisissez le score final du match.",
@@ -347,7 +358,8 @@
     "scoreRequiredToast": "La table a été libérée : saisissez le score final.",
     "staysToast": "Vous restez sur la table, le groupe suivant arrive.",
     "leavesToast": "Vous quittez la table.",
-    "matchCancelledToast": "Score non saisi à temps : le match a été annulé."
+    "matchCancelledToast": "Score non saisi à temps : le match a été annulé.",
+    "matchClosedByOthersToast": "Le match a été annulé : des utilisateurs extérieurs ont signalé la table comme libre."
   },
   "matches": {
     "history": "Historique des matchs",
@@ -395,7 +407,8 @@
     "scoreSubmittedToast": "Score soumis ({{a}}-{{b}}), en attente de validation par l’adversaire.",
     "wonToast": "Victoire {{a}}-{{b}} ! Ton classement a été mis à jour.",
     "lostToast": "Défaite {{a}}-{{b}}. Ton classement a été mis à jour.",
-    "disputedToast": "Litige sur le score, aucun changement de classement."
+    "disputedToast": "Litige sur le score, aucun changement de classement.",
+    "viewHistory": "Voir l’historique complet"
   },
   "tournaments": {
     "title": "Tournois",
@@ -443,6 +456,41 @@
     "tieWonToast": "Tu passes au tour suivant dans {{name}} !",
     "eliminatedToast": "Tu es éliminé du tournoi {{name}}.",
     "completedToast": "Le tournoi {{name}} est terminé !"
+  },
+  "notifications": {
+    "markAllRead": "Tout marquer comme lu",
+    "empty": "Aucune notification pour l’instant.",
+    "unreadBadge": "Non lues",
+    "items": {
+      "friendRequest": "{{fromName}} t’a envoyé une demande d’ami.",
+      "matchProposed": "{{fromName}} te défie.",
+      "matchAccepted": "{{opponentName}} a accepté ton défi.",
+      "matchDeclined": "{{opponentName}} a refusé ton défi.",
+      "matchScoreSubmitted": "Score soumis : {{scoreA}}-{{scoreB}}.",
+      "matchCompletedWon": "Victoire {{scoreA}}-{{scoreB}}.",
+      "matchCompletedLost": "Défaite {{scoreA}}-{{scoreB}}.",
+      "matchDisputed": "Le score de ton match est contesté.",
+      "queueInvite": "{{fromName}} t’invite à jouer en 2v2 sur {{tableName}}.",
+      "queueInviteDeclined": "{{byName}} a refusé ton invitation sur {{tableName}}.",
+      "queueGroupClosed": "{{byName}} a quitté ton groupe sur {{tableName}}.",
+      "queueCalled": "C’était ton tour sur {{tableName}}.",
+      "queueExpiredCall": "Tu n’as pas confirmé à temps, tu as perdu ta place sur {{tableName}}.",
+      "queueExpiredInvite": "L’invitation sur {{tableName}} a expiré sans réponse.",
+      "queueExpiredTournament": "Un tournoi a pris {{tableName}}, ta place a été annulée.",
+      "tableMatchStarted": "Ton match a commencé sur {{tableName}}.",
+      "tableScoreRequired": "La table {{tableName}} a été libérée, le score était attendu.",
+      "tableMatchEndedStays": "Tu es resté sur {{tableName}}, le groupe suivant est arrivé.",
+      "tableMatchEndedLeaves": "Tu as quitté {{tableName}}.",
+      "tableMatchCancelledTimeout": "Score non saisi à temps sur {{tableName}} : le match a été annulé.",
+      "tableMatchCancelledExternal": "Le match sur {{tableName}} a été annulé : des utilisateurs extérieurs ont signalé la table comme libre.",
+      "tournamentLaunched": "Le tournoi {{tournamentName}} a démarré.",
+      "tournamentTableReclaimed": "Le tournoi {{tournamentName}} a repris {{tableName}}.",
+      "tournamentTieStarted": "Ta manche de {{tournamentName}} commence.",
+      "tournamentTieWon": "Manche gagnée dans {{tournamentName}} (tour {{round}}).",
+      "tournamentEliminated": "Éliminé de {{tournamentName}} (tour {{round}}).",
+      "tournamentCompleted": "Le tournoi {{tournamentName}} est terminé.",
+      "badgeEarned": "Badge débloqué : {{name}}."
+    }
   },
   "badges": {
     "title": "Progression",

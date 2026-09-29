@@ -26,6 +26,7 @@ export const ROUTES = {
   SETTINGS: "/settings",
   SETTINGS_2FA: "/settings/2fa",
   CHESS: "/chess",
+  ADMIN_PANEL: "/admin",
   profile: (id: string) => `/profile/${id}`,
   tournament: (id: string) => `/tournaments/${id}`,
   chatWith: (userId: string) => `/chat?user=${userId}`,

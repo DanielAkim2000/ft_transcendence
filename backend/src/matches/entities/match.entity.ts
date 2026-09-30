@@ -44,6 +44,12 @@ export class MatchEntity {
   submittedBy!: MatchPlayer | null;
   @ApiProperty({ type: MatchPlayer, nullable: true })
   validatedBy!: MatchPlayer | null;
+  @ApiProperty({
+    description: 'Ranking points gained/lost by each player, keyed by user id',
+    nullable: true,
+    example: { clx123456789: 12 },
+  })
+  ratingDeltas!: Record<string, number> | null;
   @ApiProperty({ example: '2026-01-01T12:00:00.000Z' })
   createdAt!: Date;
   @ApiProperty({ nullable: true, example: '2026-01-01T12:01:00.000Z' })

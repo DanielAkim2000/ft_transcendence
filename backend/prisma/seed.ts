@@ -233,6 +233,16 @@ function playMatch({
     });
   }
 
+  // Variation de classement par joueur (ladder uniquement, comme en prod).
+  const ratingDeltas = isTournamentLeg
+    ? null
+    : Object.fromEntries(
+        [...teamA, ...teamB].map((u) => [
+          u.id,
+          u.rating - ratingBefore.get(u.id),
+        ]),
+      );
+
   const winners = winnerSide === 'A' ? teamA : teamB;
   const losers = winnerSide === 'A' ? teamB : teamA;
 
@@ -272,6 +282,7 @@ function playMatch({
     scoreB,
     submittedById: teamAIds[0],
     validatedById: teamBIds[0],
+    ratingDeltas,
     tournamentTieId,
     legNumber,
     tableId,
@@ -359,6 +370,12 @@ const t1EntryByPlayer = Object.fromEntries(
   tournament1.entries.map((e) => [e.player1Id, e]),
 );
 
+/** Enregistre sur la manche décisive les points de tournoi gagnés par chaque joueur vainqueur. */
+function setLegPoints(legId: string, winnerIds: string[], points: number) {
+  const leg = matches.find((m) => m.id === legId);
+  leg.ratingDeltas = Object.fromEntries(winnerIds.map((id) => [id, points]));
+}
+
 /** Simule une rencontre de tournoi 1v1 en une manche : joue le match, ajoute le bonus de points du tour (10 × tour) au vainqueur et retourne la ligne « TournamentTie » à insérer. */
 function tournamentTie1v1({
   tournamentId,
@@ -385,6 +402,7 @@ function tournamentTie1v1({
   });
   const winnerEntry = winnerEntrySide === 'A' ? entryA : entryB;
   stats[winnerEntry.player1Id].rating += points;
+  setLegPoints(legId, [winnerEntry.player1Id], points);
   return {
     id: `seed_tie_${tournamentId}_${round}_${slot}`,
     tournamentId,
@@ -585,6 +603,7 @@ const { id: t2LegId, winnerEntrySide: t2WinnerSide } = playMatch({
 const t2r1s0Points = 10 * 1;
 stats['seed_bob'].rating += t2r1s0Points;
 stats['seed_charlie'].rating += t2r1s0Points;
+setLegPoints(t2LegId, ['seed_bob', 'seed_charlie'], t2r1s0Points);
 tournament2.ties = [
   {
     id: 'seed_tie_2_1_0',
@@ -1148,6 +1167,7 @@ async function main() {
             scoreB: m.scoreB,
             submittedById: m.submittedById,
             validatedById: m.validatedById,
+            ratingDeltas: m.ratingDeltas ?? undefined,
             tournamentTieId: m.tournamentTieId,
             legNumber: m.legNumber,
             tableId: m.tableId,

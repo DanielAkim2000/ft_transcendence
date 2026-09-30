@@ -365,6 +365,8 @@
     "history": "Match history",
     "historyEmpty": "No match played yet.",
     "historyWin": "Win",
+    "historyPoints": "Ranking points gained or lost",
+    "historyPointsShort": "pts",
     "historyLoss": "Loss",
     "historyLadder": "Challenge",
     "historyTournament": "Tournament",

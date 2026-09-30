@@ -305,6 +305,11 @@ export class TournamentsService {
       (id): id is string => !!id,
     );
     await this.tournamentsRepository.awardRatingBonus(winnerIds, points);
+    await this.tournamentsRepository.setLegRatingDeltas(
+      matchId,
+      winnerIds,
+      points,
+    );
 
     const allParticipantIds = [
       ...winnerIds,

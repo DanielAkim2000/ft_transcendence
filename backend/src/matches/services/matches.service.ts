@@ -358,7 +358,7 @@ export class MatchesService {
       teams.teamB,
       outcomeForTeamA,
     );
-    await this.matchesRepository.applyEloUpdates(results);
+    await this.matchesRepository.applyEloUpdates(matchId, results);
 
     if (outcomeForTeamA === 0.5) {
       await this.badgesService.recordDraw(

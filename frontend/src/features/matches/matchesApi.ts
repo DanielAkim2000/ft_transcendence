@@ -30,6 +30,7 @@ export interface Match {
   scoreB: number | null;
   submittedBy: MatchPlayer | null;
   validatedBy: MatchPlayer | null;
+  ratingDeltas: Record<string, number> | null;
   createdAt: string;
   respondedAt: string | null;
   submittedAt: string | null;

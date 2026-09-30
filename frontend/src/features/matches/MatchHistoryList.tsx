@@ -20,6 +20,7 @@ function HistoryRow({ match, meId }: { match: Match; meId: string }) {
   const won = myScore !== null && theirScore !== null && myScore > theirScore;
   const mine = myTeam === "A" ? match.teamA : match.teamB;
   const theirs = myTeam === "A" ? match.teamB : match.teamA;
+  const delta = match.ratingDeltas?.[meId] ?? null;
   const names = (team: Match["teamA"]) => team.map((p) => p.displayname).join(" & ");
 
   return (
@@ -56,9 +57,23 @@ function HistoryRow({ match, meId }: { match: Match; meId: string }) {
           </p>
         </div>
       </div>
-      <span className="shrink-0 font-mono text-sm font-bold">
-        {myScore} - {theirScore}
-      </span>
+      <div className="flex shrink-0 flex-col items-end">
+        <span className="font-mono text-sm font-bold">
+          {myScore} - {theirScore}
+        </span>
+        {delta !== null ? (
+          <span
+            className={cn(
+              "font-mono text-xs font-semibold",
+              delta > 0 ? "text-primary" : delta < 0 ? "text-destructive" : "text-muted-foreground",
+            )}
+            title={t("matches.historyPoints")}
+          >
+            {delta > 0 ? "+" : ""}
+            {delta} {t("matches.historyPointsShort")}
+          </span>
+        ) : null}
+      </div>
     </li>
   );
 }

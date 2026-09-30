@@ -269,15 +269,28 @@ export class MatchesRepository {
   /** Enregistre en base les nouvelles notes Elo de chaque joueur, en une seule transaction. */
   // matchesPlayed/xp sont gérés exclusivement par BadgesService (recordGameResult) :
   // ne pas les incrémenter ici pour éviter un double comptage.
-  async applyEloUpdates(results: EloPlayerResult[]): Promise<void> {
-    await this.prisma.$transaction(
-      results.map((result) =>
+  async applyEloUpdates(
+    matchId: string,
+    results: EloPlayerResult[],
+  ): Promise<void> {
+    const ratingDeltas = Object.fromEntries(
+      results.map((result) => [
+        result.id,
+        result.ratingAfter - result.ratingBefore,
+      ]),
+    );
+    await this.prisma.$transaction([
+      ...results.map((result) =>
         this.prisma.user.update({
           where: { id: result.id },
           data: { rating: result.ratingAfter },
         }),
       ),
-    );
+      this.prisma.match.update({
+        where: { id: matchId },
+        data: { ratingDeltas },
+      }),
+    ]);
   }
 
   /** Convertit une ligne Prisma en MatchEntity (équipes, scores, infos publiques des joueurs, infos de tournoi). */
@@ -319,6 +332,8 @@ export class MatchesRepository {
       scoreB: match.scoreB,
       submittedBy: publicPlayer(match.submittedBy),
       validatedBy: publicPlayer(match.validatedBy),
+      ratingDeltas:
+        (match.ratingDeltas as Record<string, number> | null) ?? null,
       createdAt: match.createdAt,
       respondedAt: match.respondedAt,
       submittedAt: match.submittedAt,

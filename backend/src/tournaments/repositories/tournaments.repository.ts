@@ -370,6 +370,20 @@ export class TournamentsRepository {
     });
   }
 
+  /** Enregistre sur la manche décisive les points de tournoi gagnés, pour l'historique. */
+  async setLegRatingDeltas(
+    matchId: string,
+    userIds: string[],
+    points: number,
+  ): Promise<void> {
+    await this.prisma.match.update({
+      where: { id: matchId },
+      data: {
+        ratingDeltas: Object.fromEntries(userIds.map((id) => [id, points])),
+      },
+    });
+  }
+
   /** Score + composition de la manche qui vient d'être jouée (pour les badges : victoire/défaite de CETTE manche). */
   async getLegOutcome(matchId: string): Promise<{
     scoreA: number | null;

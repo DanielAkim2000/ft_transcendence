@@ -329,6 +329,8 @@ model Match {
   submittedBy   User?   @relation("MatchSubmittedBy", fields: [submittedById], references: [id], onDelete: SetNull)
   validatedById String?
   validatedBy   User?   @relation("MatchValidatedBy", fields: [validatedById], references: [id], onDelete: SetNull)
+  // Points de classement gagnés/perdus par joueur à la validation : { [userId]: delta }.
+  ratingDeltas  Json?
 
   // Non-nuls uniquement pour une rencontre de tournoi (legNumber 1/2, 3 = belle en cas d'égalité aller-retour).
   tournamentTieId String?

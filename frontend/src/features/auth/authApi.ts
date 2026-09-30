@@ -9,7 +9,9 @@ import { TAG_TYPES } from "@/constants/tagTypes";
 import { API_ROUTES } from "@/constants/apiRoutes";
 import { AUTH_ENDPOINTS } from "@/constants/queryEndpoints";
 import type {
+  AccentPreference,
   LanguagePreference,
+  RadiusPreference,
   ThemePreference,
 } from "../settings/settingsSlice";
 
@@ -34,6 +36,8 @@ export interface User {
   role: Role;
   theme: ThemePreference;
   language: LanguagePreference;
+  accent: AccentPreference;
+  radius: RadiusPreference;
   createdAt: Date;
   updatedAt: Date;
 }

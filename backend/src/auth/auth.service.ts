@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
   BadRequestException,
   ConflictException,
@@ -93,6 +94,10 @@ export class AuthService {
       {
         secret: refreshTokenSecret,
         expiresIn: refreshTokenExpirationTime,
+        // Identifiant unique : sans lui, deux connexions dans la même seconde
+        // produisent le même jeton (même userId, même iat) et la contrainte
+        // d'unicité du hash en base fait échouer la seconde en erreur 500.
+        jwtid: randomUUID(),
       },
     );
 

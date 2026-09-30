@@ -5,6 +5,7 @@ import {
   MatchFormat,
   MatchStatus,
 } from '../entities/match.entity';
+import { HistoryQueryDto } from '../dtos/history-query.dto';
 import type { EloPlayerInput, EloPlayerResult } from '../lib/elo';
 import type { Prisma } from '../../generated/prisma/client';
 import {
@@ -114,25 +115,91 @@ export class MatchesRepository {
     return { matches: matches.map((match) => this.toEntity(match)), total };
   }
 
-  /** Historique complet : tous les matchs terminés (ladder + manches de tournoi), une page plus le total. */
+  /** Historique : matchs terminés (ladder + manches de tournoi) filtrés par nom de joueur, résultat, format et origine, triés, une page plus le total. */
   async listHistoryForUser(
     userId: string,
-    page: PageQueryDto,
+    query: HistoryQueryDto,
   ): Promise<{ matches: MatchEntity[]; total: number }> {
-    const where: Prisma.MatchWhereInput = {
-      ...involvesUser(userId),
-      status: MatchStatus.COMPLETED,
-    };
-    const [matches, total] = await this.prisma.$transaction([
-      this.prisma.match.findMany({
-        where,
-        include: withTournament,
-        orderBy: { createdAt: 'desc' },
-        skip: pageOffset(page),
-        take: page.limit,
-      }),
-      this.prisma.match.count({ where }),
-    ]);
+    const { q, result, format, source, sort } = query;
+    const scoreB = this.prisma.match.fields.scoreB;
+    const scoreA = this.prisma.match.fields.scoreA;
+    const and: Prisma.MatchWhereInput[] = [
+      involvesUser(userId),
+      { status: MatchStatus.COMPLETED },
+    ];
+    if (format) {
+      and.push({ format });
+    }
+    if (source) {
+      and.push({ tournamentTieId: source === 'ladder' ? null : { not: null } });
+    }
+    if (q?.trim()) {
+      const name = { contains: q.trim(), mode: 'insensitive' as const };
+      const other = { id: { not: userId }, displayname: name };
+      and.push({
+        OR: [
+          { teamAPlayer1: other },
+          { teamAPlayer2: other },
+          { teamBPlayer1: other },
+          { teamBPlayer2: other },
+        ],
+      });
+    }
+    if (result) {
+      const iAmA = {
+        OR: [{ teamAPlayer1Id: userId }, { teamAPlayer2Id: userId }],
+      };
+      const iAmB = {
+        OR: [{ teamBPlayer1Id: userId }, { teamBPlayer2Id: userId }],
+      };
+      and.push(
+        result === 'win'
+          ? {
+              OR: [
+                { AND: [iAmA, { scoreA: { gt: scoreB } }] },
+                { AND: [iAmB, { scoreB: { gt: scoreA } }] },
+              ],
+            }
+          : {
+              OR: [
+                { AND: [iAmA, { scoreA: { lt: scoreB } }] },
+                { AND: [iAmB, { scoreB: { lt: scoreA } }] },
+              ],
+            },
+      );
+    }
+    const where: Prisma.MatchWhereInput = { AND: and };
+    const skip = pageOffset(query);
+
+    let matches: MatchWithPlayers[];
+    let total: number;
+    if (sort === 'score') {
+      // Prisma ne trie pas sur une différence de colonnes : on trie en mémoire
+      // l'ensemble filtré (historique d'un seul joueur, donc petit), puis on pagine.
+      const [all, count] = await this.prisma.$transaction([
+        this.prisma.match.findMany({ where, include: withTournament }),
+        this.prisma.match.count({ where }),
+      ]);
+      const gap = (m: { scoreA: number | null; scoreB: number | null }) =>
+        Math.abs((m.scoreA ?? 0) - (m.scoreB ?? 0));
+      all.sort(
+        (a, b) =>
+          gap(b) - gap(a) || b.createdAt.getTime() - a.createdAt.getTime(),
+      );
+      matches = all.slice(skip, skip + query.limit);
+      total = count;
+    } else {
+      [matches, total] = await this.prisma.$transaction([
+        this.prisma.match.findMany({
+          where,
+          include: withTournament,
+          orderBy: { createdAt: sort === 'oldest' ? 'asc' : 'desc' },
+          skip,
+          take: query.limit,
+        }),
+        this.prisma.match.count({ where }),
+      ]);
+    }
     return { matches: matches.map((match) => this.toEntity(match)), total };
   }
 

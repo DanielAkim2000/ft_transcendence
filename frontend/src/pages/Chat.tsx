@@ -1,12 +1,20 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
-import { ArrowLeftIcon, Check, CheckCheck } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  Check,
+  CheckCheck,
+  CrownIcon,
+  SwordsIcon,
+} from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { toast } from "@/components/ui/toast";
+import { ChallengeDialog } from "@/features/matches/ChallengeDialog";
+import { useChessInvite } from "@/features/chess/useChessInvite";
 import { ROUTES } from "@/constants/routes";
 import { useMeQuery } from "@/features/auth/authApi";
 import { useGetUserQuery } from "@/features/users/usersApi";
@@ -45,7 +53,13 @@ const isReadByPeer = (message: Message, conversation: Conversation) =>
   new Date(message.createdAt).getTime() <=
     new Date(conversation.peerLastReadAt as string).getTime();
 
-function PeerAvatar({ userId, className }: { userId: string; className?: string }) {
+function PeerAvatar({
+  userId,
+  className,
+}: {
+  userId: string;
+  className?: string;
+}) {
   const { data } = useGetUserQuery(userId);
   const user = data?.user;
   return (
@@ -155,10 +169,15 @@ function Thread({
   const [markRead] = useMarkConversationReadMutation();
   const [blockUser, { isLoading: blocking }] = useBlockUserMutation();
   const [unblockUser, { isLoading: unblocking }] = useUnblockUserMutation();
+  const { inviteToChess } = useChessInvite();
   const [draft, setDraft] = useState("");
   const [peerTyping, setPeerTyping] = useState(false);
-  const peerTypingExpiryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const stopTypingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const peerTypingExpiryRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const stopTypingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const endRef = useRef<HTMLDivElement>(null);
 
   const isBlockedByMe = blockStatus?.blocked ?? false;
@@ -179,7 +198,8 @@ function Thread({
       if (event.conversationId !== conversation.id || event.userId !== peerId) {
         return;
       }
-      if (peerTypingExpiryRef.current) clearTimeout(peerTypingExpiryRef.current);
+      if (peerTypingExpiryRef.current)
+        clearTimeout(peerTypingExpiryRef.current);
       if (event.isTyping) {
         setPeerTyping(true);
         peerTypingExpiryRef.current = setTimeout(
@@ -192,14 +212,16 @@ function Thread({
     });
     return () => {
       unsubscribe();
-      if (peerTypingExpiryRef.current) clearTimeout(peerTypingExpiryRef.current);
+      if (peerTypingExpiryRef.current)
+        clearTimeout(peerTypingExpiryRef.current);
     };
   }, [conversation.id, peerId]);
 
   const handleDraftChange = (value: string) => {
     setDraft(value);
     emitTyping(conversation.id, true);
-    if (stopTypingTimeoutRef.current) clearTimeout(stopTypingTimeoutRef.current);
+    if (stopTypingTimeoutRef.current)
+      clearTimeout(stopTypingTimeoutRef.current);
     stopTypingTimeoutRef.current = setTimeout(
       () => emitTyping(conversation.id, false),
       TYPING_STOP_DELAY_MS,
@@ -211,10 +233,20 @@ function Thread({
     if (conversation.unreadCount > 0 || newestFromPeer) {
       void markRead(conversation.id);
     }
-  }, [conversation.id, conversation.unreadCount, newestId, newestFromPeer, markRead]);
+  }, [
+    conversation.id,
+    conversation.unreadCount,
+    newestId,
+    newestFromPeer,
+    markRead,
+  ]);
 
   useEffect(() => {
-    if (!isFetching && cursor && messages.length === lengthBeforeLoadMore.current) {
+    if (
+      !isFetching &&
+      cursor &&
+      messages.length === lengthBeforeLoadMore.current
+    ) {
       setExhausted(true);
     }
   }, [isFetching, cursor, messages.length]);
@@ -228,7 +260,8 @@ function Thread({
     event.preventDefault();
     const content = draft.trim();
     if (!content || sending) return;
-    if (stopTypingTimeoutRef.current) clearTimeout(stopTypingTimeoutRef.current);
+    if (stopTypingTimeoutRef.current)
+      clearTimeout(stopTypingTimeoutRef.current);
     emitTyping(conversation.id, false);
     try {
       await sendMessage({ conversationId: conversation.id, content }).unwrap();
@@ -292,11 +325,40 @@ function Thread({
                   peer.user.isOnline ? "text-primary" : "text-muted-foreground",
                 )}
               >
-                {peer.user.isOnline ? t("profile.online") : t("profile.offline")}
+                {peer.user.isOnline
+                  ? t("profile.online")
+                  : t("profile.offline")}
               </p>
             ) : null}
           </div>
         </Link>
+        {peer && !isBlockedByMe ? (
+          <>
+            <ChallengeDialog opponent={peer.user}>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                aria-label={t("matches.challenge")}
+              >
+                <SwordsIcon />
+                <span className="hidden sm:inline">
+                  {t("matches.challenge")}
+                </span>
+              </Button>
+            </ChallengeDialog>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              aria-label={t("chat.inviteChess")}
+              onClick={() => inviteToChess(peerId)}
+            >
+              <CrownIcon />
+              <span className="hidden sm:inline">{t("chat.inviteChess")}</span>
+            </Button>
+          </>
+        ) : null}
         {isBlockedByMe ? (
           <Button
             type="button"
@@ -347,7 +409,10 @@ function Thread({
           return (
             <div
               key={message.id}
-              className={cn("flex max-w-[85%] flex-col gap-1", mine && "items-end self-end")}
+              className={cn(
+                "flex max-w-[85%] flex-col gap-1",
+                mine && "items-end self-end",
+              )}
             >
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
                 {mine ? t("chat.you") : (peer?.user.displayname ?? "…")} ·{" "}
@@ -477,7 +542,9 @@ export const Chat = () => {
         </ul>
       </aside>
 
-      <section className={cn("min-w-0 flex-1", selected ? "block" : "hidden md:block")}>
+      <section
+        className={cn("min-w-0 flex-1", selected ? "block" : "hidden md:block")}
+      >
         {selected ? (
           <Thread
             key={selected.id}

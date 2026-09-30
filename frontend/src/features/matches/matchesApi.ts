@@ -43,13 +43,21 @@ export interface Match {
   tableId: string | null;
 }
 
+export interface HistoryArgs extends PageArgs {
+  q?: string;
+  result?: "win" | "loss";
+  format?: MatchFormat;
+  source?: "ladder" | "tournament";
+  sort?: "newest" | "oldest" | "score";
+}
+
 export const matchesApi = api.injectEndpoints({
   endpoints: (builder) => ({
     [MATCHES_ENDPOINTS.LIST_MATCHES]: builder.query<Paginated<Match>, PageArgs | void>({
       query: (args) => ({ url: API_ROUTES.MATCHES_ME, params: args ?? undefined }),
       providesTags: [TAG_TYPES.MATCHES],
     }),
-    [MATCHES_ENDPOINTS.LIST_MATCH_HISTORY]: builder.query<Paginated<Match>, PageArgs | void>({
+    [MATCHES_ENDPOINTS.LIST_MATCH_HISTORY]: builder.query<Paginated<Match>, HistoryArgs | void>({
       query: (args) => ({ url: API_ROUTES.MATCHES_HISTORY, params: args ?? undefined }),
       providesTags: [TAG_TYPES.MATCHES],
     }),

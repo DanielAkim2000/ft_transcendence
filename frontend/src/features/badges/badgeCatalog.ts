@@ -1,4 +1,13 @@
-import { Award, Crown, Flame, Medal, Shield, Swords, Trophy, type LucideIcon } from "lucide-react";
+import {
+  Award,
+  Crown,
+  Flame,
+  Medal,
+  Shield,
+  Swords,
+  Trophy,
+  type LucideIcon,
+} from "lucide-react";
 import type { BadgeCode } from "./badgesApi";
 
 export const BADGE_CATALOG: { code: BadgeCode; icon: LucideIcon }[] = [

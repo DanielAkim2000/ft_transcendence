@@ -8,7 +8,11 @@ import { TAG_TYPES } from "@/constants/tagTypes";
 import { toast } from "@/components/ui/toast";
 import i18n from "@/i18n";
 
-export const BadgesBootstrap = ({ children }: { children: React.ReactNode }) => {
+export const BadgesBootstrap = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const accessToken = useAppSelector(selectAccessToken);
   const { data: me } = useMeQuery();
   const dispatch = useAppDispatch();
@@ -21,7 +25,9 @@ export const BadgesBootstrap = ({ children }: { children: React.ReactNode }) => 
     const socket = connect(accessToken);
 
     const onEarned = (payload: { code: BadgeCode }) => {
-      dispatch(badgesApi.util.invalidateTags([{ type: TAG_TYPES.BADGES, id: me.id }]));
+      dispatch(
+        badgesApi.util.invalidateTags([{ type: TAG_TYPES.BADGES, id: me.id }]),
+      );
       toast.add({
         title: i18n.t("badges.earnedToast", {
           name: i18n.t(`badges.catalog.${payload.code}.name`),

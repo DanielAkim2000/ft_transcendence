@@ -21,6 +21,8 @@ import * as bcrypt from 'bcrypt';
 import { Prisma } from '../../generated/prisma/client';
 import { PageQueryDto } from '../../common/pagination/page-query.dto';
 import { Paginated, toPaginated } from '../../common/pagination/paginated';
+import { RankingEntry } from '../entities/ranking-entry.entity';
+import { RankingQueryDto } from '../dtos/ranking-query.dto';
 
 /** Utilisateur renvoyé par la recherche, avec sa relation d'amitié avec l'utilisateur connecté. */
 export type UserWithFriendship = UserEntity & {
@@ -153,13 +155,15 @@ export class UsersService {
     return this.userRepository.updateUser(user);
   }
 
-  /** Met à jour le thème et la langue de l'utilisateur. */
+  /** Met à jour le thème, la langue, la couleur principale et l'arrondi des bordures de l'utilisateur. */
   async updateSettings(
     user: UserEntity,
     dto: UpdateSettingsDto,
   ): Promise<UserEntity> {
     user.theme = dto.theme;
     user.language = dto.language;
+    if (dto.accent) user.accent = dto.accent;
+    if (dto.radius) user.radius = dto.radius;
     return this.userRepository.updateUser(user);
   }
 
@@ -368,8 +372,15 @@ export class UsersService {
     return this.userRepository.updatePresence(userId, isOnline, status);
   }
 
-  /** Retourne le classement des joueurs par note Elo. */
-  getRanking() {
-    return this.userRepository.listRanking();
+  /** Retourne une page du classement des joueurs par note Elo, avec recherche, filtres et tri. */
+  async getRanking(
+    userId: string,
+    query: RankingQueryDto,
+  ): Promise<Paginated<RankingEntry>> {
+    const { entries, total } = await this.userRepository.listRanking(
+      userId,
+      query,
+    );
+    return toPaginated(entries, total, query);
   }
 }

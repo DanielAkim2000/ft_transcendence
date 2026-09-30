@@ -89,3 +89,15 @@ export const NOTIFICATIONS_ENDPOINTS = {
   COUNT_UNREAD_NOTIFICATIONS: "countUnreadNotifications",
   MARK_ALL_NOTIFICATIONS_READ: "markAllNotificationsRead",
 } as const;
+
+/** Noms des endpoints RTK Query — healthApi */
+export const HEALTH_ENDPOINTS = {
+  GET_HEALTH: "getHealth",
+} as const;
+
+/** Noms des endpoints RTK Query — gdprApi */
+export const GDPR_ENDPOINTS = {
+  EXPORT_DATA: "exportMyData",
+  REQUEST_DELETION: "requestAccountDeletion",
+  CONFIRM_DELETION: "confirmAccountDeletion",
+} as const;

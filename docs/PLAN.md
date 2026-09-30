@@ -84,12 +84,15 @@ Filet si un module tombe : API publique (2), permissions admin (2), dashboard an
 
 ### Modules bonus « filet » validés
 
-- ✅ **Chat avancé (minor, 1 pt)** — blocage, historique persistant, accès au profil depuis le chat (lien dans l'en-tête de conversation), indicateurs de frappe (WebSocket `typing`, timeout 3 s), accusés de lecture temps réel (simple check / double check, événement `conversation:read`). Inviter à jouer depuis le chat non fait (dépend du produit, pas nécessaire pour le point).
+- ✅ **Chat avancé (minor, 1 pt)** — blocage, historique persistant, accès au profil depuis le chat (lien dans l'en-tête de conversation), indicateurs de frappe (WebSocket `typing`, timeout 3 s), accusés de lecture temps réel (simple check / double check, événement `conversation:read`). Inviter à jouer depuis le chat : bouton « Défier » (même dialogue 1v1 / 2v2 que le classement) dans l'en-tête de conversation, plus un bouton « Inviter aux échecs » à brancher quand le jeu d'échecs sera intégré (point d'entrée : `frontend/src/features/chess/useChessInvite.ts`).
 - ✅ **Design system maison (minor, 1 pt)** — documenté dans [`docs/DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) : palette (tokens clair/sombre), typographie (JetBrains Mono), icônes (lucide-react), 14 composants réutilisables listés avec variantes et usages.
 
 ### Suivi du reste (bonus)
 
-Aucun des 5 modules bonus n'est commencé (GDPR, PWA, autres navigateurs, healthcheck + backups, recherche avancée). Le healthcheck Docker de Postgres existe déjà mais ne compte pas comme module.
+- ✅ **Healthcheck + backups (minor, 1 pt)** — `/health`, page `/status`, healthchecks Docker, service `backup` (pg_dump toutes les 24 h, rétention 7 j), restauration transactionnelle. Voir [`BACKUP.md`](./BACKUP.md).
+- ✅ **Recherche avancée (minor, 1 pt)** — historique des matchs (joueur, résultat, format, origine, tri) et classement (joueur, périmètre amis, matchs minimum, tri), pagination côté serveur ; le rang affiché reste le rang général.
+- ✅ **GDPR (minor, 1 pt)** — export des données en CSV ou JSON (`GET /gdpr/export?format=`), suppression du compte avec lien de confirmation par email (`/gdpr/deletion-request` puis `/gdpr/deletion-confirm`) : les données personnelles sont effacées et le compte est **anonymisé** (« Deleted user », colonne `User.deletedAt`) pour préserver l'historique, l'Elo et les tournois des autres joueurs, emails de confirmation (nodemailer, Mailpit en dev sur http://localhost:8025), section « Confidentialité & données » dans les réglages.
+- Restent (filet) : PWA, autres navigateurs.
 
 ## Abordable plus tard (pas dans le pack)
 
@@ -148,7 +151,7 @@ Les mates ne font pas de web : le produit babyfoot est porté par l'équipe web 
 
 1. ✅ **Tables** — 2 baby (seed Baby A / Baby B), libre / occupé (honor system), page live en WebSocket (`/tables`), prise atomique (pas de course), carte sur l'accueil.
 2. ✅ **Queue** — solo, FIFO par table, notif « à toi » (WebSocket `/queue`, toast, point de nav sur Tables), timeout 2 min (le suivant est appelé automatiquement), table réservée pendant le délai (bloque les autres).
-3. ✅ **Match + Elo** — page Classement (`/ranking`), défi 1v1/2v2 depuis le classement (indépendant des tables), accept/decline, saisie + validation du score par l'adversaire, litige auto après 10 min sans validation, Elo appliqué côté serveur à la validation. Notifs temps réel (WebSocket `/matches`, toasts, point de nav sur Classement).
+3. ✅ **Match + Elo** — page Classement (`/ranking`) et page Défis (`/challenges`) séparées, défi 1v1/2v2 depuis le classement ou le chat (indépendant des tables), accept/decline, saisie + validation du score par l'adversaire, litige auto après 10 min sans validation, Elo appliqué côté serveur à la validation. Notifs temps réel (WebSocket `/matches`, toasts, point de nav sur Défis).
 4. ✅ **Tournois** — page `/tournaments`, création admin (nom, format, aller-retour), inscription des participants (recherche de joueurs, paires pour le 2v2), tirage au sort au lancement, moteur d'attribution automatique des tables (libération forcée + file vidée au lancement, occupation/libération à chaque manche), points fixes par tour ajoutés au classement, bracket affiché par tour avec score cumulé pour l'aller-retour. Notifs temps réel (WebSocket `/tournaments`).
 5. ✅ **Gamification (badges + XP)** — carte « Progression » sur chaque profil (le sien et celui des autres) : barre XP/niveau, stats (victoires, matchs joués, meilleure série), grille des 7 badges (colorés si obtenus, grisés + cadenas sinon). Notif temps réel (WebSocket `/badges`) à chaque déblocage.
 6. ✅ Chat avancé (+1 pt) et design system documenté (+1 pt, voir [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md)).

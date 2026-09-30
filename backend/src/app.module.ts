@@ -12,6 +12,9 @@ import { MatchesModule } from './matches/matches.module';
 import { TournamentsModule } from './tournaments/tournaments.module';
 import { BadgesModule } from './badges/badges.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { HealthModule } from './health/health.module';
+import { MailModule } from './mail/mail.module';
+import { GdprModule } from './gdpr/gdpr.module';
 
 /** Module racine : charge la config (.env), le JWT global (access token, 1 h) et tous les modules fonctionnels de l'application. */
 @Module({
@@ -39,6 +42,9 @@ import { NotificationsModule } from './notifications/notifications.module';
     TournamentsModule,
     BadgesModule,
     NotificationsModule,
+    HealthModule,
+    MailModule,
+    GdprModule,
   ],
   controllers: [],
   providers: [],

@@ -21,7 +21,7 @@ export const MatchesBootstrap = ({ children }: { children: React.ReactNode }) =>
       return;
     }
     const socket = connect(accessToken);
-    const goToRanking = () => navigate(ROUTES.RANKING);
+    const goToChallenges = () => navigate(ROUTES.CHALLENGES);
 
     const onProposed = (match: Match) => {
       applyMatchToCache(dispatch, match);
@@ -29,7 +29,7 @@ export const MatchesBootstrap = ({ children }: { children: React.ReactNode }) =>
       toast.add({
         title: i18n.t("matches.proposedToast", { name: challenger?.displayname ?? "?" }),
         type: "info",
-        actionProps: { children: i18n.t("home.review"), onClick: goToRanking },
+        actionProps: { children: i18n.t("home.review"), onClick: goToChallenges },
       });
     };
 
@@ -47,7 +47,7 @@ export const MatchesBootstrap = ({ children }: { children: React.ReactNode }) =>
       toast.add({
         title: i18n.t("matches.acceptedToast"),
         type: "success",
-        actionProps: { children: i18n.t("home.review"), onClick: goToRanking },
+        actionProps: { children: i18n.t("home.review"), onClick: goToChallenges },
       });
     };
 
@@ -68,7 +68,7 @@ export const MatchesBootstrap = ({ children }: { children: React.ReactNode }) =>
                 b: match.scoreB,
               }),
         type: "info",
-        actionProps: { children: i18n.t("home.review"), onClick: goToRanking },
+        actionProps: { children: i18n.t("home.review"), onClick: goToChallenges },
       });
     };
 

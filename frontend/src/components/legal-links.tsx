@@ -19,6 +19,10 @@ export function LegalLinks({ className }: { className?: string }) {
       <Link to={ROUTES.TERMS} className="hover:text-primary">
         {t("legal.nav.terms")}
       </Link>
+      <span aria-hidden>·</span>
+      <Link to={ROUTES.STATUS} className="hover:text-primary">
+        {t("status.nav")}
+      </Link>
     </nav>
   );
 }

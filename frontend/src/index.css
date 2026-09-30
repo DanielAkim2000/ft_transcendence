@@ -154,3 +154,189 @@
     color: var(--primary-foreground);
     }
 }
+/* ── Personnalisation (Réglages → Apparence) ──────────────────────────────────
+   L'utilisateur choisit sa couleur principale et l'arrondi des bordures ;
+   ils sont posés en attributs sur <html> (data-accent / data-radius) par
+   AppearanceSync. Le vert et les angles droits sont les valeurs d'origine :
+   sans attribut, rien ne change. */
+:root[data-accent="blue"] {
+    --primary: #2563eb;
+    --primary-foreground: #ffffff;
+    --ring: #2563eb;
+    --chart-1: #2563eb;
+    --chart-2: #719af2;
+    --accent: #d7ddea;
+    --sidebar-primary: #2563eb;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #d7ddea;
+    --sidebar-ring: #2563eb;
+}
+:root[data-accent="blue"].dark {
+    --primary: #60a5fa;
+    --primary-foreground: #07090a;
+    --ring: #60a5fa;
+    --chart-1: #60a5fa;
+    --chart-2: #98c4fc;
+    --accent: #26374b;
+    --sidebar-primary: #60a5fa;
+    --sidebar-primary-foreground: #07090a;
+    --sidebar-accent: #26374b;
+    --sidebar-ring: #60a5fa;
+}
+:root[data-accent="purple"] {
+    --primary: #7c3aed;
+    --primary-foreground: #ffffff;
+    --ring: #7c3aed;
+    --chart-1: #7c3aed;
+    --chart-2: #aa7ff3;
+    --accent: #e3d7ea;
+    --sidebar-primary: #7c3aed;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #e3d7ea;
+    --sidebar-ring: #7c3aed;
+}
+:root[data-accent="purple"].dark {
+    --primary: #a78bfa;
+    --primary-foreground: #07090a;
+    --ring: #a78bfa;
+    --chart-1: #a78bfa;
+    --chart-2: #c6b4fc;
+    --accent: #36314b;
+    --sidebar-primary: #a78bfa;
+    --sidebar-primary-foreground: #07090a;
+    --sidebar-accent: #36314b;
+    --sidebar-ring: #a78bfa;
+}
+:root[data-accent="pink"] {
+    --primary: #be185d;
+    --primary-foreground: #ffffff;
+    --ring: #be185d;
+    --chart-1: #be185d;
+    --chart-2: #d56996;
+    --accent: #ecd3d6;
+    --sidebar-primary: #be185d;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #ecd3d6;
+    --sidebar-ring: #be185d;
+}
+:root[data-accent="pink"].dark {
+    --primary: #f472b6;
+    --primary-foreground: #07090a;
+    --ring: #f472b6;
+    --chart-1: #f472b6;
+    --chart-2: #f8a3d0;
+    --accent: #472c3c;
+    --sidebar-primary: #f472b6;
+    --sidebar-primary-foreground: #07090a;
+    --sidebar-accent: #472c3c;
+    --sidebar-ring: #f472b6;
+}
+:root[data-accent="red"] {
+    --primary: #d9342b;
+    --primary-foreground: #ffffff;
+    --ring: #d9342b;
+    --chart-1: #d9342b;
+    --chart-2: #e67b75;
+    --accent: #f0d7cf;
+    --sidebar-primary: #d9342b;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #f0d7cf;
+    --sidebar-ring: #d9342b;
+}
+:root[data-accent="red"].dark {
+    --primary: #ff6b5b;
+    --primary-foreground: #07090a;
+    --ring: #ff6b5b;
+    --chart-1: #ff6b5b;
+    --chart-2: #ff9f94;
+    --accent: #492a28;
+    --sidebar-primary: #ff6b5b;
+    --sidebar-primary-foreground: #07090a;
+    --sidebar-accent: #492a28;
+    --sidebar-ring: #ff6b5b;
+}
+:root[data-accent="orange"] {
+    --primary: #c2410c;
+    --primary-foreground: #ffffff;
+    --ring: #c2410c;
+    --chart-1: #c2410c;
+    --chart-2: #d78461;
+    --accent: #edd8cb;
+    --sidebar-primary: #c2410c;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #edd8cb;
+    --sidebar-ring: #c2410c;
+}
+:root[data-accent="orange"].dark {
+    --primary: #fb923c;
+    --primary-foreground: #07090a;
+    --ring: #fb923c;
+    --chart-1: #fb923c;
+    --chart-2: #fcb880;
+    --accent: #483321;
+    --sidebar-primary: #fb923c;
+    --sidebar-primary-foreground: #07090a;
+    --sidebar-accent: #483321;
+    --sidebar-ring: #fb923c;
+}
+:root[data-accent="amber"] {
+    --primary: #a16207;
+    --primary-foreground: #ffffff;
+    --ring: #a16207;
+    --chart-1: #a16207;
+    --chart-2: #c2995e;
+    --accent: #e8ddca;
+    --sidebar-primary: #a16207;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #e8ddca;
+    --sidebar-ring: #a16207;
+}
+:root[data-accent="amber"].dark {
+    --primary: #fbbf24;
+    --primary-foreground: #07090a;
+    --ring: #fbbf24;
+    --chart-1: #fbbf24;
+    --chart-2: #fcd571;
+    --accent: #483d1c;
+    --sidebar-primary: #fbbf24;
+    --sidebar-primary-foreground: #07090a;
+    --sidebar-accent: #483d1c;
+    --sidebar-ring: #fbbf24;
+}
+:root[data-accent="teal"] {
+    --primary: #0f766e;
+    --primary-foreground: #ffffff;
+    --ring: #0f766e;
+    --chart-1: #0f766e;
+    --chart-2: #63a6a1;
+    --accent: #d4e0d9;
+    --sidebar-primary: #0f766e;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #d4e0d9;
+    --sidebar-ring: #0f766e;
+}
+:root[data-accent="teal"].dark {
+    --primary: #2dd4bf;
+    --primary-foreground: #07090a;
+    --ring: #2dd4bf;
+    --chart-1: #2dd4bf;
+    --chart-2: #76e3d5;
+    --accent: #1b413e;
+    --sidebar-primary: #2dd4bf;
+    --sidebar-primary-foreground: #07090a;
+    --sidebar-accent: #1b413e;
+    --sidebar-ring: #2dd4bf;
+}
+
+/* Arrondi : « none » (angles droits) est la valeur par défaut de :root. */
+:root[data-radius="medium"] { --radius: 0.5rem; }
+:root[data-radius="large"] { --radius: 1rem; }
+
+/* Les blocs à bordure complète (listes, cartes maison…) suivent le réglage :
+   la classe « border » seule (pas border-b, ni border-border). Les éléments
+   qui ont leur propre « rounded-* » (utilities) l'emportent sur cette règle. */
+@layer base {
+    .border {
+        border-radius: var(--radius);
+    }
+}

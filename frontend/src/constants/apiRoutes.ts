@@ -23,6 +23,12 @@ export const API_ROUTES = {
   friend: (userId: string) => `/users/me/friends/${userId}`,
   friendAccept: (userId: string) => `/users/me/friends/${userId}/accept`,
 
+  HEALTH: "/health",
+
+  GDPR_EXPORT: "/gdpr/export",
+  GDPR_DELETION_REQUEST: "/gdpr/deletion-request",
+  GDPR_DELETION_CONFIRM: "/gdpr/deletion-confirm",
+
   TABLES: "/tables",
 
   QUEUE_ME: "/queue/me",

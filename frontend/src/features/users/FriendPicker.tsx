@@ -16,7 +16,11 @@ type FriendPickerProps = {
 };
 
 /** Liste paginée (côté backend) d'amis à choisir, un seul à la fois. */
-export function FriendPicker({ value, onChange, excludeIds = [] }: FriendPickerProps) {
+export function FriendPicker({
+  value,
+  onChange,
+  excludeIds = [],
+}: FriendPickerProps) {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const { data, isFetching } = useListFriendsQuery({
@@ -24,11 +28,17 @@ export function FriendPicker({ value, onChange, excludeIds = [] }: FriendPickerP
     limit: FRIEND_PICKER_PAGE_SIZE,
   });
   useClampedPage(page, data?.totalPages, setPage);
-  const friends = (data?.items ?? []).filter((friend) => !excludeIds.includes(friend.id));
+  const friends = (data?.items ?? []).filter(
+    (friend) => !excludeIds.includes(friend.id),
+  );
 
   return (
     <div className="flex flex-col gap-3">
-      <RadioGroup value={value} onValueChange={onChange} className="flex flex-col gap-2">
+      <RadioGroup
+        value={value}
+        onValueChange={onChange}
+        className="flex flex-col gap-2"
+      >
         {friends.map((friend) => (
           <Label
             key={friend.id}
@@ -39,7 +49,9 @@ export function FriendPicker({ value, onChange, excludeIds = [] }: FriendPickerP
           </Label>
         ))}
         {!isFetching && (data?.total ?? 0) === 0 ? (
-          <p className="text-xs text-muted-foreground">{t("matches.noFriends")}</p>
+          <p className="text-xs text-muted-foreground">
+            {t("matches.noFriends")}
+          </p>
         ) : null}
       </RadioGroup>
       <Pagination

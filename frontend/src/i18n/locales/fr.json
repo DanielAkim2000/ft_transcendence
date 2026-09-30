@@ -103,6 +103,7 @@
     "chat": "Chat",
     "tables": "Tables",
     "ranking": "Classement",
+    "challenges": "Défis",
     "tournaments": "Tournois",
     "history": "Historique",
     "notifications": "Notifications",
@@ -118,6 +119,25 @@
       "light": "Clair",
       "dark": "Sombre",
       "system": "Système"
+    },
+    "accent": {
+      "title": "Couleur principale",
+      "description": "La couleur des boutons, des liens et des éléments mis en avant sur tout le site.",
+      "green": "Vert",
+      "blue": "Bleu",
+      "purple": "Violet",
+      "pink": "Rose",
+      "red": "Rouge",
+      "orange": "Orange",
+      "amber": "Ambre",
+      "teal": "Turquoise"
+    },
+    "radius": {
+      "title": "Bordures",
+      "description": "À quel point les bords des cartes, des boutons et des listes sont arrondis.",
+      "none": "Carré",
+      "medium": "Arrondi",
+      "large": "Très arrondi"
     },
     "language": {
       "title": "Langue",
@@ -152,6 +172,27 @@
       "manage": "Gérer",
       "active": "activée",
       "inactive": "désactivée"
+    },
+    "privacy": {
+      "title": "Confidentialité & données",
+      "description": "Tes données t’appartiennent : télécharge-en une copie ou supprime ton compte.",
+      "exportTitle": "Télécharger mes données",
+      "exportDescription": "Un fichier avec ton profil, tes amis, tes matchs, tes badges, tes notifications et les messages que tu as envoyés (CSV ou JSON).",
+      "exportAction": "Télécharger",
+      "exportDone": "Tes données ont été téléchargées. Un email de confirmation t’a été envoyé.",
+      "exportFailed": "Impossible d’exporter tes données.",
+      "deleteTitle": "Supprimer mon compte",
+      "deleteDescription": "Efface définitivement tes données personnelles (profil, email, amis, messages, badges). Tes anciens matchs restent dans l’historique de tes adversaires sous « Deleted user ». On t’envoie d’abord un lien de confirmation par email.",
+      "deleteAction": "Supprimer mon compte",
+      "dialogTitle": "Supprimer ton compte ?",
+      "dialogDescription": "On va envoyer un lien de confirmation à ton adresse email. Ton compte n’est supprimé qu’une fois ce lien ouvert : tes données personnelles sont effacées et tes anciens matchs restent dans l’historique de tes adversaires sous « Deleted user ». Action irréversible.",
+      "dialogConfirm": "Envoyer le lien",
+      "requested": "Email de confirmation envoyé. Vérifie ta boîte de réception (lien valable 1 heure).",
+      "requestFailed": "Impossible de lancer la suppression.",
+      "formatTitle": "Choisis un format",
+      "formatDescription": "Ton fichier est généré et téléchargé tout de suite.",
+      "format_csv": "S’ouvre dans Excel ou LibreOffice",
+      "format_json": "Fichier structuré, pour les développeurs et d’autres applis"
     }
   },
   "profile": {
@@ -223,7 +264,39 @@
     "newMessages": "Nouveaux messages",
     "typing": "est en train d’écrire…",
     "sent": "Envoyé",
-    "read": "Lu"
+    "read": "Lu",
+    "inviteChess": "Inviter aux échecs",
+    "chessSoon": "Les invitations aux échecs arrivent bientôt."
+  },
+  "status": {
+    "nav": "Statut",
+    "label": "Système",
+    "title": "État du système",
+    "back": "← retour",
+    "refreshed": "Vérifié à {{time}} · actualisation toutes les 15 s",
+    "overall": {
+      "ok": "Tous les systèmes sont opérationnels",
+      "degraded": "Fonctionnement dégradé",
+      "down": "Service interrompu",
+      "unreachable": "API injoignable"
+    },
+    "services": {
+      "api": "API",
+      "database": "Base de données",
+      "backups": "Sauvegardes"
+    },
+    "state": {
+      "ok": "Opérationnel",
+      "down": "Hors service",
+      "stale": "Trop ancienne",
+      "none": "Aucune",
+      "unknown": "Inconnu"
+    },
+    "latency": "Temps de réponse : {{ms}} ms",
+    "uptime": "Disponibilité de l’API : {{value}}",
+    "backupCount": "{{count}} sauvegarde(s) conservée(s)",
+    "lastBackup": "Dernière sauvegarde : {{date}} ({{size}})",
+    "noBackup": "Aucune sauvegarde trouvée pour l’instant."
   },
   "legal": {
     "nav": {
@@ -246,7 +319,7 @@
         },
         {
           "title": "Conservation",
-          "body": "Les données sont conservées tant que ton compte existe. À la suppression du compte, tes messages, amitiés et blocages sont supprimés."
+          "body": "Les données sont conservées tant que ton compte existe. Quand tu supprimes ton compte, tes données personnelles (email, nom, avatar, messages, amitiés, badges) sont effacées. Les résultats des matchs que tu as joués restent dans l’historique de tes adversaires et dans les classements calculés à partir d’eux, attribués à un « Deleted user » anonyme."
         },
         {
           "title": "Cookies & session",
@@ -254,7 +327,7 @@
         },
         {
           "title": "Tes droits (RGPD)",
-          "body": "Tu peux accéder à tes données, les rectifier ou demander leur suppression à tout moment en nous contactant."
+          "body": "Tu peux télécharger une copie de tes données en CSV ou JSON (Réglages → Confidentialité & données) et supprimer ton compte à tout moment : on t’envoie un lien de confirmation par email avant tout effacement. La suppression efface tes données personnelles et anonymise tes anciens matchs. Tu peux aussi corriger ton profil depuis ton compte et nous contacter pour toute demande."
         },
         {
           "title": "Contact",
@@ -367,6 +440,16 @@
     "historyWin": "Victoire",
     "historyPoints": "Points de classement gagnés ou perdus",
     "historyPointsShort": "pts",
+    "filterSearch": "Chercher un joueur…",
+    "filterResult": "Résultat",
+    "filterFormat": "Format",
+    "filterSource": "Origine",
+    "filterReset": "Réinitialiser",
+    "sortLabel": "Trier",
+    "sortNewest": "Plus récents",
+    "sortOldest": "Plus anciens",
+    "sortScore": "Plus gros écart",
+    "historyNoMatch": "Aucun match ne correspond à ces filtres.",
     "historyLoss": "Défaite",
     "historyLadder": "Défi",
     "historyTournament": "Tournoi",
@@ -410,7 +493,22 @@
     "wonToast": "Victoire {{a}}-{{b}} ! Ton classement a été mis à jour.",
     "lostToast": "Défaite {{a}}-{{b}}. Ton classement a été mis à jour.",
     "disputedToast": "Litige sur le score, aucun changement de classement.",
-    "viewHistory": "Voir l’historique complet"
+    "viewHistory": "Voir l’historique complet",
+    "challengesTitle": "Mes défis",
+    "challengeSomeone": "Défier quelqu’un",
+    "myChallengesLink": "Mes défis",
+    "rankingScope": "Périmètre",
+    "scopeAll": "Tout le monde",
+    "scopeFriends": "Moi et mes amis",
+    "filterMinMatches": "Matchs joués",
+    "minMatchesAny": "Tous les joueurs",
+    "minMatchesPlayed": "Au moins 1 match",
+    "minMatchesEstablished": "10 matchs et plus",
+    "sortRank": "Par rang",
+    "sortMatches": "Plus de matchs",
+    "sortName": "Par nom",
+    "rankingNoMatch": "Aucun joueur ne correspond à ces filtres.",
+    "rankingEmpty": "Aucun joueur pour l’instant."
   },
   "tournaments": {
     "title": "Tournois",
@@ -532,5 +630,30 @@
         "description": "Remporter un tournoi."
       }
     }
+  },
+  "confirmDeletion": {
+    "label": "Confidentialité",
+    "title": "Confirmer la suppression du compte",
+    "warning": "Cela efface définitivement tes données personnelles (profil, email, amis, messages, badges). Tes anciens matchs restent dans l’historique de tes adversaires sous « Deleted user ». Action irréversible.",
+    "missingToken": "Ce lien est incomplet. Rouvre le lien reçu par email.",
+    "action": "Supprimer définitivement mon compte",
+    "deleting": "Suppression…",
+    "done": "Tes données personnelles ont été effacées et ton compte est anonymisé. Un email de confirmation t’a été envoyé.",
+    "toLogin": "Retour à la connexion",
+    "error_invalid": "Ce lien est invalide ou expiré. Refais une demande depuis les Réglages.",
+    "error_gone": "Ce compte a déjà été supprimé.",
+    "error_blocked": "Ton compte ne peut pas être supprimé pour le moment (tournoi ouvert ou partie en cours). Réessaie plus tard.",
+    "redirecting": "Redirection vers la page de connexion…"
+  },
+  "ranking": {
+    "podium1": "1re place (or)",
+    "podium2": "2e place (argent)",
+    "podium3": "3e place (bronze)",
+    "rank": "Rang n°{{rank}}",
+    "outOf": "sur {{total}} joueurs",
+    "rating": "Note {{rating}}",
+    "podiumTitle1": "Champion du classement",
+    "podiumTitle2": "Vice-champion, sur le podium",
+    "podiumTitle3": "Sur le podium"
   }
 }

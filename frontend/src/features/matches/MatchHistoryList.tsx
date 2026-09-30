@@ -1,16 +1,107 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { cn } from "@/lib/utils";
 import { Pagination } from "@/components/pagination";
 import { useClampedPage } from "@/lib/use-clamped-page";
 import { ROUTES } from "@/constants/routes";
-import { useListMatchHistoryQuery, type Match } from "./matchesApi";
+import { Input } from "@/components/ui/input";
+import { useListMatchHistoryQuery, type HistoryArgs, type Match } from "./matchesApi";
 import { teamOf } from "./matchHelpers";
 import { TeamAvatar } from "./MatchCard";
 import { ListSkeleton } from "@/components/skeletons";
 
 const HISTORY_PAGE_SIZE = 10;
+const SEARCH_DEBOUNCE_MS = 300;
+
+const selectClass =
+  "h-8 rounded-lg border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30";
+
+type Filters = Pick<HistoryArgs, "result" | "format" | "source" | "sort">;
+
+/** Barre de recherche avancée : nom d'un joueur, résultat, format, origine et tri. */
+function HistoryFilters({
+  search,
+  onSearch,
+  filters,
+  onChange,
+}: {
+  search: string;
+  onSearch: (value: string) => void;
+  filters: Filters;
+  onChange: (next: Filters) => void;
+}) {
+  const { t } = useTranslation();
+  /** Met à jour un filtre ; la valeur vide (« tous ») le retire. */
+  const set = <K extends keyof Filters>(key: K, value: string) =>
+    onChange({ ...filters, [key]: value === "" ? undefined : (value as Filters[K]) });
+  const active = search !== "" || Object.values(filters).some((value) => value !== undefined);
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Input
+        type="search"
+        className="w-full sm:w-56"
+        placeholder={t("matches.filterSearch")}
+        aria-label={t("matches.filterSearch")}
+        value={search}
+        onChange={(e) => onSearch(e.target.value)}
+      />
+      <select
+        className={selectClass}
+        aria-label={t("matches.filterResult")}
+        value={filters.result ?? ""}
+        onChange={(e) => set("result", e.target.value)}
+      >
+        <option value="">{t("matches.filterResult")}</option>
+        <option value="win">{t("matches.historyWin")}</option>
+        <option value="loss">{t("matches.historyLoss")}</option>
+      </select>
+      <select
+        className={selectClass}
+        aria-label={t("matches.filterFormat")}
+        value={filters.format ?? ""}
+        onChange={(e) => set("format", e.target.value)}
+      >
+        <option value="">{t("matches.filterFormat")}</option>
+        <option value="ONE_V_ONE">{t("matches.oneVOne")}</option>
+        <option value="TWO_V_TWO">{t("matches.twoVTwo")}</option>
+      </select>
+      <select
+        className={selectClass}
+        aria-label={t("matches.filterSource")}
+        value={filters.source ?? ""}
+        onChange={(e) => set("source", e.target.value)}
+      >
+        <option value="">{t("matches.filterSource")}</option>
+        <option value="ladder">{t("matches.historyLadder")}</option>
+        <option value="tournament">{t("matches.historyTournament")}</option>
+      </select>
+      <select
+        className={selectClass}
+        aria-label={t("matches.sortLabel")}
+        value={filters.sort ?? "newest"}
+        onChange={(e) => set("sort", e.target.value)}
+      >
+        <option value="newest">{t("matches.sortNewest")}</option>
+        <option value="oldest">{t("matches.sortOldest")}</option>
+        <option value="score">{t("matches.sortScore")}</option>
+      </select>
+      {active ? (
+        <button
+          type="button"
+          className="text-xs uppercase tracking-wider text-muted-foreground underline"
+          onClick={() => {
+            onSearch("");
+            onChange({});
+          }}
+        >
+          {t("matches.filterReset")}
+        </button>
+      ) : null}
+    </div>
+  );
+}
 
 function HistoryRow({ match, meId }: { match: Match; meId: string }) {
   const { t, i18n } = useTranslation();
@@ -81,19 +172,38 @@ function HistoryRow({ match, meId }: { match: Match; meId: string }) {
 export function MatchHistoryList({ meId }: { meId: string }) {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [filters, setFilters] = useState<Filters>({});
+  useEffect(() => {
+    // Toute modification de recherche ou de filtre revient à la première page.
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+      setPage(1);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [search]);
   const { data, isLoading, isFetching } = useListMatchHistoryQuery({
     page,
     limit: HISTORY_PAGE_SIZE,
+    q: debouncedSearch || undefined,
+    ...filters,
   });
   useClampedPage(page, data?.totalPages, setPage);
   const history = data?.items ?? [];
+  const filtered = debouncedSearch !== "" || Object.values(filters).some((value) => value !== undefined);
 
   return (
     <section className="flex flex-col gap-3">
+      <HistoryFilters search={search} onSearch={setSearch} filters={filters} onChange={(next) => {
+          setFilters(next);
+          setPage(1);
+        }}
+      />
       {isLoading ? (
         <ListSkeleton count={HISTORY_PAGE_SIZE / 2} action />
       ) : history.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("matches.historyEmpty")}</p>
+        <p className="text-sm text-muted-foreground">{t(filtered ? "matches.historyNoMatch" : "matches.historyEmpty")}</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {history.map((match) => (

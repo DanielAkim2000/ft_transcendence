@@ -27,6 +27,10 @@ export interface PlayerBadgesProfile {
   matchesPlayed: number;
   currentWinStreak: number;
   bestWinStreak: number;
+  rating: number;
+  /** Position au classement général (ex æquo = même rang) ; null pour un compte supprimé. */
+  rank: number | null;
+  totalPlayers: number;
   badges: EarnedBadge[];
 }
 
@@ -34,7 +38,11 @@ export const badgesApi = api.injectEndpoints({
   endpoints: (builder) => ({
     [BADGES_ENDPOINTS.GET_BADGES]: builder.query<PlayerBadgesProfile, string>({
       query: (userId) => API_ROUTES.badges(userId),
-      providesTags: (_result, _error, userId) => [{ type: TAG_TYPES.BADGES, id: userId }],
+      // Le rang change quand le classement change.
+      providesTags: (_result, _error, userId) => [
+        { type: TAG_TYPES.BADGES, id: userId },
+        TAG_TYPES.RANKING,
+      ],
     }),
   }),
 });

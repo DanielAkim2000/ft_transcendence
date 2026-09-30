@@ -14,7 +14,7 @@ type Translate = (key: string, options?: Record<string, unknown>) => string;
 /** Icône et lien éventuel selon la famille de la notification. */
 function categoryOf(type: AppNotification["type"]): { icon: LucideIcon; to?: string } {
   if (type === "FRIEND_REQUEST") return { icon: UsersIcon, to: ROUTES.FRIENDS };
-  if (type.startsWith("MATCH_")) return { icon: SwordsIcon, to: ROUTES.RANKING };
+  if (type.startsWith("MATCH_")) return { icon: SwordsIcon, to: ROUTES.CHALLENGES };
   if (type.startsWith("QUEUE_") || type.startsWith("TABLE_")) {
     return { icon: LayoutGridIcon, to: ROUTES.TABLES };
   }

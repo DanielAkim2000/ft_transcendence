@@ -19,6 +19,7 @@ import { TournamentsService } from '../../tournaments/services/tournaments.servi
 import { BadgesService } from '../../badges/services/badges.service';
 import { QueueService } from '../../queue/services/queue.service';
 import { PageQueryDto } from '../../common/pagination/page-query.dto';
+import { HistoryQueryDto } from '../dtos/history-query.dto';
 import { Paginated, toPaginated } from '../../common/pagination/paginated';
 import { NotificationsService } from '../../notifications/services/notifications.service';
 import { NotificationType } from '../../notifications/entities/notification.entity';
@@ -57,16 +58,16 @@ export class MatchesService {
     return toPaginated(matches, total, page);
   }
 
-  /** Liste une page des matchs terminés de l'utilisateur, ladder et tournois confondus. */
+  /** Liste une page des matchs terminés de l'utilisateur, ladder et tournois confondus, avec filtres et tri. */
   async listHistory(
     userId: string,
-    page: PageQueryDto,
+    query: HistoryQueryDto,
   ): Promise<Paginated<MatchEntity>> {
     const { matches, total } = await this.matchesRepository.listHistoryForUser(
       userId,
-      page,
+      query,
     );
-    return toPaginated(matches, total, page);
+    return toPaginated(matches, total, query);
   }
 
   /** Nombre de défis en attente d'une action de l'utilisateur (pastille de la barre latérale). */

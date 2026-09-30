@@ -24,6 +24,7 @@ import { UserEntity } from './entities/users.entity';
 import { UpdateProfileDto } from './dtos/update-profile.dto';
 import { UpdateSettingsDto } from './dtos/update-settings.dto';
 import { SearchUsersQueryDto } from './dtos/search-users-query.dto';
+import { RankingQueryDto } from './dtos/ranking-query.dto';
 import { ListFriendsQueryDto } from './dtos/list-friends-query.dto';
 import { PageQueryDto } from '../common/pagination/page-query.dto';
 
@@ -45,10 +46,13 @@ export class UsersController {
     return this.usersService.searchUsers(req.user.id, query.q, query);
   }
 
-  /** GET /users/ranking : classement des 100 meilleurs joueurs par note Elo. */
+  /** GET /users/ranking?page=&limit=&q=&scope=&minMatches=&sort= : page du classement par note Elo, avec recherche, filtres et tri. */
   @Get('ranking')
-  getRanking() {
-    return this.usersService.getRanking();
+  getRanking(
+    @Req() req: Request & { user: UserEntity },
+    @Query() query: RankingQueryDto,
+  ) {
+    return this.usersService.getRanking(req.user.id, query);
   }
 
   /** GET /users/me/friends?page=&limit=&q=&online= : page des amis de l'utilisateur connecté, en ligne d'abord. */

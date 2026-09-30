@@ -69,11 +69,17 @@ services:
       CHOKIDAR_USEPOLLING: "true"
       WATCHPACK_POLLING: "true"
       RUN_SEED: ${RUN_SEED:-true}
+      BACKUP_DIR: /backups
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      MAIL_FROM: ${MAIL_FROM:-42 Baby <no-reply@ft.local>}
+      BACKUP_MAX_AGE_HOURS: ${BACKUP_MAX_AGE_HOURS:-36}
       CI: "true"
     volumes:
       - ./backend:/app
       - backend_node_modules:/app/node_modules
       - ./backend/uploads:/app/uploads
+      - db_backups_dev:/backups:ro
     ports:
       - "${BACKEND_PORT:-5000}:${BACKEND_PORT:-5000}"
     deploy:
@@ -101,6 +107,32 @@ services:
       resources:
         limits: *frontend-limits
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: ft_mailpit_dev
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+
+  backup:
+    image: postgres:16-alpine
+    container_name: ft_backup_dev
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["/db-backup.sh", "run"]
+    secrets:
+      - postgres_password
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ft_user}
+      POSTGRES_DB: ${POSTGRES_DB:-ft_transcendence}
+      BACKUP_INTERVAL_HOURS: ${BACKUP_INTERVAL_HOURS:-24}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+    volumes:
+      - ./scripts/db-backup.sh:/db-backup.sh:ro
+      - db_backups_dev:/backups
+
 secrets:
   postgres_password:
     file: ./secrets/postgres_password
@@ -115,5 +147,6 @@ secrets:
 
 volumes:
   postgres_data_dev:
+  db_backups_dev:
   backend_node_modules:
   frontend_node_modules:

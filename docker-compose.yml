@@ -53,11 +53,27 @@ services:
       JWT_REFRESH_TOKEN_EXPIRATION_TIME: ${JWT_REFRESH_TOKEN_EXPIRATION_TIME:-7d}
       JWT_PRE_AUTH_TOKEN_EXPIRATION_TIME: ${JWT_PRE_AUTH_TOKEN_EXPIRATION_TIME:-15m}
       RUN_SEED: ${RUN_SEED:-true}
+      BACKUP_DIR: /backups
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      MAIL_FROM: ${MAIL_FROM:-42 Baby <no-reply@ft.local>}
+      BACKUP_MAX_AGE_HOURS: ${BACKUP_MAX_AGE_HOURS:-36}
       CI: "true"
     expose:
       - "${BACKEND_PORT:-5000}"
     volumes:
       - backend_uploads:/app/uploads
+      - db_backups:/backups:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://127.0.0.1:${BACKEND_PORT:-5000}/health >/dev/null || exit 1",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
 
   frontend:
     build:
@@ -69,6 +85,16 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-check-certificate -qO- https://127.0.0.1:443/ >/dev/null 2>&1 || exit 1",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     environment:
       HTTPS_PORT: ${HTTPS_PORT:-8443}
       BACKEND_PORT: ${BACKEND_PORT:-5000}
@@ -77,6 +103,32 @@ services:
       - "${HTTP_PORT:-8080}:80"
     volumes:
       - tls_certs:/etc/nginx/certs
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: ft_mailpit
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+
+  backup:
+    image: postgres:16-alpine
+    container_name: ft_backup
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["/db-backup.sh", "run"]
+    secrets:
+      - postgres_password
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ft_user}
+      POSTGRES_DB: ${POSTGRES_DB:-ft_transcendence}
+      BACKUP_INTERVAL_HOURS: ${BACKUP_INTERVAL_HOURS:-24}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+    volumes:
+      - ./scripts/db-backup.sh:/db-backup.sh:ro
+      - db_backups:/backups
 
 secrets:
   postgres_password:
@@ -92,5 +144,6 @@ secrets:
 
 volumes:
   postgres_data:
+  db_backups:
   backend_uploads:
   tls_certs:

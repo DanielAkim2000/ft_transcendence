@@ -119,6 +119,25 @@ enum LanguagePreference {
   es
 }
 
+// Couleur principale de l'interface choisie par l'utilisateur (green = celle d'origine).
+enum AccentPreference {
+  green
+  blue
+  purple
+  pink
+  red
+  orange
+  amber
+  teal
+}
+
+// Arrondi des bordures : none = angles droits (défaut), medium, large.
+enum RadiusPreference {
+  none
+  medium
+  large
+}
+
 model RefreshToken {
   id        String   @id @default(cuid())
   userId    String
@@ -160,12 +179,16 @@ model User {
   role                       Role               @default(USER)
   theme                      ThemePreference    @default(light)
   language                   LanguagePreference @default(en)
+  accent                     AccentPreference   @default(green)
+  radius                     RadiusPreference   @default(none)
   rating                     Int                @default(1000)
   matchesPlayed              Int                @default(0)
   wins                       Int                @default(0)
   xp                         Int                @default(0)
   currentWinStreak           Int                @default(0)
   bestWinStreak              Int                @default(0)
+  // Non-nul = compte supprimé (RGPD) : données personnelles effacées, ligne conservée sous un nom anonyme pour l'historique des autres joueurs.
+  deletedAt                  DateTime?
   badges                     UserBadge[]
   refreshTokens              RefreshToken[]
   friendshipsSent            Friendship[]       @relation("FriendshipsSent")

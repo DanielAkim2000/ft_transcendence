@@ -17,6 +17,8 @@ export function SettingsBootstrap({ children }: { children: React.ReactNode }) {
       hydrateSettings({
         theme: user.theme,
         language: user.language,
+        accent: user.accent,
+        radius: user.radius,
       }),
     );
   }, [user, dispatch]);

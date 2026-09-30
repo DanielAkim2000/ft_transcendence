@@ -6,6 +6,7 @@ import {
   LogOutIcon,
   MessageSquareIcon,
   SettingsIcon,
+  SwordIcon,
   SwordsIcon,
   TrophyIcon,
   UserIcon,
@@ -62,7 +63,7 @@ export function AppSidebar() {
   const { data: unreadNotifications } = useCountUnreadNotificationsQuery();
   const hasUnreadNotifications = (unreadNotifications?.count ?? 0) > 0;
 
-  // Trois groupes : jouer (accueil, tables, classement, tournois, historique),
+  // Trois groupes : jouer (accueil, tables, classement, défis, tournois, historique),
   // social (amis, chat) et compte (profil, paramètres).
   const groups = [
     {
@@ -71,6 +72,7 @@ export function AppSidebar() {
         { title: t("nav.home"), url: ROUTES.HOME, icon: HomeIcon },
         { title: t("nav.tables"), url: ROUTES.TABLES, icon: LayoutGridIcon },
         { title: t("nav.ranking"), url: ROUTES.RANKING, icon: TrophyIcon },
+        { title: t("nav.challenges"), url: ROUTES.CHALLENGES, icon: SwordIcon },
         { title: t("nav.tournaments"), url: ROUTES.TOURNAMENTS, icon: SwordsIcon },
         { title: t("nav.history"), url: ROUTES.HISTORY, icon: HistoryIcon },
       ],
@@ -107,7 +109,7 @@ export function AppSidebar() {
       return t("friends.newRequests");
     if (url === ROUTES.TABLES && isMyTurn) return t("queue.yourTurnBadge");
     if (url === ROUTES.TABLES && hasPendingInvite) return t("queue.inviteBadge");
-    if (url === ROUTES.RANKING && hasMatchAction)
+    if (url === ROUTES.CHALLENGES && hasMatchAction)
       return t("matches.actionNeededBadge");
     if (url === ROUTES.TOURNAMENTS && hasTournamentAction)
       return t("tournaments.actionNeededBadge");

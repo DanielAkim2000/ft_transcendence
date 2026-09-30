@@ -20,11 +20,14 @@ const Friends = lazyPage(() => import("@/pages/Friends"), "Friends");
 const Chat = lazyPage(() => import("@/pages/Chat"), "Chat");
 const Tables = lazyPage(() => import("@/pages/Tables"), "Tables");
 const Ranking = lazyPage(() => import("@/pages/Ranking"), "Ranking");
+const Challenges = lazyPage(() => import("@/pages/Challenges"), "Challenges");
 const History = lazyPage(() => import("@/pages/History"), "History");
 const Notifications = lazyPage(() => import("@/pages/Notifications"), "Notifications");
 const Tournaments = lazyPage(() => import("@/pages/Tournaments"), "Tournaments");
 const TournamentNew = lazyPage(() => import("@/pages/TournamentNew"), "TournamentNew");
 const TournamentDetail = lazyPage(() => import("@/pages/TournamentDetail"), "TournamentDetail");
+const Status = lazyPage(() => import("@/pages/Status"), "Status");
+const ConfirmDeletion = lazyPage(() => import("@/pages/ConfirmDeletion"), "ConfirmDeletion");
 const Legal = lazyPage(() => import("@/pages/Legal"), "Legal");
 
 function App() {
@@ -36,6 +39,8 @@ function App() {
         <Route path={ROUTES.AUTH_CALLBACK} element={<AuthCallback />} />
         <Route path={ROUTES.PRIVACY} element={<Legal kind="privacy" />} />
         <Route path={ROUTES.TERMS} element={<Legal kind="terms" />} />
+        <Route path={ROUTES.STATUS} element={<Status />} />
+        <Route path={ROUTES.CONFIRM_DELETION} element={<ConfirmDeletion />} />
 
         <Route element={<ProtectedLayout />}>
           <Route element={<DashboardLayout />}>
@@ -46,6 +51,7 @@ function App() {
             <Route path={ROUTES.CHAT} element={<Chat />} />
             <Route path={ROUTES.TABLES} element={<Tables />} />
             <Route path={ROUTES.RANKING} element={<Ranking />} />
+            <Route path={ROUTES.CHALLENGES} element={<Challenges />} />
             <Route path={ROUTES.HISTORY} element={<History />} />
             <Route path={ROUTES.TOURNAMENTS_NEW} element={<TournamentNew />} />
             <Route path={ROUTES.TOURNAMENTS} element={<Tournaments />} />

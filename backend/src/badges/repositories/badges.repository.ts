@@ -109,12 +109,21 @@ export class BadgesRepository {
         matchesPlayed: true,
         currentWinStreak: true,
         bestWinStreak: true,
+        rating: true,
+        deletedAt: true,
         badges: { orderBy: { earnedAt: 'asc' } },
       },
     });
     if (!user) {
       return null;
     }
+    const active = { deletedAt: null };
+    const [better, totalPlayers] = await Promise.all([
+      this.prisma.user.count({
+        where: { ...active, rating: { gt: user.rating } },
+      }),
+      this.prisma.user.count({ where: active }),
+    ]);
     return new PlayerBadgesProfile({
       userId,
       xp: user.xp,
@@ -125,6 +134,9 @@ export class BadgesRepository {
       matchesPlayed: user.matchesPlayed,
       currentWinStreak: user.currentWinStreak,
       bestWinStreak: user.bestWinStreak,
+      rating: user.rating,
+      rank: user.deletedAt ? null : better + 1,
+      totalPlayers,
       badges: user.badges.map(
         (badge) =>
           new UserBadgeEntity({

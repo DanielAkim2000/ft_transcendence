@@ -13,6 +13,7 @@ import {
 import { Profile42Dto } from '../../auth/dtos/profile42.dto';
 import { RefreshToken as RefreshTokenEntity } from '../entities/users.entity';
 import { RankingEntry } from '../entities/ranking-entry.entity';
+import { RankingQueryDto } from '../dtos/ranking-query.dto';
 
 @Injectable()
 export class UserRepository {
@@ -29,7 +30,8 @@ export class UserRepository {
         },
       },
     });
-    return user ? this.mapUser(user) : null;
+    // Un compte anonymisé (RGPD) est traité comme inexistant : plus de connexion, ni de profil.
+    return user && !user.deletedAt ? this.mapUser(user) : null;
   }
 
   /** Retrouve un utilisateur par email, avec ses refresh tokens, ou null. */
@@ -110,6 +112,8 @@ export class UserRepository {
         email: user.email,
         theme: user.theme,
         language: user.language,
+        accent: user.accent,
+        radius: user.radius,
       },
       include: {
         refreshTokens: {
@@ -176,6 +180,7 @@ export class UserRepository {
   ): Promise<{ users: UserEntity[]; total: number }> {
     const where: Prisma.UserWhereInput = {
       id: { not: excludeUserId },
+      deletedAt: null,
       ...this.textFilter(query),
     };
     const [users, total] = await this.prisma.$transaction([
@@ -369,9 +374,13 @@ export class UserRepository {
     );
   }
 
-  /** Retourne les 100 meilleurs joueurs triés par note Elo décroissante. */
-  async listRanking(): Promise<RankingEntry[]> {
+  /** Classement des joueurs actifs par note Elo (ex æquo = même rang), filtré par nom, périmètre (amis) et nombre de matchs, trié, une page plus le total. Le rang affiché reste le rang général, quel que soit le filtre. */
+  async listRanking(
+    userId: string,
+    query: RankingQueryDto,
+  ): Promise<{ entries: RankingEntry[]; total: number }> {
     const users = await this.prisma.user.findMany({
+      where: { deletedAt: null },
       select: {
         id: true,
         displayname: true,
@@ -379,10 +388,55 @@ export class UserRepository {
         rating: true,
         matchesPlayed: true,
       },
-      orderBy: { rating: 'desc' },
-      take: 100,
+      orderBy: [{ rating: 'desc' }, { createdAt: 'asc' }],
     });
-    return users.map((user) => new RankingEntry(user));
+    let previousRating: number | null = null;
+    let currentRank = 0;
+    let ranked = users.map((user, index) => {
+      if (user.rating !== previousRating) {
+        currentRank = index + 1;
+        previousRating = user.rating;
+      }
+      return new RankingEntry({ ...user, rank: currentRank });
+    });
+
+    if (query.scope === 'friends') {
+      const friendships = await this.prisma.friendship.findMany({
+        where: {
+          status: 'ACCEPTED',
+          OR: [{ requesterId: userId }, { addresseeId: userId }],
+        },
+        select: { requesterId: true, addresseeId: true },
+      });
+      const friendIds = new Set(
+        friendships.flatMap((f) => [f.requesterId, f.addresseeId]),
+      );
+      // Toi aussi, pour te situer parmi tes amis.
+      friendIds.add(userId);
+      ranked = ranked.filter((entry) => friendIds.has(entry.id));
+    }
+    const text = query.q?.trim().toLowerCase();
+    if (text) {
+      ranked = ranked.filter((entry) =>
+        entry.displayname.toLowerCase().includes(text),
+      );
+    }
+    if (query.minMatches) {
+      const min = query.minMatches;
+      ranked = ranked.filter((entry) => entry.matchesPlayed >= min);
+    }
+    if (query.sort === 'matches') {
+      ranked.sort(
+        (a, b) => b.matchesPlayed - a.matchesPlayed || a.rank - b.rank,
+      );
+    } else if (query.sort === 'name') {
+      ranked.sort((a, b) => a.displayname.localeCompare(b.displayname));
+    }
+    const skip = pageOffset(query);
+    return {
+      entries: ranked.slice(skip, skip + query.limit),
+      total: ranked.length,
+    };
   }
 
   /** Met à jour l'état de connexion et le statut de l'utilisateur. */
@@ -436,6 +490,8 @@ export class UserRepository {
       status,
       theme: theme,
       language: language,
+      accent: user.accent,
+      radius: user.radius,
       role,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

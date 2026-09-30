@@ -13,6 +13,7 @@ import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { PageQueryDto } from '../common/pagination/page-query.dto';
 import { UserEntity } from '../users/entities/user.entity';
 import { MatchesService } from './services/matches.service';
+import { HistoryQueryDto } from './dtos/history-query.dto';
 import { ProposeMatchDto } from './dtos/propose-match.dto';
 import { RespondMatchDto } from './dtos/respond-match.dto';
 import { SubmitScoreDto } from './dtos/submit-score.dto';
@@ -33,11 +34,11 @@ export class MatchesController {
     return this.matchesService.listMine(req.user.id, query);
   }
 
-  /** GET /matches/me/history?page=&limit= : page de l'historique des matchs terminés de l'utilisateur (ladder + tournois). */
+  /** GET /matches/me/history?page=&limit=&q=&result=&format=&source=&sort= : page filtrée et triée de l'historique des matchs terminés de l'utilisateur (ladder + tournois). */
   @Get('me/history')
   listHistory(
     @Req() req: Request & { user: UserEntity },
-    @Query() query: PageQueryDto,
+    @Query() query: HistoryQueryDto,
   ) {
     return this.matchesService.listHistory(req.user.id, query);
   }

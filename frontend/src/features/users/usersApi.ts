@@ -5,25 +5,22 @@ import { AUTH_ENDPOINTS, USERS_ENDPOINTS } from "@/constants/queryEndpoints";
 import { authApi, type User } from "@/features/auth/authApi";
 import type { PageArgs, Paginated } from "@/lib/pagination";
 import type {
+  AccentPreference,
   LanguagePreference,
+  RadiusPreference,
   ThemePreference,
 } from "../settings/settingsSlice";
 
 export type FriendshipStatus =
-  | "none"
-  | "pending_out"
-  | "pending_in"
-  | "friends"
-  | "self";
+  "none" | "pending_out" | "pending_in" | "friends" | "self";
 
 /** Relation d'amitié annotée par le backend sur chaque résultat de recherche. */
 export type SearchFriendshipStatus =
-  | "none"
-  | "pending_out"
-  | "pending_in"
-  | "friends";
+  "none" | "pending_out" | "pending_in" | "friends";
 
-export type UserSearchResult = User & { friendshipStatus: SearchFriendshipStatus };
+export type UserSearchResult = User & {
+  friendshipStatus: SearchFriendshipStatus;
+};
 
 export interface SearchUsersArgs extends PageArgs {
   q?: string;
@@ -35,20 +32,32 @@ export interface ListFriendsArgs extends PageArgs {
 }
 
 /** Retire les paramètres non définis pour ne pas les envoyer dans l'URL. */
-function toParams(args: object | void): Record<string, string | number | boolean> {
+function toParams(
+  args: object | void,
+): Record<string, string | number | boolean> {
   const params: Record<string, string | number | boolean> = {};
   for (const [key, value] of Object.entries(args ?? {})) {
-    if (value !== undefined && value !== "") params[key] = value as string | number | boolean;
+    if (value !== undefined && value !== "")
+      params[key] = value as string | number | boolean;
   }
   return params;
 }
 
 export interface RankingEntry {
   id: string;
+  /** Position au classement général (les ex æquo partagent le même rang). */
+  rank: number;
   displayname: string;
   avatarUrl: string | null;
   rating: number;
   matchesPlayed: number;
+}
+
+export interface RankingArgs extends PageArgs {
+  q?: string;
+  scope?: "all" | "friends";
+  minMatches?: 0 | 1 | 10;
+  sort?: "rank" | "matches" | "name";
 }
 
 export const usersApi = api.injectEndpoints({
@@ -63,8 +72,14 @@ export const usersApi = api.injectEndpoints({
       }),
       providesTags: [TAG_TYPES.USERS],
     }),
-    [USERS_ENDPOINTS.GET_RANKING]: builder.query<RankingEntry[], void>({
-      query: () => API_ROUTES.USERS_RANKING,
+    [USERS_ENDPOINTS.GET_RANKING]: builder.query<
+      Paginated<RankingEntry>,
+      RankingArgs | void
+    >({
+      query: (args) => ({
+        url: API_ROUTES.USERS_RANKING,
+        params: toParams(args),
+      }),
       providesTags: [TAG_TYPES.RANKING],
     }),
     [USERS_ENDPOINTS.GET_USER]: builder.query<
@@ -90,7 +105,12 @@ export const usersApi = api.injectEndpoints({
     }),
     [USERS_ENDPOINTS.UPDATE_SETTINGS]: builder.mutation<
       User,
-      { theme: ThemePreference; language: LanguagePreference }
+      {
+        theme: ThemePreference;
+        language: LanguagePreference;
+        accent?: AccentPreference;
+        radius?: RadiusPreference;
+      }
     >({
       query: (body) => ({
         url: API_ROUTES.USERS_ME_SETTINGS,
@@ -109,6 +129,8 @@ export const usersApi = api.injectEndpoints({
             (draft) => {
               draft.theme = arg.theme;
               draft.language = arg.language;
+              if (arg.accent) draft.accent = arg.accent;
+              if (arg.radius) draft.radius = arg.radius;
             },
           ),
         );

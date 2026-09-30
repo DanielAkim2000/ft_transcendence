@@ -57,6 +57,10 @@ All configuration lives in `.env` (copied from `.env.example`), documented inlin
 - Dev: `http://localhost:5000/auth/42/callback`
 - Production: `https://localhost:8443/api/auth/42/callback`
 
+Emails (GDPR export and account-deletion confirmations) are sent through SMTP (`SMTP_HOST`, `SMTP_PORT`, `MAIL_FROM`). By default they go to the bundled **Mailpit** test inbox, readable at [http://localhost:8025](http://localhost:8025); point the `SMTP_*` variables to a real server to send real emails.
+
+**Troubleshooting** — if the backend loops on `P1001: Can't reach database server at db:5432`, an old container lost its Docker network (typical after switching between the dev and production stacks). Run `docker compose down` (never `-v`, which deletes the data) and start again, or `docker compose up -d --force-recreate db`; the data lives in a named volume and is kept.
+
 ### Further documentation
 
 - [`docs/PLAN.md`](docs/PLAN.md) — product scope, business rules, data model, module checklist.
@@ -246,12 +250,15 @@ Two business rules are enforced with hand-written partial unique indexes rather 
 | User profile, avatar, friends | Editable profile, avatar upload, friend requests/accept/remove | `demane` | [`docs/team/demane.md`](docs/team/demane.md) |
 | Online presence | Multi-tab-aware online/offline status, synced live to friends | `demane` | [`docs/team/demane.md`](docs/team/demane.md) |
 | Live chat | 1:1 conversations between friends, blocking, unread counts, typing indicators, read receipts, profile link from the chat header | `demane` | [`docs/team/demane.md`](docs/team/demane.md) |
-| i18n & theming | English/French/Spanish, light/dark/system theme, both persisted per user | `demane` | [`docs/team/demane.md`](docs/team/demane.md) |
+| i18n & theming | English/French/Spanish, light/dark/system theme, 8 main colors (green by default) and 3 corner styles (square by default, rounded, very rounded), all persisted per user in the database and applied on every page | `demane` | [`docs/team/demane.md`](docs/team/demane.md) |
 | Design system | Documented palette, typography, icon set and 16 reusable components | `demane` | [`docs/team/demane.md`](docs/team/demane.md) / [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) |
 | Tables | Live free/busy status for both babyfoot tables, atomic occupy/release | `demane` | `rdinis` — [`docs/team/rdinis.md`](docs/team/rdinis.md) |
 | Queue | FIFO waiting list per table, 2-minute call window, automatic advance | `demane` | `rdinis` — [`docs/team/rdinis.md`](docs/team/rdinis.md) |
 | Match & Elo | Challenge from the ranking (1v1/2v2), opponent-validated score, server-computed Elo | `demane` | `rbourdon` — [`docs/team/rbourdon.md`](docs/team/rbourdon.md) |
 | Tournaments | Admin-created single-elimination bracket, random draw, automatic table assignment, fixed per-round points, two-legged option | `demane` | `vicli` — [`docs/team/vicli.md`](docs/team/vicli.md) |
+| GDPR (data export & account deletion) | Download your data as CSV or JSON, delete (anonymise) your account after an emailed confirmation link, confirmation emails | `demane` | — |
+| Health check & backups | Public status page, `/health` endpoint, Docker healthchecks, scheduled PostgreSQL dumps with retention, restore script | `demane` | [`docs/BACKUP.md`](docs/BACKUP.md) |
+| Search & filters | Filters, sorting and pagination on the History and Ranking pages | `demane` | — |
 | Gamification (XP & badges) | XP/levels independent from Elo, 7 unlockable badges, real-time unlock notifications | `demane` | `bbouarab` — [`docs/team/bbouarab.md`](docs/team/bbouarab.md) |
 
 "Implemented by" reflects the actual git history to date (see Individual Contributions). "Assigned owner" is who is taking that slice's documentation and presentation ownership going forward — each has their own file in [`docs/team/`](docs/team/) written for that purpose.
@@ -275,16 +282,19 @@ Target: **125%** = 14 required points + up to 5 bonus points. Major = 2 pts, Min
 | Notification system (CUD) | Minor | 1 | Toasts + live UI updates for chat, friend requests, queue calls, match results, tournament progress — all pushed via the WebSocket gateways above. |
 | Gamification | Minor | 1 | Elo ranking as leaderboard, plus tournament points and the XP/badge system — see [`docs/team/bbouarab.md`](docs/team/bbouarab.md). |
 
-### Bonus modules implemented (+2 pts so far)
+### Bonus modules implemented (+5 pts: the maximum)
 
 | Module | Type | Pts | Justification / how it was implemented |
 | --- | --- | --- | --- |
-| Advanced chat | Minor | 1 | Profile link from the chat header, typing indicators (debounced WebSocket event), real-time read receipts (single/double check derived from existing per-conversation last-read timestamps, pushed live). |
+| Advanced chat | Minor | 1 | Profile link from the chat header, typing indicators (debounced WebSocket event), real-time read receipts (single/double check derived from existing per-conversation last-read timestamps, pushed live). **Invite to play from the chat**: a Challenge button in the conversation header opens the same 1v1/2v2 challenge dialog as the ranking (the opponent gets the usual match notification), next to an "Invite to play chess" button reserved for the chess game being integrated. |
 | Custom design system | Minor | 1 | Documented palette (light/dark tokens), single monospace typeface, `lucide-react` icon set, and 16 reusable components (well above the 10 required) — see [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) for the full list, variants and usage. |
+| Health check, status page, automated backups & disaster recovery | Minor | 1 | Public `GET /health` (real DB query + latency, backup freshness, 503 when the DB is down), public `/status` page refreshed every 15 s, Docker healthchecks on db/backend/frontend, a `backup` service dumping PostgreSQL every 24 h with 7-day retention, and a transactional restore script — see [`docs/BACKUP.md`](docs/BACKUP.md). |
+| Advanced search | Minor | 1 | Server-side search, filters, sorting and pagination (validated by DTOs, debounced filter bars) on two lists. **Match history** (`GET /matches/me/history`): player name, result (win/loss), format (1v1/2v2), origin (ladder/tournament), sort by date or score gap. **Ranking** (`GET /users/ranking`): player name, scope (everyone / me and my friends), minimum matches played, sort by rank, matches or name; the displayed rank always stays the overall rank, whatever the filter. Friends lists also filter by name and online status. |
+| GDPR compliance | Minor | 1 | **Data request/export**: `GET /gdpr/export?format=csv|json` returns everything we hold (profile, friends, matches, badges, notifications, sent messages…) as a CSV (one file, one section per data type, opens in Excel/LibreOffice, formula-injection safe) or an indented JSON, never secrets such as the password hash or 2FA secret; the UI asks for the format, then downloads. **Deletion with confirmation and anonymisation**: `POST /gdpr/deletion-request` emails a signed one-hour link (own signing key, single purpose), and `POST /gdpr/deletion-confirm` erases the personal data (email, name, avatar, credentials, friends, conversations, badges, notifications, unfinished challenges, sessions) and keeps the user row under the name "Deleted user", so finished matches, Elo and tournaments of the other players stay intact; the account can no longer sign in, appear in searches or in the ranking. Refused while the user has an open tournament or is playing on a table. **Confirmation emails** (nodemailer/SMTP, Mailpit in Docker for testing) for the export, the deletion request and the deletion, in the user's language. UI: Settings → Privacy & data, plus the `/confirm-deletion` page. The Privacy Policy describes these rights. |
 
 ### Bonus modules planned, not yet implemented
 
-GDPR data export/deletion, PWA (installable, offline table-status view), cross-browser testing (Firefox/Safari), healthcheck + database backups, advanced search (players/matches with filters, sort, pagination) — see [`docs/PLAN.md`](docs/PLAN.md) for the up-to-date status of each.
+PWA (installable, offline table-status view) and cross-browser testing (Firefox/Safari) — kept as fallbacks in case a claimed module is not validated; see [`docs/PLAN.md`](docs/PLAN.md).
 
 **Custom "modules of choice" note**: our Elo ranking and Tournament system are *product features*, not the subject's Gaming "Tournament"/"Game stats" modules — they organize the 2 physical babyfoot tables rather than a Pong match, and are declared as such (see the "Description" and [`docs/PLAN.md`](docs/PLAN.md) for the full boundary).
 

@@ -15,6 +15,19 @@ export enum Status {
 
 export type ThemePreference = 'light' | 'dark' | 'system';
 export type LanguagePreference = 'en' | 'fr' | 'es';
+export const ACCENT_PREFERENCES = [
+  'green',
+  'blue',
+  'purple',
+  'pink',
+  'red',
+  'orange',
+  'amber',
+  'teal',
+] as const;
+export type AccentPreference = (typeof ACCENT_PREFERENCES)[number];
+export const RADIUS_PREFERENCES = ['none', 'medium', 'large'] as const;
+export type RadiusPreference = (typeof RADIUS_PREFERENCES)[number];
 
 export class UserEntity {
   @ApiProperty({
@@ -56,6 +69,10 @@ export class UserEntity {
   theme!: ThemePreference;
   @ApiProperty({ description: 'Preferred UI language', example: 'fr' })
   language!: LanguagePreference;
+  @ApiProperty({ description: 'Main UI color', example: 'green' })
+  accent!: AccentPreference;
+  @ApiProperty({ description: 'Border roundness', example: 'none' })
+  radius!: RadiusPreference;
   @Exclude()
   passwordHash!: string | null;
   @Exclude()

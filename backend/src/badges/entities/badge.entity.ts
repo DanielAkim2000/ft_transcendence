@@ -28,6 +28,11 @@ export class PlayerBadgesProfile {
   matchesPlayed!: number;
   currentWinStreak!: number;
   bestWinStreak!: number;
+  /** Note Elo actuelle. */
+  rating!: number;
+  /** Position au classement général (ex æquo = même rang), null si le compte est supprimé. */
+  rank!: number | null;
+  totalPlayers!: number;
   badges!: UserBadgeEntity[];
 
   /** Copie dans l'instance les champs fournis. */

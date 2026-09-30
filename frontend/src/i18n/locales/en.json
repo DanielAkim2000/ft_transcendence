@@ -103,6 +103,7 @@
     "chat": "Chat",
     "tables": "Tables",
     "ranking": "Ranking",
+    "challenges": "Challenges",
     "tournaments": "Tournaments",
     "history": "History",
     "notifications": "Notifications",
@@ -118,6 +119,25 @@
       "light": "Light",
       "dark": "Dark",
       "system": "System"
+    },
+    "accent": {
+      "title": "Main color",
+      "description": "The color used for buttons, links and highlights across the site.",
+      "green": "Green",
+      "blue": "Blue",
+      "purple": "Purple",
+      "pink": "Pink",
+      "red": "Red",
+      "orange": "Orange",
+      "amber": "Amber",
+      "teal": "Teal"
+    },
+    "radius": {
+      "title": "Corners",
+      "description": "How rounded the borders of cards, buttons and lists are.",
+      "none": "Square",
+      "medium": "Rounded",
+      "large": "Very rounded"
     },
     "language": {
       "title": "Language",
@@ -152,6 +172,27 @@
       "manage": "Manage",
       "active": "enabled",
       "inactive": "disabled"
+    },
+    "privacy": {
+      "title": "Privacy & data",
+      "description": "Your data belongs to you: download a copy or delete your account.",
+      "exportTitle": "Download my data",
+      "exportDescription": "A file with your profile, friends, matches, badges, notifications and the messages you sent (CSV or JSON).",
+      "exportAction": "Download",
+      "exportDone": "Your data was downloaded. A confirmation email was sent.",
+      "exportFailed": "Could not export your data.",
+      "deleteTitle": "Delete my account",
+      "deleteDescription": "Permanently erases your personal data (profile, email, friends, messages, badges). Your past matches stay in your opponents' history as “Deleted user”. We first email you a confirmation link.",
+      "deleteAction": "Delete my account",
+      "dialogTitle": "Delete your account?",
+      "dialogDescription": "We will send a confirmation link to your email address. Your account is only deleted once you open that link: your personal data is erased and your past matches stay in your opponents' history as “Deleted user”. This cannot be undone.",
+      "dialogConfirm": "Send the link",
+      "requested": "Confirmation email sent. Check your inbox (link valid 1 hour).",
+      "requestFailed": "Could not start the deletion.",
+      "formatTitle": "Choose a format",
+      "formatDescription": "Your file is generated and downloaded right away.",
+      "format_csv": "Opens in Excel or LibreOffice",
+      "format_json": "Structured file, for developers and other apps"
     }
   },
   "profile": {
@@ -223,7 +264,39 @@
     "newMessages": "New messages",
     "typing": "is typing…",
     "sent": "Sent",
-    "read": "Read"
+    "read": "Read",
+    "inviteChess": "Invite to play chess",
+    "chessSoon": "Chess invitations are coming soon."
+  },
+  "status": {
+    "nav": "Status",
+    "label": "System",
+    "title": "System status",
+    "back": "← back",
+    "refreshed": "Checked at {{time}} · refreshes every 15 s",
+    "overall": {
+      "ok": "All systems operational",
+      "degraded": "Degraded performance",
+      "down": "Service disruption",
+      "unreachable": "API unreachable"
+    },
+    "services": {
+      "api": "API",
+      "database": "Database",
+      "backups": "Backups"
+    },
+    "state": {
+      "ok": "Operational",
+      "down": "Down",
+      "stale": "Outdated",
+      "none": "None yet",
+      "unknown": "Unknown"
+    },
+    "latency": "Response time: {{ms}} ms",
+    "uptime": "API uptime: {{value}}",
+    "backupCount": "{{count}} backup(s) kept",
+    "lastBackup": "Last backup: {{date}} ({{size}})",
+    "noBackup": "No backup found yet."
   },
   "legal": {
     "nav": {
@@ -246,7 +319,7 @@
         },
         {
           "title": "Retention",
-          "body": "Data is kept as long as your account exists. When you delete your account, your messages, friendships and blocks are deleted."
+          "body": "Data is kept as long as your account exists. When you delete your account, your personal data (email, name, avatar, messages, friendships, badges) is erased. Results of matches you played remain in your opponents' history and the rankings they were computed from, attributed to an anonymous “Deleted user”."
         },
         {
           "title": "Cookies & session",
@@ -254,7 +327,7 @@
         },
         {
           "title": "Your rights (GDPR)",
-          "body": "You can access, correct or request deletion of your data at any time by contacting us."
+          "body": "You can download a copy of your data as CSV or JSON (Settings → Privacy & data), and delete your account at any time: we email you a confirmation link before anything is erased. Erasure removes your personal data and anonymises your past matches. You can also correct your profile in your account and contact us with any request."
         },
         {
           "title": "Contact",
@@ -367,6 +440,16 @@
     "historyWin": "Win",
     "historyPoints": "Ranking points gained or lost",
     "historyPointsShort": "pts",
+    "filterSearch": "Search a player…",
+    "filterResult": "Result",
+    "filterFormat": "Format",
+    "filterSource": "Source",
+    "filterReset": "Reset",
+    "sortLabel": "Sort",
+    "sortNewest": "Newest first",
+    "sortOldest": "Oldest first",
+    "sortScore": "Biggest score gap",
+    "historyNoMatch": "No match fits these filters.",
     "historyLoss": "Loss",
     "historyLadder": "Challenge",
     "historyTournament": "Tournament",
@@ -410,7 +493,22 @@
     "wonToast": "You won {{a}}-{{b}}! Your rating was updated.",
     "lostToast": "You lost {{a}}-{{b}}. Your rating was updated.",
     "disputedToast": "The score was disputed, no rating change.",
-    "viewHistory": "View full history"
+    "viewHistory": "View full history",
+    "challengesTitle": "My challenges",
+    "challengeSomeone": "Challenge someone",
+    "myChallengesLink": "My challenges",
+    "rankingScope": "Scope",
+    "scopeAll": "Everyone",
+    "scopeFriends": "Me & my friends",
+    "filterMinMatches": "Matches played",
+    "minMatchesAny": "All players",
+    "minMatchesPlayed": "Played at least 1",
+    "minMatchesEstablished": "10+ matches",
+    "sortRank": "By rank",
+    "sortMatches": "Most matches",
+    "sortName": "By name",
+    "rankingNoMatch": "No player fits these filters.",
+    "rankingEmpty": "No player yet."
   },
   "tournaments": {
     "title": "Tournaments",
@@ -532,5 +630,30 @@
         "description": "Win a tournament."
       }
     }
+  },
+  "confirmDeletion": {
+    "label": "Privacy",
+    "title": "Confirm account deletion",
+    "warning": "This permanently erases your personal data (profile, email, friends, messages, badges). Your past matches stay in your opponents' history as “Deleted user”. It cannot be undone.",
+    "missingToken": "This link is incomplete. Open the link from the email again.",
+    "action": "Delete my account permanently",
+    "deleting": "Deleting…",
+    "done": "Your personal data has been erased and your account anonymised. A confirmation email was sent.",
+    "toLogin": "Back to login",
+    "error_invalid": "This link is invalid or expired. Request a new one from Settings.",
+    "error_gone": "This account has already been deleted.",
+    "error_blocked": "Your account can’t be deleted right now (open tournament or game in progress). Try again later.",
+    "redirecting": "Redirecting to the login page…"
+  },
+  "ranking": {
+    "podium1": "1st place (gold)",
+    "podium2": "2nd place (silver)",
+    "podium3": "3rd place (bronze)",
+    "rank": "Rank #{{rank}}",
+    "outOf": "out of {{total}} players",
+    "rating": "Rating {{rating}}",
+    "podiumTitle1": "Champion of the ladder",
+    "podiumTitle2": "Runner-up on the podium",
+    "podiumTitle3": "On the podium"
   }
 }

@@ -23,6 +23,9 @@ import { toast } from "@/components/ui/toast";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { PlayerBadgesCard } from "@/features/badges/PlayerBadgesCard";
 import { useState } from "react";
+import { CrownIcon, SwordsIcon } from "lucide-react";
+import { ChallengeDialog } from "@/features/matches/ChallengeDialog";
+import { useChessInvite } from "@/features/chess/useChessInvite";
 import { ROUTES } from "@/constants/routes";
 import { PageFallback } from "@/components/page-fallback";
 
@@ -37,6 +40,7 @@ export const Profile = () => {
   const [removeFriend, { isLoading: isRemoving }] = useRemoveFriendMutation();
   const [actionError, setActionError] = useState<string | null>(null);
   const [justSentId, setJustSentId] = useState<string | null>(null);
+  const { inviteToChess } = useChessInvite();
 
   if (!id || isLoading) {
     return <PageFallback />;
@@ -95,7 +99,7 @@ export const Profile = () => {
         <CardContent className="font-sans text-sm text-muted-foreground">
           <p>{user.email}</p>
         </CardContent>
-        <CardFooter className="gap-2">
+        <CardFooter className="flex-wrap gap-2">
           {me?.id === user.id || friendshipStatus === "self" ? (
             <Button render={<Link to={ROUTES.PROFILE_ME} />}>
               {t("profile.edit")}
@@ -196,6 +200,20 @@ export const Profile = () => {
               {t("friends.add")}
             </Button>
           )}
+          {me && me.id !== user.id && friendshipStatus !== "self" ? (
+            <>
+              <ChallengeDialog opponent={user}>
+                <Button variant="outline">
+                  <SwordsIcon />
+                  {t("matches.challenge")}
+                </Button>
+              </ChallengeDialog>
+              <Button variant="outline" onClick={() => inviteToChess(user.id)}>
+                <CrownIcon />
+                {t("chat.inviteChess")}
+              </Button>
+            </>
+          ) : null}
         </CardFooter>
       </Card>
       {actionError ? (

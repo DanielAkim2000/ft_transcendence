@@ -7,6 +7,11 @@ export class RankingEntry {
   displayname!: string;
   @ApiProperty({ example: '/uploads/avatars/john.png', nullable: true })
   avatarUrl!: string | null;
+  @ApiProperty({
+    example: 1,
+    description: 'Position au classement général (ex æquo = même rang)',
+  })
+  rank!: number;
   @ApiProperty({ example: 1000 })
   rating!: number;
   @ApiProperty({ example: 5 })

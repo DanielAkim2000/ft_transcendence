@@ -81,53 +81,53 @@ function UserRow({
   );
 }
 
-function banUser({user} : {user: User;}) {
-  alert(user.displayname + " has been banned");
-}
-
-function viewBanDetails({user} : {user: User}) {
-  return (
-    <div>
-    </div>
-  );
-}
-
-function BanPopUp({hidePopUp} : {hidePopUp: () => void}) {
+function BanPopUp({setHide} : {setHide: () => void}) {
   return (
     <>
-      <div className="absolute z-50 backdrop-blur-xs size-full" onClick={() => hidePopUp}>
+      <div className="fixed z-50 top-0 left-0 backdrop-blur-xs size-full" onClick={setHide}>
       </div>
-      <div className="mx-auto flex absolute z-60 w-full gap-6">
-          <Button
-            size="icon-xs"
-            onClick={() => hidePopUp}
-          >
-            X
-          </Button>
-          <Card>
-            <CardHeader className="flex flex-row items-center">
-              <CardTitle>
-                Ban History
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-            </CardContent>
-          </Card>
+      <div className="relative mx-auto z-60 flex w-full max-w-xl flex-col gap-6">
+        <Card className="[--card-spacing:--spacing(0)]">
+          <CardContent>
+            <Card>
+              <CardHeader className="flex flex-row items-center">
+                <CardTitle>
+                  Ban History
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                blabla
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center">
+                <CardTitle>
+                  Select Ban duration
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                blabla
+              </CardContent>
+            </Card>
+          </CardContent>
+        </Card>
       </div>
     </>
   );
 }
 
+const SEARCH_PAGE_SIZE = 10;
+
 export const AdminPanel = () => {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
+  const [searchPage, setSearchPage] = useState(1);
   const { data: results, isFetching: searchLoading } = useSearchUsersQuery({
     q: query.trim() || undefined,
     page: searchPage,
     limit: SEARCH_PAGE_SIZE,
   });
   const [banPopUp, setBanPopUp] = useState(false);
-
 
   return (
     <>
@@ -152,7 +152,7 @@ export const AdminPanel = () => {
                 <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
               ) : (
                 <ul className="flex flex-col gap-2">
-                  {results.map((user) => (
+                  {results?.items.map((user) => (
                     <UserRow
                       key={user.id}
                       user={user}
@@ -160,7 +160,7 @@ export const AdminPanel = () => {
                         <>
                           <Button
                             size="sm"
-                            onClick={()=> setBanPopUp(true)}
+                            onClick={() => setBanPopUp(true)}
                           >
                             View
                           </Button>
@@ -174,7 +174,7 @@ export const AdminPanel = () => {
           </CardContent>
         </Card>
       </div>
-      {banPopUp && <BanPopUp hidePopUp={() => setBanPopUp(false)} />}
+      {banPopUp && <BanPopUp setHide={() => setBanPopUp(false)} />}
     </>
   );
 };

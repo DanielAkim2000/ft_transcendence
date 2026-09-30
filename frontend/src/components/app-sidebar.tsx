@@ -101,6 +101,10 @@ export function AppSidebar() {
         // },
       ],
     },
+//      title: t("Admin"),
+//      url: ROUTES.ADMIN_PANEL,
+//      icon: SettingsIcon,
+    },
   ] as const;
 
   const dotLabel = (url: string): string | null => {

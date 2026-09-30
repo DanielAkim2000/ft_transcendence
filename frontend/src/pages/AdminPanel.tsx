@@ -1,5 +1,5 @@
 import { useState, type ReactNode, useMemo } from "react";
-import { Link } from "react-router";
+import { Link, Route, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   useSearchUsersQuery,
 } from "@/features/users/usersApi";
-import type { User } from "@/features/auth/authApi";
+import { useMeQuery, type User } from "@/features/auth/authApi";
 import { getInitials, resolveAvatarUrl } from "@/lib/user";
 import { getErrorMessage } from "@/lib/get-error-message";
 import { toast } from "@/components/ui/toast";
@@ -21,6 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Home } from "@/pages/Home"
 
 function UserRow({
   user,
@@ -86,7 +87,7 @@ function BanPopUp({setHide} : {setHide: () => void}) {
     <>
       <div className="fixed z-50 top-0 left-0 backdrop-blur-xs size-full" onClick={setHide}>
       </div>
-      <div className="relative mx-auto z-60 flex w-full max-w-xl flex-col gap-6">
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-60 flex w-full max-w-xl flex-col gap-6">
         <Card className="[--card-spacing:--spacing(0)]">
           <CardContent>
             <Card>
@@ -127,7 +128,13 @@ export const AdminPanel = () => {
     page: searchPage,
     limit: SEARCH_PAGE_SIZE,
   });
+  const { data: meInfo } = useMeQuery();
   const [banPopUp, setBanPopUp] = useState(false);
+  const navigate = useNavigate();
+
+  if (meInfo?.role !== "ADMIN") {
+    navigate("/", { replace: true });
+  }
 
   return (
     <>

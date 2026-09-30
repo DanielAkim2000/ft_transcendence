@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useLogoutMutation, useMeQuery } from "@/features/auth/authApi";
 import { useListConversationsQuery } from "@/features/chat/chatApi";
-import { useListPendingFriendsQuery } from "@/features/users/usersApi";
+import { useGetUserQuery, useListPendingFriendsQuery } from "@/features/users/usersApi";
 import { useGetMyQueueGroupQuery } from "@/features/queue/queueApi";
 import { useCountMatchActionsQuery } from "@/features/matches/matchesApi";
 import { useCountTournamentActionsQuery } from "@/features/tournaments/tournamentsApi";
@@ -62,6 +62,7 @@ export function AppSidebar() {
   const hasTournamentAction = (tournamentActions?.count ?? 0) > 0;
   const { data: unreadNotifications } = useCountUnreadNotificationsQuery();
   const hasUnreadNotifications = (unreadNotifications?.count ?? 0) > 0;
+  const { data: userInfo } = useMeQuery();
 
   // Trois groupes : jouer (accueil, tables, classement, défis, tournois, historique),
   // social (amis, chat) et compte (profil, paramètres).
@@ -101,9 +102,6 @@ export function AppSidebar() {
         // },
       ],
     },
-//      title: t("Admin"),
-//      url: ROUTES.ADMIN_PANEL,
-//      icon: SettingsIcon,
     },
   ] as const;
 

@@ -209,6 +209,14 @@ model Friendship {
   @@index([requesterId])
 }
 
+model Ban {
+  id        String    @id @default(cuid())
+  userId    String
+  startTime DateTime  @default(now())
+  endTime   DateTime?
+  reason    String
+}
+
 model User {
   id                         String             @id @default(cuid())
   login42                    String?            @unique
@@ -264,6 +272,7 @@ model User {
   chessMoves        ChessMove[]
   createdAt                  DateTime           @default(now())
   updatedAt                  DateTime           @updatedAt
+  banReceived                Ban[]
 }
 
 model Message {

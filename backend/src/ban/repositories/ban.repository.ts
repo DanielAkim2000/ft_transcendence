@@ -6,10 +6,13 @@ export class BanRepository {
 
   async findBanStatus(userId: string) : Promise<boolean> {
     const user = await this.prisma.user.findUnique({
-      where: { userId },
+      where: { id: userId },
       orderBy: { createdAt: 'desc' },
     });
-    const banStatus = await user.ban.findUnique({
+    if (user === null) {
+      return false;
+    }
+    const banStatus = await user.banReceived.findUnique({
       where: { OR: [{ endTime: null }, { endTime: { gt: new Date() } }]},
       orderBy: { createdAt: 'desc' },
     });

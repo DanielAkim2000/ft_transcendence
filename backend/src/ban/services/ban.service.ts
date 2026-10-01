@@ -1,5 +1,5 @@
 import { Injectable, } from '@nestjs/common';
-import { BanRepository } from '../repository/ban.repository';
+import { BanRepository } from '../repositories/ban.repository';
 
 @Injectable()
 export class BanService {

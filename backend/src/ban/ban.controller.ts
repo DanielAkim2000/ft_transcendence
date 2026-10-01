@@ -17,7 +17,4 @@ import { BanService } from './services/ban.service';
 @AuthRoles(Role.ADMIN)
 export class BanController {
   contructor(private readonly banService: BanService) {}
-
-  @Get('users/:userid')
-  async ()
 }

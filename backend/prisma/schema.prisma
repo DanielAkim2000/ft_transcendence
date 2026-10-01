@@ -212,6 +212,7 @@ model Friendship {
 model Ban {
   id        String    @id @default(cuid())
   userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   startTime DateTime  @default(now())
   endTime   DateTime?
   reason    String

@@ -55,6 +55,7 @@ const withTies = {
           scoreA: true,
           scoreB: true,
           tableId: true,
+          submittedById: true,
         },
       },
     },
@@ -219,12 +220,58 @@ export class TournamentsRepository {
     ]);
   }
 
-  /** Passe le tournoi en statut CANCELLED. */
+  /** Passe le tournoi en statut CANCELLED et clôt ses manches en cours (en litige) pour qu'aucun joueur n'ait plus de score à saisir ou valider. */
   async cancel(tournamentId: string): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.tournament.update({
+        where: { id: tournamentId },
+        data: { status: TournamentStatus.CANCELLED },
+      }),
+      this.prisma.match.updateMany({
+        where: {
+          tournamentTie: { tournamentId },
+          status: {
+            in: [MatchStatus.ACCEPTED, MatchStatus.PENDING_VALIDATION],
+          },
+        },
+        data: { status: MatchStatus.DISPUTED },
+      }),
+    ]);
+  }
+
+  /** Met le tournoi en file d'attente (un autre tournoi est en cours). */
+  async markQueued(tournamentId: string): Promise<void> {
     await this.prisma.tournament.update({
       where: { id: tournamentId },
-      data: { status: TournamentStatus.CANCELLED },
+      data: { status: TournamentStatus.QUEUED, queuedAt: new Date() },
     });
+  }
+
+  /** Nombre de tournois en cours (au plus un en régime normal). */
+  countInProgress(): Promise<number> {
+    return this.prisma.tournament.count({
+      where: { status: TournamentStatus.IN_PROGRESS },
+    });
+  }
+
+  /** Ids des tournois en cours, du plus ancien au plus récent. */
+  async listInProgressIds(): Promise<string[]> {
+    const rows = await this.prisma.tournament.findMany({
+      where: { status: TournamentStatus.IN_PROGRESS },
+      orderBy: { startedAt: 'asc' },
+      select: { id: true },
+    });
+    return rows.map((row) => row.id);
+  }
+
+  /** Id du tournoi en file d'attente depuis le plus longtemps, ou null. */
+  async findNextQueuedId(): Promise<string | null> {
+    const next = await this.prisma.tournament.findFirst({
+      where: { status: TournamentStatus.QUEUED },
+      orderBy: { queuedAt: 'asc' },
+      select: { id: true },
+    });
+    return next?.id ?? null;
   }
 
   /** Passe le tournoi en COMPLETED et enregistre la date de fin. */
@@ -491,6 +538,9 @@ export class TournamentsRepository {
       activeTableId: activeLeg?.tableId ?? null,
       activeLegId: activeLeg?.id ?? null,
       activeLegStatus: activeLeg?.status ?? null,
+      activeLegScoreA: activeLeg?.scoreA ?? null,
+      activeLegScoreB: activeLeg?.scoreB ?? null,
+      activeLegSubmittedById: activeLeg?.submittedById ?? null,
       legsPlayed: completedLegs.length,
       legsNeeded: resolution.nextLegNumber ?? completedLegs.length,
       aggregateScoreA:

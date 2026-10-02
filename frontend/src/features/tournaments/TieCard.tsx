@@ -5,7 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/toast";
-import { useSubmitScoreMutation, useValidateScoreMutation } from "@/features/matches/matchesApi";
+import {
+  useSubmitScoreMutation,
+  useValidateScoreMutation,
+} from "@/features/matches/matchesApi";
 import { getErrorMessage } from "@/lib/get-error-message";
 import { getInitials, resolveAvatarUrl } from "@/lib/user";
 import { cn } from "@/lib/utils";
@@ -14,28 +17,48 @@ import { translateRoundLabel } from "./tournamentHelpers";
 
 const TARGET_SCORE = 10;
 
-function entryName(entry: TournamentEntry | null, t: (key: string) => string): string {
+function entryName(
+  entry: TournamentEntry | null,
+  t: (key: string) => string,
+): string {
   if (!entry) return t("tournaments.tbd");
   return entry.player2
     ? `${entry.player1.displayname} + ${entry.player2.displayname}`
     : entry.player1.displayname;
 }
 
-function EntrySide({ entry, t }: { entry: TournamentEntry | null; t: (key: string) => string }) {
+function EntrySide({
+  entry,
+  t,
+}: {
+  entry: TournamentEntry | null;
+  t: (key: string) => string;
+}) {
   if (!entry) {
-    return <span className="text-xs text-muted-foreground">{t("tournaments.tbd")}</span>;
+    return (
+      <span className="text-xs text-muted-foreground">
+        {t("tournaments.tbd")}
+      </span>
+    );
   }
   return (
     <span className="flex flex-wrap items-center gap-1.5">
-      {[entry.player1, entry.player2].filter((p): p is NonNullable<typeof p> => !!p).map((player) => (
-        <span key={player.id} className="flex items-center gap-1">
-          <Avatar className="size-6">
-            <AvatarImage src={resolveAvatarUrl(player.avatarUrl)} alt={player.displayname} />
-            <AvatarFallback className="text-[10px]">{getInitials(player.displayname)}</AvatarFallback>
-          </Avatar>
-          {player.displayname}
-        </span>
-      ))}
+      {[entry.player1, entry.player2]
+        .filter((p): p is NonNullable<typeof p> => !!p)
+        .map((player) => (
+          <span key={player.id} className="flex items-center gap-1">
+            <Avatar className="size-6">
+              <AvatarImage
+                src={resolveAvatarUrl(player.avatarUrl)}
+                alt={player.displayname}
+              />
+              <AvatarFallback className="text-[10px]">
+                {getInitials(player.displayname)}
+              </AvatarFallback>
+            </Avatar>
+            {player.displayname}
+          </span>
+        ))}
     </span>
   );
 }
@@ -54,11 +77,29 @@ export function TieCard({ tie, meId }: { tie: TournamentTie; meId?: string }) {
         ? "B"
         : null;
 
-  const run = async (action: () => Promise<unknown>) => {
+  // Côté de la rencontre (A ou B) du joueur qui a soumis le score : l'autre côté valide.
+  const isIn = (entry: TournamentEntry | null, id: string | null) =>
+    id !== null && (entry?.player1.id === id || entry?.player2?.id === id);
+  const submitterSide = isIn(tie.entryA, tie.activeLegSubmittedById)
+    ? "A"
+    : isIn(tie.entryB, tie.activeLegSubmittedById)
+      ? "B"
+      : null;
+  const canValidate =
+    myEntry !== null && submitterSide !== null && myEntry !== submitterSide;
+
+  const run = async (
+    action: () => Promise<unknown>,
+    successMessage?: string,
+  ) => {
     try {
       await action();
+      if (successMessage) toast.add({ title: successMessage, type: "success" });
     } catch (error) {
-      toast.add({ title: getErrorMessage(error, t("matches.actionFailed")), type: "error" });
+      toast.add({
+        title: getErrorMessage(error, t("matches.actionFailed")),
+        type: "error",
+      });
     }
   };
 
@@ -71,18 +112,29 @@ export function TieCard({ tie, meId }: { tie: TournamentTie; meId?: string }) {
     Number.isInteger(b) &&
     a >= 0 &&
     b >= 0 &&
-    ((a === TARGET_SCORE && b < TARGET_SCORE) || (b === TARGET_SCORE && a < TARGET_SCORE));
+    ((a === TARGET_SCORE && b < TARGET_SCORE) ||
+      (b === TARGET_SCORE && a < TARGET_SCORE));
 
   const submit = () => {
     if (!tie.activeLegId || !scoreValid) return;
-    void run(() => submitScore({ matchId: tie.activeLegId!, scoreA: a, scoreB: b }).unwrap());
+    void run(
+      () =>
+        submitScore({
+          matchId: tie.activeLegId!,
+          scoreA: a,
+          scoreB: b,
+        }).unwrap(),
+      t("matches.scoreSentToast", { a, b }),
+    );
   };
 
   return (
     <li
       className={cn(
         "flex flex-col gap-2 border p-3",
-        tie.status === "DONE" ? "border-border" : "border-primary/40 bg-primary/5",
+        tie.status === "DONE"
+          ? "border-border"
+          : "border-primary/40 bg-primary/5",
       )}
     >
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
@@ -109,7 +161,9 @@ export function TieCard({ tie, meId }: { tie: TournamentTie; meId?: string }) {
         </p>
       ) : null}
 
-      {tie.status === "IN_PROGRESS" && tie.activeLegStatus === "ACCEPTED" && myEntry ? (
+      {tie.status === "IN_PROGRESS" &&
+      tie.activeLegStatus === "ACCEPTED" &&
+      myEntry ? (
         <div className="flex flex-col gap-2">
           <div className="flex items-end gap-2">
             <div className="flex flex-col gap-1">
@@ -138,59 +192,92 @@ export function TieCard({ tie, meId }: { tie: TournamentTie; meId?: string }) {
                 onChange={(e) => setScoreB(e.target.value)}
               />
             </div>
-            <Button type="button" size="sm" disabled={submitting || !scoreValid} onClick={submit}>
+            <Button
+              type="button"
+              size="sm"
+              disabled={submitting || !scoreValid}
+              onClick={submit}
+            >
               {t("matches.submitScore")}
             </Button>
           </div>
           <p
             className={cn(
               "text-[11px]",
-              scoreFilled && !scoreValid ? "text-destructive" : "text-muted-foreground",
+              scoreFilled && !scoreValid
+                ? "text-destructive"
+                : "text-muted-foreground",
             )}
           >
-            {scoreFilled && !scoreValid ? t("tables.scoreInvalid") : t("tables.scoreHint")}
+            {scoreFilled && !scoreValid
+              ? t("tables.scoreInvalid")
+              : t("tables.scoreHint")}
           </p>
         </div>
       ) : null}
 
-      {tie.status === "IN_PROGRESS" && tie.activeLegStatus === "PENDING_VALIDATION" ? (
-        myEntry ? (
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              size="sm"
-              disabled={validating}
-              onClick={() =>
-                void run(() =>
-                  validateScore({ matchId: tie.activeLegId!, accept: true }).unwrap(),
-                )
-              }
-            >
-              {t("matches.validate")}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={validating}
-              onClick={() =>
-                void run(() =>
-                  validateScore({ matchId: tie.activeLegId!, accept: false }).unwrap(),
-                )
-              }
-            >
-              {t("matches.dispute")}
-            </Button>
-          </div>
-        ) : (
-          <p className="text-xs text-muted-foreground">{t("matches.awaitingValidation")}</p>
-        )
+      {tie.status === "IN_PROGRESS" &&
+      tie.activeLegStatus === "PENDING_VALIDATION" ? (
+        <div className="flex flex-col gap-2">
+          <p className="text-xs">
+            {t("matches.scoreSubmitted", {
+              a: tie.activeLegScoreA,
+              b: tie.activeLegScoreB,
+            })}
+          </p>
+          {canValidate ? (
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                disabled={validating}
+                onClick={() =>
+                  void run(
+                    () =>
+                      validateScore({
+                        matchId: tie.activeLegId!,
+                        accept: true,
+                      }).unwrap(),
+                    t("matches.validatedToast"),
+                  )
+                }
+              >
+                {t("matches.validate")}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={validating}
+                onClick={() =>
+                  void run(
+                    () =>
+                      validateScore({
+                        matchId: tie.activeLegId!,
+                        accept: false,
+                      }).unwrap(),
+                    t("matches.disputedToast"),
+                  )
+                }
+              >
+                {t("matches.dispute")}
+              </Button>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              {t("matches.awaitingValidation")}
+            </p>
+          )}
+        </div>
       ) : null}
 
       {tie.status === "DONE" ? (
         <p className="text-xs font-semibold text-primary">
           {t("tournaments.tieWon", {
-            name: entryName(tie.winnerEntryId === tie.entryA?.id ? tie.entryA : tie.entryB, t),
+            name: entryName(
+              tie.winnerEntryId === tie.entryA?.id ? tie.entryA : tie.entryB,
+              t,
+            ),
             points: tie.pointsAwarded,
           })}
         </p>

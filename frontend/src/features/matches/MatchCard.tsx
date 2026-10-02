@@ -79,7 +79,11 @@ function AcceptTwoVTwoDialog({
             {t("matches.pickTeammateDescription")}
           </Dialog.Description>
           <div className="mt-4">
-            <FriendPicker value={teammateId} onChange={setTeammateId} excludeIds={teamAIds} />
+            <FriendPicker
+              value={teammateId}
+              onChange={setTeammateId}
+              excludeIds={teamAIds}
+            />
           </div>
           <div className="mt-5 flex justify-end gap-2">
             <Dialog.Close
@@ -111,11 +115,17 @@ export function MatchCard({ match, meId }: { match: Match; meId: string }) {
   const [scoreB, setScoreB] = useState("");
 
   const myTeam = teamOf(match, meId);
-  const formatLabel = t(match.format === "ONE_V_ONE" ? "matches.oneVOne" : "matches.twoVTwo");
+  const formatLabel = t(
+    match.format === "ONE_V_ONE" ? "matches.oneVOne" : "matches.twoVTwo",
+  );
 
-  const run = async (action: () => Promise<unknown>) => {
+  const run = async (
+    action: () => Promise<unknown>,
+    successMessage?: string,
+  ) => {
     try {
       await action();
+      if (successMessage) toast.add({ title: successMessage, type: "success" });
     } catch (error) {
       toast.add({
         title: getErrorMessage(error, t("matches.actionFailed")),
@@ -124,8 +134,10 @@ export function MatchCard({ match, meId }: { match: Match; meId: string }) {
     }
   };
 
-  const decline = () => run(() => respond({ matchId: match.id, accept: false }).unwrap());
-  const acceptSolo = () => run(() => respond({ matchId: match.id, accept: true }).unwrap());
+  const decline = () =>
+    run(() => respond({ matchId: match.id, accept: false }).unwrap());
+  const acceptSolo = () =>
+    run(() => respond({ matchId: match.id, accept: true }).unwrap());
 
   const a = Number(scoreA);
   const b = Number(scoreB);
@@ -136,11 +148,15 @@ export function MatchCard({ match, meId }: { match: Match; meId: string }) {
     Number.isInteger(b) &&
     a >= 0 &&
     b >= 0 &&
-    ((a === TARGET_SCORE && b < TARGET_SCORE) || (b === TARGET_SCORE && a < TARGET_SCORE));
+    ((a === TARGET_SCORE && b < TARGET_SCORE) ||
+      (b === TARGET_SCORE && a < TARGET_SCORE));
 
   const submit = () => {
     if (!scoreValid) return;
-    void run(() => submitScore({ matchId: match.id, scoreA: a, scoreB: b }).unwrap());
+    void run(
+      () => submitScore({ matchId: match.id, scoreA: a, scoreB: b }).unwrap(),
+      t("matches.scoreSentToast", { a, b }),
+    );
   };
 
   return (
@@ -158,7 +174,9 @@ export function MatchCard({ match, meId }: { match: Match; meId: string }) {
 
       {match.status === "PENDING" && myTeam === "B" ? (
         <div className="flex items-center gap-2">
-          <p className="flex-1 text-xs text-muted-foreground">{t("matches.pendingForYou")}</p>
+          <p className="flex-1 text-xs text-muted-foreground">
+            {t("matches.pendingForYou")}
+          </p>
           {match.format === "TWO_V_TWO" ? (
             <AcceptTwoVTwoDialog match={match}>
               <Button type="button" size="sm">
@@ -166,18 +184,31 @@ export function MatchCard({ match, meId }: { match: Match; meId: string }) {
               </Button>
             </AcceptTwoVTwoDialog>
           ) : (
-            <Button type="button" size="sm" disabled={responding} onClick={() => void acceptSolo()}>
+            <Button
+              type="button"
+              size="sm"
+              disabled={responding}
+              onClick={() => void acceptSolo()}
+            >
               {t("matches.accept")}
             </Button>
           )}
-          <Button type="button" size="sm" variant="outline" disabled={responding} onClick={() => void decline()}>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={responding}
+            onClick={() => void decline()}
+          >
             {t("matches.decline")}
           </Button>
         </div>
       ) : null}
 
       {match.status === "PENDING" && myTeam === "A" ? (
-        <p className="text-xs text-muted-foreground">{t("matches.pendingForOpponent")}</p>
+        <p className="text-xs text-muted-foreground">
+          {t("matches.pendingForOpponent")}
+        </p>
       ) : null}
 
       {match.status === "DECLINED" ? (
@@ -213,17 +244,26 @@ export function MatchCard({ match, meId }: { match: Match; meId: string }) {
                 onChange={(e) => setScoreB(e.target.value)}
               />
             </div>
-            <Button type="button" size="sm" disabled={submitting || !scoreValid} onClick={submit}>
+            <Button
+              type="button"
+              size="sm"
+              disabled={submitting || !scoreValid}
+              onClick={submit}
+            >
               {t("matches.submitScore")}
             </Button>
           </div>
           <p
             className={cn(
               "text-[11px]",
-              scoreFilled && !scoreValid ? "text-destructive" : "text-muted-foreground",
+              scoreFilled && !scoreValid
+                ? "text-destructive"
+                : "text-muted-foreground",
             )}
           >
-            {scoreFilled && !scoreValid ? t("tables.scoreInvalid") : t("tables.scoreHint")}
+            {scoreFilled && !scoreValid
+              ? t("tables.scoreInvalid")
+              : t("tables.scoreHint")}
           </p>
         </div>
       ) : null}
@@ -233,13 +273,24 @@ export function MatchCard({ match, meId }: { match: Match; meId: string }) {
           <p className="text-xs">
             {t("matches.scoreSubmitted", { a: match.scoreA, b: match.scoreB })}
           </p>
-          {myTeam !== null && match.submittedBy && teamOf(match, match.submittedBy.id) !== myTeam ? (
+          {myTeam !== null &&
+          match.submittedBy &&
+          teamOf(match, match.submittedBy.id) !== myTeam ? (
             <div className="flex gap-2">
               <Button
                 type="button"
                 size="sm"
                 disabled={validating}
-                onClick={() => void run(() => validateScore({ matchId: match.id, accept: true }).unwrap())}
+                onClick={() =>
+                  void run(
+                    () =>
+                      validateScore({
+                        matchId: match.id,
+                        accept: true,
+                      }).unwrap(),
+                    t("matches.validatedToast"),
+                  )
+                }
               >
                 {t("matches.validate")}
               </Button>
@@ -248,13 +299,24 @@ export function MatchCard({ match, meId }: { match: Match; meId: string }) {
                 size="sm"
                 variant="outline"
                 disabled={validating}
-                onClick={() => void run(() => validateScore({ matchId: match.id, accept: false }).unwrap())}
+                onClick={() =>
+                  void run(
+                    () =>
+                      validateScore({
+                        matchId: match.id,
+                        accept: false,
+                      }).unwrap(),
+                    t("matches.disputedToast"),
+                  )
+                }
               >
                 {t("matches.dispute")}
               </Button>
             </div>
           ) : (
-            <span className="text-xs text-muted-foreground">{t("matches.awaitingValidation")}</span>
+            <span className="text-xs text-muted-foreground">
+              {t("matches.awaitingValidation")}
+            </span>
           )}
         </div>
       ) : null}
@@ -277,8 +339,13 @@ export function MatchCard({ match, meId }: { match: Match; meId: string }) {
 export function TeamAvatar({ player }: { player: MatchPlayer }) {
   return (
     <Avatar className="size-6">
-      <AvatarImage src={resolveAvatarUrl(player.avatarUrl)} alt={player.displayname} />
-      <AvatarFallback className="text-[10px]">{getInitials(player.displayname)}</AvatarFallback>
+      <AvatarImage
+        src={resolveAvatarUrl(player.avatarUrl)}
+        alt={player.displayname}
+      />
+      <AvatarFallback className="text-[10px]">
+        {getInitials(player.displayname)}
+      </AvatarFallback>
     </Avatar>
   );
 }

@@ -40,9 +40,10 @@ const TARGET_SCORE = 10;
 /** Exécute une action et affiche un toast d'erreur en cas d'échec. */
 function useRun() {
   const { t } = useTranslation();
-  return async (action: () => Promise<unknown>) => {
+  return async (action: () => Promise<unknown>, successMessage?: string) => {
     try {
       await action();
+      if (successMessage) toast.add({ title: successMessage, type: "success" });
     } catch (error) {
       toast.add({
         title: getErrorMessage(error, t("tables.actionFailed")),
@@ -158,12 +159,14 @@ function ScoreForm({ table }: { table: BabyTable }) {
           size="sm"
           disabled={isLoading || !valid}
           onClick={() =>
-            void run(() =>
-              submitScore({
-                matchId: table.currentMatchId ?? "",
-                scoreA: a,
-                scoreB: b,
-              }).unwrap(),
+            void run(
+              () =>
+                submitScore({
+                  matchId: table.currentMatchId ?? "",
+                  scoreA: a,
+                  scoreB: b,
+                }).unwrap(),
+              t("matches.scoreSentToast", { a, b }),
             )
           }
         >

@@ -50,6 +50,8 @@ enum MatchStatus {
 
 enum TournamentStatus {
   DRAFT
+  // Lancé par l'admin alors qu'un autre tournoi est en cours : démarre tout seul à la fin (ou à l'annulation) du précédent.
+  QUEUED
   IN_PROGRESS
   COMPLETED
   CANCELLED
@@ -391,6 +393,7 @@ model Tournament {
   ties        TournamentTie[]
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
+  queuedAt    DateTime?
   startedAt   DateTime?
   completedAt DateTime?
 

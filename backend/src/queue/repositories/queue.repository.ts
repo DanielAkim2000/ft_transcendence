@@ -474,11 +474,19 @@ export class QueueRepository {
         where: { tableId, status: 'ACCEPTED', tournamentTieId: null },
         data: { status: 'DISPUTED' },
       });
+      // Une table réservée par la rencontre d'un tournoi reste occupée : seule la
+      // fin de cette rencontre la libère (sinon l'accueil l'affiche « libre » alors
+      // qu'un match de tournoi s'y joue).
+      const table = await tx.table.findUnique({
+        where: { id: tableId },
+        select: { currentTournamentTieId: true },
+      });
+      const claimedByTournament = table?.currentTournamentTieId != null;
       await tx.table.update({
         where: { id: tableId },
         data: {
-          status: 'FREE',
-          occupiedAt: null,
+          status: claimedByTournament ? 'BUSY' : 'FREE',
+          occupiedAt: claimedByTournament ? undefined : null,
           format: null,
           endRequestedAt: null,
         },

@@ -255,7 +255,7 @@ Two business rules are enforced with hand-written partial unique indexes rather 
 | Tables | Live free/busy status for both babyfoot tables, atomic occupy/release | `demane` | `rdinis` — [`docs/team/rdinis.md`](docs/team/rdinis.md) |
 | Queue | FIFO waiting list per table, 2-minute call window, automatic advance | `demane` | `rdinis` — [`docs/team/rdinis.md`](docs/team/rdinis.md) |
 | Match & Elo | Challenge from the ranking (1v1/2v2), opponent-validated score, server-computed Elo | `demane` | `rbourdon` — [`docs/team/rbourdon.md`](docs/team/rbourdon.md) |
-| Tournaments | Admin-created single-elimination bracket, random draw, automatic table assignment, fixed per-round points, two-legged option | `demane` | `vicli` — [`docs/team/vicli.md`](docs/team/vicli.md) |
+| Tournaments | Admin-created single-elimination bracket, random draw, automatic table assignment, fixed per-round points, two-legged option, one running tournament at a time (others wait in a queue and start automatically) | `demane` | `vicli` — [`docs/team/vicli.md`](docs/team/vicli.md) |
 | GDPR (data export & account deletion) | Download your data as CSV or JSON, delete (anonymise) your account after an emailed confirmation link, confirmation emails | `demane` | — |
 | Health check & backups | Public status page, `/health` endpoint, Docker healthchecks, scheduled PostgreSQL dumps with retention, restore script | `demane` | [`docs/BACKUP.md`](docs/BACKUP.md) |
 | Search & filters | Filters, sorting and pagination on the History and Ranking pages | `demane` | — |

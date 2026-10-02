@@ -396,7 +396,8 @@
     "scoreHint": "Un match se termine à 10 points : un côté a 10, l’autre moins.",
     "scoreInvalid": "Le score doit être de 10 pour un côté et de moins de 10 pour l’autre.",
     "scoreWaiting": "En attente de la saisie du score par les joueurs…",
-    "spectatorHint": "Match en cours"
+    "spectatorHint": "Match en cours",
+    "tournamentBusy": "Tournoi · {{name}}"
   },
   "queue": {
     "title": "File d’attente",
@@ -492,7 +493,7 @@
     "scoreSubmittedToast": "Score soumis ({{a}}-{{b}}), en attente de validation par l’adversaire.",
     "wonToast": "Victoire {{a}}-{{b}} ! Ton classement a été mis à jour.",
     "lostToast": "Défaite {{a}}-{{b}}. Ton classement a été mis à jour.",
-    "disputedToast": "Litige sur le score, aucun changement de classement.",
+    "disputedToast": "Score contesté.",
     "viewHistory": "Voir l’historique complet",
     "challengesTitle": "Mes défis",
     "challengeSomeone": "Défier quelqu’un",
@@ -508,7 +509,9 @@
     "sortMatches": "Plus de matchs",
     "sortName": "Par nom",
     "rankingNoMatch": "Aucun joueur ne correspond à ces filtres.",
-    "rankingEmpty": "Aucun joueur pour l’instant."
+    "rankingEmpty": "Aucun joueur pour l’instant.",
+    "scoreSentToast": "Score {{a}}-{{b}} envoyé. En attente de la validation de ton adversaire.",
+    "validatedToast": "Score validé."
   },
   "tournaments": {
     "title": "Tournois",
@@ -539,6 +542,7 @@
     "actionNeededBadge": "Rencontre de tournoi à jouer",
     "status": {
       "DRAFT": "Brouillon",
+      "QUEUED": "En file d’attente",
       "IN_PROGRESS": "En cours",
       "COMPLETED": "Terminé",
       "CANCELLED": "Annulé"
@@ -555,7 +559,10 @@
     "tieStartedToast": "À toi de jouer ! Tournoi {{name}}.",
     "tieWonToast": "Tu passes au tour suivant dans {{name}} !",
     "eliminatedToast": "Tu es éliminé du tournoi {{name}}.",
-    "completedToast": "Le tournoi {{name}} est terminé !"
+    "completedToast": "Le tournoi {{name}} est terminé !",
+    "queuedToast": "Un autre tournoi est en cours : le tien est mis en file d’attente et démarrera tout seul à sa fin.",
+    "queuedBanner": "En file d’attente : ce tournoi démarrera automatiquement dès que le tournoi en cours sera terminé ou annulé. Ses inscriptions sont figées.",
+    "launchQueueHint": "Si un tournoi est déjà en cours, celui-ci est mis en file d’attente et démarre tout seul à sa fin."
   },
   "notifications": {
     "markAllRead": "Tout marquer comme lu",

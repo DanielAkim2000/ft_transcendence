@@ -100,7 +100,7 @@ export const TournamentDetail = () => {
             {t(`tournaments.status.${tournament.status}`)}
           </p>
         </div>
-        {isAdmin && tournament.status === "IN_PROGRESS" ? (
+        {isAdmin && (tournament.status === "IN_PROGRESS" || tournament.status === "QUEUED") ? (
           <ConfirmDialog
             title={t("tournaments.cancelTitle")}
             description={t("tournaments.cancelDescription")}
@@ -197,19 +197,51 @@ export const TournamentDetail = () => {
               <Button
                 type="button"
                 disabled={launching || !isPowerOfTwo(tournament.entries.length)}
-                onClick={() => void run(() => launch(tournament.id).unwrap())}
+                onClick={() =>
+                  void run(async () => {
+                    const launched = await launch(tournament.id).unwrap();
+                    if (launched.status === "QUEUED") {
+                      toast.add({ title: t("tournaments.queuedToast"), type: "info" });
+                    }
+                  })
+                }
               >
                 {t("tournaments.launch")}
               </Button>
               {!isPowerOfTwo(tournament.entries.length) ? (
                 <p className="text-xs text-muted-foreground">{t("tournaments.needsPowerOfTwo")}</p>
-              ) : null}
+              ) : (
+                <p className="text-xs text-muted-foreground">{t("tournaments.launchQueueHint")}</p>
+              )}
             </>
           ) : null}
         </section>
       ) : null}
 
-      {tournament.status !== "DRAFT" ? (
+      {tournament.status === "QUEUED" ? (
+        <section className="flex flex-col gap-3">
+          <p
+            role="status"
+            className="border border-chart-3/50 bg-chart-3/10 p-3 text-sm font-semibold text-chart-3"
+          >
+            {t("tournaments.queuedBanner")}
+          </p>
+          <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            {t("tournaments.entries")} · {tournament.entries.length}
+          </h2>
+          <ul className="flex flex-col gap-1">
+            {tournament.entries.map((entry) => (
+              <li key={entry.id} className="border border-border px-2 py-1 text-sm">
+                {entry.player2
+                  ? `${entry.player1.displayname} + ${entry.player2.displayname}`
+                  : entry.player1.displayname}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {tournament.status !== "DRAFT" && tournament.status !== "QUEUED" ? (
         <div className="flex flex-col gap-6">
           {roundsInOrder.map((round) => {
             const ties = tournament.ties.filter((tie) => tie.round === round);

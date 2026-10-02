@@ -50,6 +50,15 @@ export class TablesService {
     await this.publish(tableId);
   }
 
+  /** Libère toutes les tables réservées par un tournoi (annulation) et diffuse leur nouvel état. */
+  async releaseClaimsForTournament(tournamentId: string): Promise<void> {
+    const tableIds =
+      await this.tablesRepository.releaseClaimsForTournament(tournamentId);
+    for (const tableId of tableIds) {
+      await this.publish(tableId);
+    }
+  }
+
   /** Retourne les ids des tables libres et non réclamées par un tournoi, dans un ordre aléatoire. */
   listFreeUnclaimed(): Promise<string[]> {
     return this.tablesRepository.listFreeUnclaimed();

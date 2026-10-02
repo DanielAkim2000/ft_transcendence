@@ -236,7 +236,8 @@ export const Home = () => {
       <Panel title={t("tables.title")} to={ROUTES.TABLES}>
         <ul className="grid divide-y divide-border sm:grid-cols-2 sm:divide-x sm:divide-y-0">
           {tables.map((table) => {
-            const busy = table.status === "BUSY";
+            const tie = table.currentTournamentTie;
+            const busy = table.status === "BUSY" || tie !== null;
             return (
               <li key={table.id} className="flex items-center justify-between gap-3 px-4 py-3">
                 <span className="text-sm font-bold uppercase tracking-wider">{table.name}</span>
@@ -246,9 +247,11 @@ export const Home = () => {
                     busy ? "text-chart-3" : "text-primary",
                   )}
                 >
-                  {busy
-                    ? `${t("tables.busy")} ${formatElapsed(table.occupiedAt, now)}`
-                    : t("tables.free")}
+                  {tie
+                    ? t("tables.tournamentBusy", { name: tie.tournamentName })
+                    : busy
+                      ? `${t("tables.busy")} ${formatElapsed(table.occupiedAt, now)}`
+                      : t("tables.free")}
                 </span>
               </li>
             );

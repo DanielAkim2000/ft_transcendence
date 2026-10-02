@@ -5,7 +5,7 @@ import { TOURNAMENTS_ENDPOINTS } from "@/constants/queryEndpoints";
 import type { MatchFormat, MatchStatus } from "@/features/matches/matchesApi";
 import type { PageArgs, Paginated } from "@/lib/pagination";
 
-export type TournamentStatus = "DRAFT" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+export type TournamentStatus = "DRAFT" | "QUEUED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
 export type TournamentTieStatus = "PENDING" | "READY" | "IN_PROGRESS" | "DONE";
 
 export interface TournamentPlayer {
@@ -36,6 +36,11 @@ export interface TournamentTie {
   activeTableId: string | null;
   activeLegId: string | null;
   activeLegStatus: MatchStatus | null;
+  /** Score soumis de la manche à valider (null sinon). */
+  activeLegScoreA: number | null;
+  activeLegScoreB: number | null;
+  /** Joueur qui a soumis ce score : seule l'équipe adverse peut le valider. */
+  activeLegSubmittedById: string | null;
   legsPlayed: number;
   legsNeeded: number;
   aggregateScoreA: number | null;

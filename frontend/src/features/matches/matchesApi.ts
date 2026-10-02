@@ -93,7 +93,9 @@ export const matchesApi = api.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: [TAG_TYPES.MATCHES],
+      // Une manche de tournoi est affichée depuis le cache des tournois : sans ça,
+      // le formulaire reste affiché après la soumission.
+      invalidatesTags: [TAG_TYPES.MATCHES, TAG_TYPES.TOURNAMENTS],
     }),
     [MATCHES_ENDPOINTS.VALIDATE_SCORE]: builder.mutation<
       Match,
@@ -104,7 +106,7 @@ export const matchesApi = api.injectEndpoints({
         method: "POST",
         body: { accept },
       }),
-      invalidatesTags: [TAG_TYPES.MATCHES, TAG_TYPES.RANKING],
+      invalidatesTags: [TAG_TYPES.MATCHES, TAG_TYPES.RANKING, TAG_TYPES.TOURNAMENTS],
     }),
   }),
 });
@@ -114,6 +116,10 @@ type Dispatch = (action: unknown) => unknown;
 /** Un match a changé (websocket) : les listes sont paginées côté backend, on les recharge au lieu de les patcher. */
 export function applyMatchToCache(dispatch: Dispatch, match: Match) {
   dispatch(matchesApi.util.invalidateTags([TAG_TYPES.MATCHES]));
+  // Manche de tournoi : l'adversaire voit le score soumis sans recharger la page.
+  if (match.tournamentTieId) {
+    dispatch(matchesApi.util.invalidateTags([TAG_TYPES.TOURNAMENTS]));
+  }
   if (match.status === "COMPLETED") {
     dispatch(matchesApi.util.invalidateTags([TAG_TYPES.RANKING]));
   }

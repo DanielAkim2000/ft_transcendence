@@ -396,7 +396,8 @@
     "scoreHint": "A match ends at 10 points: one side has 10, the other less.",
     "scoreInvalid": "The score must be 10 for one side and less than 10 for the other.",
     "scoreWaiting": "Waiting for the players to enter the score…",
-    "spectatorHint": "Match in progress"
+    "spectatorHint": "Match in progress",
+    "tournamentBusy": "Tournament · {{name}}"
   },
   "queue": {
     "title": "Queue",
@@ -492,7 +493,7 @@
     "scoreSubmittedToast": "Score submitted ({{a}}-{{b}}), waiting for the opponent to validate.",
     "wonToast": "You won {{a}}-{{b}}! Your rating was updated.",
     "lostToast": "You lost {{a}}-{{b}}. Your rating was updated.",
-    "disputedToast": "The score was disputed, no rating change.",
+    "disputedToast": "Score disputed.",
     "viewHistory": "View full history",
     "challengesTitle": "My challenges",
     "challengeSomeone": "Challenge someone",
@@ -508,7 +509,9 @@
     "sortMatches": "Most matches",
     "sortName": "By name",
     "rankingNoMatch": "No player fits these filters.",
-    "rankingEmpty": "No player yet."
+    "rankingEmpty": "No player yet.",
+    "scoreSentToast": "Score {{a}}-{{b}} submitted. Waiting for your opponent to validate it.",
+    "validatedToast": "Score validated."
   },
   "tournaments": {
     "title": "Tournaments",
@@ -539,6 +542,7 @@
     "actionNeededBadge": "A tournament tie is ready to play",
     "status": {
       "DRAFT": "Draft",
+      "QUEUED": "Queued",
       "IN_PROGRESS": "In progress",
       "COMPLETED": "Completed",
       "CANCELLED": "Cancelled"
@@ -555,7 +559,10 @@
     "tieStartedToast": "Your turn to play! Tournament {{name}}.",
     "tieWonToast": "You advance to the next round in {{name}}!",
     "eliminatedToast": "You've been eliminated from {{name}}.",
-    "completedToast": "The {{name}} tournament is over!"
+    "completedToast": "The {{name}} tournament is over!",
+    "queuedToast": "Another tournament is in progress: yours is queued and will start automatically when it ends.",
+    "queuedBanner": "Queued: this tournament will start automatically as soon as the tournament in progress is finished or cancelled. Its entries are locked.",
+    "launchQueueHint": "If a tournament is already in progress, this one is queued and starts automatically when it ends."
   },
   "notifications": {
     "markAllRead": "Mark all as read",

@@ -120,6 +120,24 @@ export class TablesRepository {
     });
   }
 
+  /** Libère toutes les tables réservées par les rencontres d'un tournoi (annulation) et retourne leurs ids. */
+  async releaseClaimsForTournament(tournamentId: string): Promise<string[]> {
+    const claimed = await this.prisma.table.findMany({
+      where: { currentTournamentTie: { tournamentId } },
+      select: { id: true },
+    });
+    if (claimed.length === 0) return [];
+    await this.prisma.table.updateMany({
+      where: { id: { in: claimed.map((table) => table.id) } },
+      data: {
+        status: TableStatus.FREE,
+        currentTournamentTieId: null,
+        occupiedAt: null,
+      },
+    });
+    return claimed.map((table) => table.id);
+  }
+
   /** Tables libres et non réclamées par un tournoi, dans un ordre aléatoire. */
   async listFreeUnclaimed(): Promise<string[]> {
     const tables = await this.prisma.table.findMany({

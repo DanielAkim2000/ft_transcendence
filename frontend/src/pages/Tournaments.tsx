@@ -14,6 +14,7 @@ const TOURNAMENTS_PAGE_SIZE = 10;
 
 const STATUS_STYLES: Record<string, string> = {
   DRAFT: "text-muted-foreground",
+  QUEUED: "text-chart-3",
   IN_PROGRESS: "text-primary",
   COMPLETED: "text-chart-3",
   CANCELLED: "text-destructive",

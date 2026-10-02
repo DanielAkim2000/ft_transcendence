@@ -396,7 +396,8 @@
     "scoreHint": "Un partido termina a 10 puntos: un lado tiene 10 y el otro menos.",
     "scoreInvalid": "El marcador debe ser 10 para un lado y menos de 10 para el otro.",
     "scoreWaiting": "Esperando a que los jugadores introduzcan el marcador…",
-    "spectatorHint": "Partido en curso"
+    "spectatorHint": "Partido en curso",
+    "tournamentBusy": "Torneo · {{name}}"
   },
   "queue": {
     "title": "Cola de espera",
@@ -492,7 +493,7 @@
     "scoreSubmittedToast": "Resultado enviado ({{a}}-{{b}}), esperando la validación del oponente.",
     "wonToast": "¡Ganaste {{a}}-{{b}}! Tu clasificación se actualizó.",
     "lostToast": "Perdiste {{a}}-{{b}}. Tu clasificación se actualizó.",
-    "disputedToast": "El resultado fue impugnado, sin cambio de clasificación.",
+    "disputedToast": "Marcador disputado.",
     "viewHistory": "Ver historial completo",
     "challengesTitle": "Mis desafíos",
     "challengeSomeone": "Desafiar a alguien",
@@ -508,7 +509,9 @@
     "sortMatches": "Más partidos",
     "sortName": "Por nombre",
     "rankingNoMatch": "Ningún jugador coincide con estos filtros.",
-    "rankingEmpty": "Todavía no hay jugadores."
+    "rankingEmpty": "Todavía no hay jugadores.",
+    "scoreSentToast": "Marcador {{a}}-{{b}} enviado. A la espera de que tu rival lo valide.",
+    "validatedToast": "Marcador validado."
   },
   "tournaments": {
     "title": "Torneos",
@@ -539,6 +542,7 @@
     "actionNeededBadge": "Partido de torneo por jugar",
     "status": {
       "DRAFT": "Borrador",
+      "QUEUED": "En cola",
       "IN_PROGRESS": "En curso",
       "COMPLETED": "Terminado",
       "CANCELLED": "Cancelado"
@@ -555,7 +559,10 @@
     "tieStartedToast": "¡Es tu turno de jugar! Torneo {{name}}.",
     "tieWonToast": "¡Avanzas a la siguiente ronda en {{name}}!",
     "eliminatedToast": "Has sido eliminado del torneo {{name}}.",
-    "completedToast": "¡El torneo {{name}} ha terminado!"
+    "completedToast": "¡El torneo {{name}} ha terminado!",
+    "queuedToast": "Hay otro torneo en curso: el tuyo queda en cola y empezará solo cuando termine.",
+    "queuedBanner": "En cola: este torneo empezará automáticamente en cuanto el torneo en curso termine o se cancele. Sus inscripciones están bloqueadas.",
+    "launchQueueHint": "Si ya hay un torneo en curso, este queda en cola y empieza solo cuando termine."
   },
   "notifications": {
     "markAllRead": "Marcar todo como leído",

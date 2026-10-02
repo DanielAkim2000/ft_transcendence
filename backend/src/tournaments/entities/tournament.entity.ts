@@ -2,6 +2,7 @@ import { MatchFormat } from '../../matches/entities/match.entity';
 
 export enum TournamentStatus {
   DRAFT = 'DRAFT',
+  QUEUED = 'QUEUED',
   IN_PROGRESS = 'IN_PROGRESS',
   COMPLETED = 'COMPLETED',
   CANCELLED = 'CANCELLED',
@@ -47,6 +48,11 @@ export class TournamentTieEntity {
   activeTableId!: string | null;
   activeLegId!: string | null;
   activeLegStatus!: string | null;
+  /** Score soumis de la manche en attente de validation (null sinon). */
+  activeLegScoreA!: number | null;
+  activeLegScoreB!: number | null;
+  /** Joueur qui a soumis ce score : l'équipe adverse doit le valider. */
+  activeLegSubmittedById!: string | null;
   legsPlayed!: number;
   legsNeeded!: number;
   aggregateScoreA!: number | null;

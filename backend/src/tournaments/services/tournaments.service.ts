@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { TournamentsRepository } from '../repositories/tournaments.repository';
@@ -33,6 +34,8 @@ const MIN_ENTRIES = 4;
 
 @Injectable()
 export class TournamentsService {
+  private readonly logger = new Logger(TournamentsService.name);
+
   /** Injecte les dépendances : TournamentsRepository, TournamentsGateway, UsersService, TablesService, QueueService, BadgesService, NotificationsService. */
   constructor(
     private readonly tournamentsRepository: TournamentsRepository,
@@ -133,9 +136,17 @@ export class TournamentsService {
     return updated;
   }
 
-  /** Lance le tournoi : exige un nombre d'entrées puissance de 2 (au moins 4), tire au sort le tableau, réquisitionne les tables (libère les occupants, vide les files), notifie les participants et démarre les premières rencontres. */
+  /**
+   * Lance le tournoi. Exige un nombre d'entrées puissance de 2 (au moins 4).
+   * Les 2 tables sont réservées par un seul tournoi à la fois : si un autre est
+   * déjà en cours, celui-ci est mis en file d'attente (entrées figées) et démarrera
+   * tout seul quand le précédent sera terminé ou annulé.
+   */
   async launch(tournamentId: string): Promise<TournamentEntity> {
     const tournament = await this.getById(tournamentId);
+    if (tournament.status === TournamentStatus.QUEUED) {
+      throw new ConflictException('Tournament is already waiting in the queue');
+    }
     if (tournament.status !== TournamentStatus.DRAFT) {
       throw new ConflictException('Tournament already launched');
     }
@@ -145,6 +156,19 @@ export class TournamentsService {
         `Tournament needs a power-of-two number of entries (4, 8, 16, 32…), got ${count}`,
       );
     }
+    if ((await this.tournamentsRepository.countInProgress()) > 0) {
+      await this.tournamentsRepository.markQueued(tournamentId);
+      const queued = await this.getById(tournamentId);
+      this.tournamentsGateway.broadcast('tournament:updated', queued);
+      return queued;
+    }
+    return this.start(tournamentId);
+  }
+
+  /** Démarre réellement un tournoi (tirage au sort, réservation des tables, notifications, premières rencontres). Aucun autre tournoi ne doit être en cours. */
+  private async start(tournamentId: string): Promise<TournamentEntity> {
+    const tournament = await this.getById(tournamentId);
+    const count = tournament.entries.length;
 
     const totalRounds = log2(count);
     const shuffledIds = shuffle(tournament.entries.map((entry) => entry.id));
@@ -216,30 +240,45 @@ export class TournamentsService {
     return this.getById(tournamentId);
   }
 
-  /** Annule un tournoi non terminé : libère les tables des rencontres en cours et diffuse la mise à jour. */
+  /** Annule un tournoi non terminé (brouillon, en file ou en cours) : libère ses tables, clôt ses manches en cours, diffuse la mise à jour puis fait démarrer le tournoi suivant de la file. */
   async cancel(tournamentId: string): Promise<TournamentEntity> {
     const tournament = await this.getById(tournamentId);
     if (
       tournament.status !== TournamentStatus.DRAFT &&
+      tournament.status !== TournamentStatus.QUEUED &&
       tournament.status !== TournamentStatus.IN_PROGRESS
     ) {
       throw new ConflictException('Tournament already finished');
     }
-    const activeTies =
-      await this.tournamentsRepository.findInProgressTies(tournamentId);
-    for (const tie of activeTies) {
-      const activeLeg = tie.legs[0];
-      if (activeLeg?.tableId) {
-        await this.tablesService.releaseTournamentClaim(
-          activeLeg.tableId,
-          tie.id,
-        );
-      }
-    }
+    const wasRunning = tournament.status === TournamentStatus.IN_PROGRESS;
     await this.tournamentsRepository.cancel(tournamentId);
+    await this.tablesService.releaseClaimsForTournament(tournamentId);
     const updated = await this.getById(tournamentId);
     this.tournamentsGateway.broadcast('tournament:updated', updated);
+    if (wasRunning) {
+      await this.startNextQueued();
+    }
     return updated;
+  }
+
+  /** Quand plus aucun tournoi n'est en cours, démarre celui qui attend depuis le plus longtemps dans la file (sans effet sinon). Une erreur de démarrage est loggée, jamais propagée à l'appelant. */
+  private async startNextQueued(): Promise<void> {
+    try {
+      if ((await this.tournamentsRepository.countInProgress()) > 0) return;
+      const nextId = await this.tournamentsRepository.findNextQueuedId();
+      if (nextId) {
+        await this.start(nextId);
+      }
+    } catch (error) {
+      this.logger.error(`Unable to start the next queued tournament: ${error}`);
+    }
+  }
+
+  /** Distribue les tables libres aux rencontres prêtes de tous les tournois en cours, le plus ancien d'abord. */
+  private async scheduleAllRunning(): Promise<void> {
+    for (const id of await this.tournamentsRepository.listInProgressIds()) {
+      await this.scheduleFreeTables(id);
+    }
   }
 
   /** Appelé par MatchesService quand une manche de tournoi vient d'être validée. */
@@ -333,6 +372,8 @@ export class TournamentsService {
         { tournamentId: tie.tournamentId, tournamentName: updated.name },
       );
       this.tournamentsGateway.broadcast('tournament:updated', updated);
+      // Le tournoi est fini : les tables sont libres, au suivant de la file.
+      await this.startNextQueued();
       return;
     }
 
@@ -396,7 +437,7 @@ export class TournamentsService {
     const updated = await this.getById(tie.tournamentId);
     this.tournamentsGateway.broadcast('tournament:updated', updated);
 
-    await this.scheduleFreeTables(tie.tournamentId);
+    await this.scheduleAllRunning();
   }
 
   /** Appelé par MatchesService quand une manche de tournoi part en litige (ou expire) : on la rejoue. */
@@ -408,10 +449,7 @@ export class TournamentsService {
       await this.tablesService.releaseTournamentClaim(tableId, tieId);
     }
     await this.tournamentsRepository.markTieReady(tieId);
-    const tie = await this.tournamentsRepository.findTieById(tieId);
-    if (tie) {
-      await this.scheduleFreeTables(tie.tournamentId);
-    }
+    await this.scheduleAllRunning();
   }
 
   /** Retourne la rencontre et la table liées à une manche (match) de tournoi, ou null si le match n'en est pas une. */

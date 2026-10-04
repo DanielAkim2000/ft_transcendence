@@ -1,11 +1,11 @@
-import { IsOptional, IsInt, IsString } from 'class-validator';
+import { Min, IsOptional, IsInt, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateBanDto {
-  @IsOptional()
   @IsInt()
-  durationHours?: number;
+  @Min(0)
+  durationHours!: number;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  reason?: string;
+  reason!: string;
 }

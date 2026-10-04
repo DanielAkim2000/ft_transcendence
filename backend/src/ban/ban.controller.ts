@@ -12,9 +12,35 @@ import type { Request } from 'express';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { Role } from '../users/entities/user.entity';
 import { BanService } from './services/ban.service';
+import { CreateBanDto } from './dto/create-ban.dto';
 
 @Controller('ban')
 @AuthRoles(Role.ADMIN)
 export class BanController {
-  contructor(private readonly banService: BanService) {}
+  constructor(private readonly banService: BanService) {}
+
+  @Get(':userId/status')
+  getBanStatus(@Param('userId') userId: string) {
+    return this.banService.findBanStatus(userId);
+  }
+
+  @Get(':userId/history')
+  getBanHistory(@Param('userId') userId: string) {
+    return this.banService.findBans(userId);
+  }
+
+  @Post(':userId')
+  ban(
+    @Param('userId') userId: string,
+    @Body() dto: CreateBanDto,
+  ) {
+    return this.banService.banUser(userId, dto);
+  }
+
+  @Post(':userId/unban')
+  unban(
+    @Param('userId') userId: string,
+  ) {
+    return this.banService.unbanUser(userId);
+  }
 }

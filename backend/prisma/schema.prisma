@@ -216,6 +216,8 @@ model Ban {
   startTime DateTime  @default(now())
   endTime   DateTime?
   reason    String
+
+  @@index([userId])
 }
 
 model User {

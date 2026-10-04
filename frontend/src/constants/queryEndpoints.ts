@@ -112,3 +112,11 @@ export const CHESS_ENDPOINTS = {
   ACCEPT_GAME: "acceptChessGame",
   DECLINE_GAME: "declineChessGame",
 } as const;
+
+/** Noms des endpoints RTK Query — banApi */
+export const BAN_ENDPOINTS = {
+  GET_BAN_STATUS: "getBanStatus",
+  GET_BAN_HISTORY: "getBanHistory",
+  BAN_USER: "banUser",
+  UNBAN_USER: "unbanUser",
+} as const;

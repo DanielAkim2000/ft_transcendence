@@ -38,7 +38,33 @@
       "with42": "Sign in with 42",
       "failed": "Sign in failed. Please try again.",
       "noAccount": "Don't have an account?",
-      "registerLink": "Sign up"
+      "registerLink": "Sign up",
+      "forgotPassword": "Forgot password?"
+    },
+    "forgetPass": {
+      "title": "Forgot your password?",
+      "description": "Enter your email and we'll send you a link to choose a new one.",
+      "email": "Email",
+      "emailPlaceholder": "you@student.42.fr",
+      "submit": "Send reset link",
+      "submitting": "Sending…",
+      "success": "If an account exists for this email, a reset link has been sent. It is valid for 60 minutes.",
+      "failed": "Could not send the email. Please try again.",
+      "remembered": "Remembered it?",
+      "loginLink": "Sign in"
+    },
+    "resetPassword": {
+      "title": "Choose a new password",
+      "description": "Pick a strong password for your account.",
+      "password": "New password",
+      "confirmation": "Confirm password",
+      "passwordMismatch": "Passwords do not match.",
+      "submit": "Update password",
+      "submitting": "Updating…",
+      "success": "Your password has been updated. You can now sign in.",
+      "failed": "This link is invalid or has expired. Request a new one.",
+      "invalidLink": "This reset link is invalid.",
+      "loginLink": "Back to sign in"
     },
     "register": {
       "title": "Create account",

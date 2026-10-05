@@ -160,6 +160,22 @@ export class AuthController {
     });
   }
 
+  /** POST /auth/forgot-password : public ; envoie un lien de réinitialisation si un compte correspond (réponse identique sinon, pour ne pas révéler les emails inscrits). */
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.ACCEPTED)
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    await this.authService.requestPasswordReset(dto.email);
+    return { message: 'If an account exists, an email has been sent' };
+  }
+
+  /** POST /auth/reset-password : public (le jeton reçu par email fait foi) ; définit le nouveau mot de passe et déconnecte toutes les sessions. */
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    await this.authService.resetPassword(dto.token, dto.password);
+    return { message: 'Password updated' };
+  }
+
   /** GET /auth/me : retourne l'utilisateur authentifié. */
   @Get('me')
   @UseGuards(AccessTokenGuard)

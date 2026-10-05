@@ -355,6 +355,31 @@ export class UsersService {
     return this.userRepository.deleteRefreshToken(userId, tokenHash);
   }
 
+  /** Enregistre le hash du jeton de réinitialisation de mot de passe de l'utilisateur (remplace le précédent). */
+  savePasswordResetToken(
+    userId: string,
+    tokenHash: string,
+    expiresAt: Date,
+  ): Promise<void> {
+    return this.userRepository.replacePasswordResetToken(
+      userId,
+      tokenHash,
+      expiresAt,
+    );
+  }
+
+  /** Consomme un jeton de réinitialisation (usage unique), change le mot de passe et révoque les sessions ; null si le jeton est invalide ou expiré. */
+  async consumePasswordResetToken(
+    tokenHash: string,
+    newPassword: string,
+  ): Promise<UserEntity | null> {
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    return this.userRepository.consumePasswordResetToken(
+      tokenHash,
+      passwordHash,
+    );
+  }
+
   /** Retrouve un refresh token de l'utilisateur à partir de son hash, ou null. */
   findRefreshToken(
     userId: string,

@@ -3,6 +3,8 @@ export const ROUTES = {
   HOME: "/",
   LOGIN: "/login",
   REGISTER: "/register",
+  FORGOT_PASSWORD: "/forgot-password",
+  RESET_PASSWORD: "/reset-password",
   AUTH_CALLBACK: "/auth/callback",
   PROFILE_ME: "/profile/me",
   /** Pattern React Router */

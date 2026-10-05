@@ -149,6 +149,15 @@ function LoginCredentialsForm() {
               }}
             />
 
+            <div className="-mt-2 text-right">
+              <Link
+                to={ROUTES.FORGOT_PASSWORD}
+                className="font-sans text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
+                {t("auth.login.forgotPassword")}
+              </Link>
+            </div>
+
             {serverError ? <FieldError>{serverError}</FieldError> : null}
           </FieldGroup>
         </form>

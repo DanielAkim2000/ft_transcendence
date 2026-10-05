@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import {
   BadRequestException,
   ConflictException,
@@ -16,15 +16,24 @@ import { RegisterDto } from './dtos/register.dto';
 import { LoginDto } from './dtos/login.dto';
 import * as bcrypt from 'bcrypt';
 import { verify, generateSecret, generateURI } from 'otplib';
-import { hashRefreshToken } from './utils/utils';
+import { hashRefreshToken, hashToken } from './utils/utils';
+import { MailService } from '../mail/mail.service';
+import { authMails } from './auth.messages';
+import type { MailLanguage } from '../gdpr/gdpr.messages';
+
+const PASSWORD_RESET_TTL_MINUTES = 60;
+const PASSWORD_RESET_COOLDOWN_MS = 60_000;
 
 @Injectable()
 export class AuthService {
-  /** Injecte les dépendances : UsersService, JwtService, ConfigService. */
+  private readonly lastResetRequestAt = new Map<string, number>();
+
+  /** Injecte les dépendances : UsersService, JwtService, ConfigService, MailService. */
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly mailService: MailService,
   ) {}
 
   /** Crée l'utilisateur puis génère ses tokens de session. */
@@ -268,5 +277,52 @@ export class AuthService {
     await this.assertRefreshTokenIsValid(user.id, oldRefreshToken);
     await this.revokeRefreshToken(user.id, oldRefreshToken);
     return this.createTokens(user);
+  }
+
+  /** Langue des emails de l'utilisateur, avec repli sur l'anglais. */
+  private mailLanguage(user: UserEntity): MailLanguage {
+    return user.language === 'fr' || user.language === 'es'
+      ? user.language
+      : 'en';
+  }
+
+  /** Étape 1 de « mot de passe oublié » : si un compte à mot de passe existe pour cet email, envoie un lien à usage unique valable une heure. Ne révèle jamais si l'email existe (même comportement dans tous les cas). */
+  async requestPasswordReset(email: string): Promise<void> {
+    const user = await this.usersService.findUserByEmail(email);
+    if (!user?.passwordHash) return;
+    const last = this.lastResetRequestAt.get(user.id) ?? 0;
+    if (Date.now() - last < PASSWORD_RESET_COOLDOWN_MS) return;
+    this.lastResetRequestAt.set(user.id, Date.now());
+
+    const token = randomBytes(32).toString('hex');
+    await this.usersService.savePasswordResetToken(
+      user.id,
+      hashToken(token),
+      new Date(Date.now() + PASSWORD_RESET_TTL_MINUTES * 60_000),
+    );
+    const link = `${this.configService.get<string>('FRONTEND_URL')}/reset-password?token=${token}`;
+    const mail = authMails.resetPassword(
+      this.mailLanguage(user),
+      user.displayname,
+      link,
+      PASSWORD_RESET_TTL_MINUTES,
+    );
+    await this.mailService.sendQuietly(user.email, mail.subject, mail.text);
+  }
+
+  /** Étape 2 : vérifie le jeton reçu par email, définit le nouveau mot de passe, déconnecte toutes les sessions et prévient l'utilisateur par email. */
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const user = await this.usersService.consumePasswordResetToken(
+      hashToken(token),
+      newPassword,
+    );
+    if (!user) {
+      throw new BadRequestException('Invalid or expired reset link');
+    }
+    const mail = authMails.passwordChanged(
+      this.mailLanguage(user),
+      user.displayname,
+    );
+    await this.mailService.sendQuietly(user.email, mail.subject, mail.text);
   }
 }

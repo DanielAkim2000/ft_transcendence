@@ -183,6 +183,17 @@ model RefreshToken {
   @@index([userId])
 }
 
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
 model Friendship {
   id          String           @id @default(cuid())
   requesterId String
@@ -225,6 +236,7 @@ model User {
   deletedAt                  DateTime?
   badges                     UserBadge[]
   refreshTokens              RefreshToken[]
+  passwordResetTokens        PasswordResetToken[]
   friendshipsSent            Friendship[]       @relation("FriendshipsSent")
   friendshipsReceived        Friendship[]       @relation("FriendshipsReceived")
   conversationsAsA           Conversation[]     @relation("ConversationsAsA")

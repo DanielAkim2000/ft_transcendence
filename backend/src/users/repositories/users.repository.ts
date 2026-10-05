@@ -172,6 +172,48 @@ export class UserRepository {
     });
   }
 
+  /** Remplace le jeton de réinitialisation du mot de passe de l'utilisateur (un seul actif à la fois). */
+  async replacePasswordResetToken(
+    userId: string,
+    tokenHash: string,
+    expiresAt: Date,
+  ): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.passwordResetToken.deleteMany({ where: { userId } }),
+      this.prisma.passwordResetToken.create({
+        data: { userId, tokenHash, expiresAt },
+      }),
+    ]);
+  }
+
+  /** Consomme un jeton de réinitialisation valide (usage unique) : change le mot de passe et révoque toutes les sessions. Retourne l'utilisateur concerné, ou null si le jeton est inconnu, expiré ou déjà utilisé. */
+  async consumePasswordResetToken(
+    tokenHash: string,
+    passwordHash: string,
+  ): Promise<UserEntity | null> {
+    return this.prisma.$transaction(async (tx) => {
+      const stored = await tx.passwordResetToken.findUnique({
+        where: { tokenHash },
+      });
+      if (!stored || stored.expiresAt.getTime() <= Date.now()) return null;
+      // Le contrôle du compteur garantit l'usage unique même en cas de requêtes concurrentes.
+      const deleted = await tx.passwordResetToken.deleteMany({
+        where: { tokenHash },
+      });
+      if (deleted.count === 0) return null;
+      await tx.passwordResetToken.deleteMany({
+        where: { userId: stored.userId },
+      });
+      await tx.refreshToken.deleteMany({ where: { userId: stored.userId } });
+      const user = await tx.user.update({
+        where: { id: stored.userId },
+        data: { passwordHash },
+        include: { refreshTokens: { orderBy: { createdAt: 'desc' } } },
+      });
+      return this.mapUser(user);
+    });
+  }
+
   /** Cherche des utilisateurs par nom ou email (insensible à la casse), triés par nom, en excluant l'utilisateur donné : une page de résultats plus le total. */
   async searchUsers(
     excludeUserId: string,

@@ -11,6 +11,8 @@ import { PageFallback } from "@/components/page-fallback";
 const Home = lazyPage(() => import("@/pages/Home"), "Home");
 const Login = lazyPage(() => import("@/pages/Login"), "Login");
 const Register = lazyPage(() => import("@/pages/Register"), "Register");
+const ForgetPass = lazyPage(() => import("@/pages/ForgetPass"), "ForgetPass");
+const ResetPassword = lazyPage(() => import("@/pages/ResetPassword"), "ResetPassword");
 const AuthCallback = lazyPage(() => import("@/pages/AuthCallback"), "AuthCallback");
 const TwoFactorSettings = lazyPage(() => import("@/pages/TwoFactorSettings"), "TwoFactorSettings");
 const Settings = lazyPage(() => import("@/pages/Settings"), "Settings");
@@ -38,6 +40,8 @@ function App() {
       <Routes>
         <Route path={ROUTES.LOGIN} element={<Login />} />
         <Route path={ROUTES.REGISTER} element={<Register />} />
+        <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgetPass />} />
+        <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
         <Route path={ROUTES.AUTH_CALLBACK} element={<AuthCallback />} />
         <Route path={ROUTES.PRIVACY} element={<Legal kind="privacy" />} />
         <Route path={ROUTES.TERMS} element={<Legal kind="terms" />} />

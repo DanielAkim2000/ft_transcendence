@@ -58,6 +58,15 @@ interface RegisterRequest {
   username: string;
 }
 
+interface ForgotPasswordRequest {
+  email: string;
+}
+
+interface ResetPasswordRequest {
+  token: string;
+  password: string;
+}
+
 interface Verify2faRequest {
   code: string;
 }
@@ -142,6 +151,26 @@ export const authApi = api.injectEndpoints({
         }
       },
     }),
+    [AUTH_ENDPOINTS.FORGOT_PASSWORD]: builder.mutation<
+      { message: string },
+      ForgotPasswordRequest
+    >({
+      query: (body) => ({
+        url: API_ROUTES.AUTH_FORGOT_PASSWORD,
+        method: "POST",
+        body,
+      }),
+    }),
+    [AUTH_ENDPOINTS.RESET_PASSWORD]: builder.mutation<
+      { message: string },
+      ResetPasswordRequest
+    >({
+      query: (body) => ({
+        url: API_ROUTES.AUTH_RESET_PASSWORD,
+        method: "POST",
+        body,
+      }),
+    }),
     [AUTH_ENDPOINTS.ME]: builder.query<User, void>({
       query: () => ({
         url: API_ROUTES.AUTH_ME,
@@ -199,6 +228,8 @@ export const {
   useLoginMutation,
   useRefreshMutation,
   useLogoutMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
   useMeQuery,
   useLazyCheck2faPendingQuery,
   useVerify2faMutation,

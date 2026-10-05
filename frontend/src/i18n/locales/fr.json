@@ -38,7 +38,33 @@
       "with42": "Se connecter avec 42",
       "failed": "Connexion impossible. Réessaie.",
       "noAccount": "Pas encore de compte ?",
-      "registerLink": "S’inscrire"
+      "registerLink": "S’inscrire",
+      "forgotPassword": "Mot de passe oublié ?"
+    },
+    "forgetPass": {
+      "title": "Mot de passe oublié ?",
+      "description": "Entre ton email, on t'envoie un lien pour en choisir un nouveau.",
+      "email": "Email",
+      "emailPlaceholder": "toi@student.42.fr",
+      "submit": "Envoyer le lien",
+      "submitting": "Envoi…",
+      "success": "Si un compte existe pour cet email, un lien de réinitialisation a été envoyé. Il est valable 60 minutes.",
+      "failed": "Impossible d'envoyer l'email. Réessaie.",
+      "remembered": "Tu t'en souviens ?",
+      "loginLink": "Se connecter"
+    },
+    "resetPassword": {
+      "title": "Choisis un nouveau mot de passe",
+      "description": "Choisis un mot de passe solide pour ton compte.",
+      "password": "Nouveau mot de passe",
+      "confirmation": "Confirme le mot de passe",
+      "passwordMismatch": "Les mots de passe ne correspondent pas.",
+      "submit": "Mettre à jour",
+      "submitting": "Mise à jour…",
+      "success": "Ton mot de passe a été mis à jour. Tu peux te connecter.",
+      "failed": "Ce lien est invalide ou a expiré. Demande-en un nouveau.",
+      "invalidLink": "Ce lien de réinitialisation est invalide.",
+      "loginLink": "Retour à la connexion"
     },
     "register": {
       "title": "Créer un compte",

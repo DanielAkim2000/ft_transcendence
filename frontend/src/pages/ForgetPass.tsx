@@ -35,6 +35,8 @@ export const ForgetPass = () => {
 
     const emailSchema = useMemo(
         () => z.object({ email: z.email(t("auth.validation.emailInvalid")) }),
+        // i18n.language force la recomputation quand la langue change (messages traduits).
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         [t, i18n.language],
     );
 

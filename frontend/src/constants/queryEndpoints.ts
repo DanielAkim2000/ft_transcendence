@@ -4,6 +4,8 @@ export const AUTH_ENDPOINTS = {
   LOGIN: "login",
   REFRESH: "refresh",
   LOGOUT: "logout",
+  FORGOT_PASSWORD: "forgotPassword",
+  RESET_PASSWORD: "resetPassword",
   ME: "me",
   CHECK_2FA_PENDING: "check2faPending",
   VERIFY_2FA: "verify2fa",

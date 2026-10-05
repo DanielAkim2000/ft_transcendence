@@ -38,7 +38,33 @@
       "with42": "Iniciar sesión con 42",
       "failed": "No se pudo iniciar sesión. Inténtalo de nuevo.",
       "noAccount": "¿No tienes cuenta?",
-      "registerLink": "Regístrate"
+      "registerLink": "Regístrate",
+      "forgotPassword": "¿Olvidaste tu contraseña?"
+    },
+    "forgetPass": {
+      "title": "¿Olvidaste tu contraseña?",
+      "description": "Introduce tu correo y te enviaremos un enlace para elegir una nueva.",
+      "email": "Correo",
+      "emailPlaceholder": "tu@student.42.fr",
+      "submit": "Enviar enlace",
+      "submitting": "Enviando…",
+      "success": "Si existe una cuenta con este correo, se ha enviado un enlace de restablecimiento. Es válido durante 60 minutos.",
+      "failed": "No se pudo enviar el correo. Inténtalo de nuevo.",
+      "remembered": "¿Ya la recuerdas?",
+      "loginLink": "Iniciar sesión"
+    },
+    "resetPassword": {
+      "title": "Elige una nueva contraseña",
+      "description": "Elige una contraseña segura para tu cuenta.",
+      "password": "Nueva contraseña",
+      "confirmation": "Confirma la contraseña",
+      "passwordMismatch": "Las contraseñas no coinciden.",
+      "submit": "Actualizar contraseña",
+      "submitting": "Actualizando…",
+      "success": "Tu contraseña se ha actualizado. Ya puedes iniciar sesión.",
+      "failed": "Este enlace no es válido o ha caducado. Solicita uno nuevo.",
+      "invalidLink": "Este enlace de restablecimiento no es válido.",
+      "loginLink": "Volver a iniciar sesión"
     },
     "register": {
       "title": "Crear cuenta",

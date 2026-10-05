@@ -38,6 +38,7 @@ export const Chess = () => {
     const friends = friendsData?.items ?? [];
     const pendingGames = chessGames.filter((chessGame) => chessGame.status === "PENDING");
     const activeGames = chessGames.filter((chessGame) => chessGame.status === "ACTIVE");
+    const finishedGames = chessGames.filter((chessGame) => chessGame.status === "FINISHED");
 
     const PIECE_LETTER: Record<PieceType, string> = {
         pawn: "P",
@@ -237,6 +238,29 @@ export const Chess = () => {
                     ? "Partie nulle : matériel insuffisant."
                     : "Partie terminée.";
 
+    function getHistoryResult(chessGame: ChessGame): string {
+        if (chessGame.result === "DRAW") return "Nulle";
+        if (chessGame.winnerId === me?.id) return "Victoire";
+        if (chessGame.result === "ABORTED") return "Abandonnée";
+        return "Défaite";
+    }
+
+    function getHistoryReason(chessGame: ChessGame): string {
+        switch (chessGame.endReason) {
+            case "CHECKMATE": return "Échec et mat";
+            case "RESIGNATION": return "Abandon";
+            case "TIMEOUT": return "Temps écoulé";
+            case "STALEMATE": return "Pat";
+            case "AGREEMENT": return "Accord mutuel";
+            case "INSUFFICIENT_MATERIAL": return "Matériel insuffisant";
+            case "THREEFOLD_REPETITION": return "Répétition";
+            case "FIFTY_MOVE_RULE": return "Règle des 50 coups";
+            case "ABANDONED": return "Abandonnée";
+            case "ABORTED": return "Interrompue";
+            default: return "Partie terminée";
+        }
+    }
+
     /*
      * The board is server-authoritative: a move is only rendered after the
      * websocket sends back the updated FEN.
@@ -376,6 +400,40 @@ export const Chess = () => {
                                         <Button type="button" size="sm" variant="outline" onClick={() => setSearchParams({ gameId: activeGame.id })}>Reprendre</Button>
                                     </li>
                                 ))}
+                            </ul>
+                        )}
+                    </section>
+
+                    <section className="flex flex-col gap-3">
+                        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Historique</h2>
+                        {finishedGames.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">Aucune partie terminée.</p>
+                        ) : (
+                            <ul className="flex flex-col gap-2">
+                                {finishedGames.map((finishedGame) => {
+                                    const opponent = finishedGame.whitePlayerId === me?.id
+                                        ? finishedGame.blackPlayer
+                                        : finishedGame.whitePlayer;
+                                    const result = getHistoryResult(finishedGame);
+                                    const resultClass = result === "Victoire"
+                                        ? "text-primary"
+                                        : result === "Défaite"
+                                            ? "text-destructive"
+                                            : "text-muted-foreground";
+
+                                    return (
+                                        <li key={finishedGame.id} className="flex items-center justify-between gap-3 border border-border px-3 py-2">
+                                            <div className="min-w-0">
+                                                <p className={`text-xs font-bold uppercase tracking-wider ${resultClass}`}>{result}</p>
+                                                <p className="truncate text-sm font-medium">contre {opponent?.displayname ?? (finishedGame.whitePlayerId === me?.id ? finishedGame.blackPlayerId : finishedGame.whitePlayerId)}</p>
+                                                <p className="truncate text-xs text-muted-foreground">
+                                                    {getHistoryReason(finishedGame)} · {new Date(finishedGame.endedAt ?? finishedGame.updatedAt).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                            <span className="font-mono text-xs text-muted-foreground">{finishedGame.id}</span>
+                                        </li>
+                                    );
+                                })}
                             </ul>
                         )}
                     </section>

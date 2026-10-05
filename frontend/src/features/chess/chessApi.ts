@@ -18,12 +18,20 @@ export type ChessEndReason =
     | "ABANDONED"
     | "ABORTED";
 
+export interface ChessPlayer {
+    id: string;
+    displayname: string;
+    avatarUrl: string | null;
+}
+
 export interface ChessGame {
     id: string;
     status: ChessGameStatus;
     challengerId: string;
     whitePlayerId: string;
     blackPlayerId: string;
+    whitePlayer?: ChessPlayer;
+    blackPlayer?: ChessPlayer;
     fen: string;
     turn: "WHITE" | "BLACK";
     timeControlMs: number | null;

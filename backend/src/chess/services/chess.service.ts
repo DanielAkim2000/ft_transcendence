@@ -17,7 +17,11 @@ export class ChessService {
         return this.prisma.chessGame.findMany({
             where: {
                 OR: [{ whitePlayerId: userId }, { blackPlayerId: userId }],
-                status: { in: ['PENDING', 'ACTIVE'] },
+                status: { in: ['PENDING', 'ACTIVE', 'FINISHED'] },
+            },
+            include: {
+                whitePlayer: { select: { id: true, displayname: true, avatarUrl: true } },
+                blackPlayer: { select: { id: true, displayname: true, avatarUrl: true } },
             },
             orderBy: { updatedAt: 'desc' },
         });

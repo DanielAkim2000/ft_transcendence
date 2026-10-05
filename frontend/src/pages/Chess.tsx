@@ -1,5 +1,5 @@
 import { useSearchParams } from "react-router";
-import { boardFromFen, makePiece, type PieceType, type Piece, type Position, canMoove } from "@/features/chess/utils";
+import { boardFromFen, makePiece, type Piece, type Position, canMoove } from "@/features/chess/utils";
 import {
     useAcceptChessGameMutation,
     useCreateChessGameMutation,
@@ -20,6 +20,7 @@ import { getErrorMessage } from "@/lib/get-error-message";
 import { getInitials, resolveAvatarUrl } from "@/lib/user";
 import { toast } from "@/components/ui/toast";
 import { useEffect, useState } from "react";
+import { ChessBoard3D } from "@/features/chess/ChessBoard3D";
 
 export const Chess = () => {
     const [searchParams] = useSearchParams();
@@ -39,21 +40,6 @@ export const Chess = () => {
     const pendingGames = chessGames.filter((chessGame) => chessGame.status === "PENDING");
     const activeGames = chessGames.filter((chessGame) => chessGame.status === "ACTIVE");
     const finishedGames = chessGames.filter((chessGame) => chessGame.status === "FINISHED");
-
-    const PIECE_LETTER: Record<PieceType, string> = {
-        pawn: "P",
-        rook: "R",
-        knight: "N",
-        bishop: "B",
-        queen: "Q",
-        king: "K",
-    };
-
-    function getPieceImage(piece: Piece) {
-        const colorLetter = piece.color === "black" ? "b" : "w";
-        return `/chess/${colorLetter}${PIECE_LETTER[piece.type]}.svg`;
-    }
-
 
     const [positions, setPositions] = useState<Position[]>([]);
     const [selected, setSelected] = useState<Piece | null>(null);
@@ -261,40 +247,6 @@ export const Chess = () => {
         }
     }
 
-    /*
-     * The board is server-authoritative: a move is only rendered after the
-     * websocket sends back the updated FEN.
-     */
-    function renderBoard() {
-        return board.map((row, rowIndex) =>
-            row.map((cell, colIndex) => {
-                const isLight = (rowIndex + colIndex) % 2 === 0;
-                return (
-                    <div
-                        key={`${rowIndex}-${colIndex}`}
-                        className={`flex items-center justify-center aspect-square cursor-pointer ${isSelected(rowIndex, colIndex)
-                            ? "bg-primary"
-                            : cell?.isSelected
-                                ? "bg-muted-foreground"
-                                : isLight
-                                    ? "bg-chart-5"
-                                    : "bg-muted"
-                            }`}
-                        onClick={() => selectPiece(rowIndex, colIndex)}
-                    >
-                        {cell && (
-                            <img
-                                src={getPieceImage(cell)}
-                                alt=""
-                                className="w-4/5 h-4/5 select-none pointer-events-none"
-                            />
-                        )}
-                    </div>
-                );
-            })
-        );
-    }
-
     async function handleCreateGame(opponentId: string) {
         try {
             const game = await createGame({ opponentId, color: "RANDOM" }).unwrap();
@@ -452,9 +404,12 @@ export const Chess = () => {
                             {endMessage}
                         </div>
                     ) : null}
-                    <div className="grid grid-cols-8 aspect-square w-full border-neutral-800">
-                        {renderBoard()}
-                    </div>
+                    <ChessBoard3D
+                        board={board}
+                        positions={positions}
+                        selectedPosition={selectedPosition}
+                        onSquareClick={selectPiece}
+                    />
                     {promotion ? (
                         <div className="flex items-center justify-center gap-2 border border-border p-3" role="dialog" aria-label="Choisir une pièce pour la promotion">
                             {(["q", "r", "b", "n"] as const).map((piece) => (

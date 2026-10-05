@@ -116,6 +116,7 @@ export const CHESS_ENDPOINTS = {
 /** Noms des endpoints RTK Query — banApi */
 export const BAN_ENDPOINTS = {
   GET_BAN_STATUS: "getBanStatus",
+  GET_ACTIVE_BAN: "getActiveBan",
   GET_BAN_HISTORY: "getBanHistory",
   BAN_USER: "banUser",
   UNBAN_USER: "unbanUser",

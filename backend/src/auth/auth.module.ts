@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
+import { BanModule } from '../ban/ban.module';
 import { FortyTwoStrategy } from './strategies/forty-two.strategy';
 import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
 import { RefreshTokenGuard } from './guards/refresh-token.guard';
@@ -14,7 +15,7 @@ import { MailModule } from '../mail/mail.module';
 
 /** Authentification : inscription/connexion, JWT (access, refresh, pré-auth 2FA), OAuth 42, 2FA et gardes de rôles. Exporte AuthService et les guards. */
 @Module({
-  imports: [forwardRef(() => UsersModule), MailModule],
+  imports: [forwardRef(() => UsersModule), MailModule, BanModule],
   providers: [
     AuthService,
     FortyTwoStrategy,

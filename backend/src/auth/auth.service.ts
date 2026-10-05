@@ -5,7 +5,10 @@ import {
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
+import { BanService } from '../ban/services/ban.service';
+import { Ban } from '../generated/prisma/client';
 import { UsersService } from '../users/services/users.services';
 import { UserEntity } from '../users/entities/users.entity';
 import { Profile42Dto } from './dtos/profile42.dto';
@@ -31,6 +34,7 @@ export class AuthService {
   /** Injecte les dépendances : UsersService, JwtService, ConfigService, MailService. */
   constructor(
     private readonly usersService: UsersService,
+    private readonly banService: BanService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
@@ -69,6 +73,15 @@ export class AuthService {
   async createTokens(
     user: UserEntity,
   ): Promise<{ accessToken: string; refreshToken: string }> {
+    const ban = await this.banService.findActiveBan(user.id);
+    if (ban) {
+      throw new ForbiddenException({
+        code: "BAN",
+        reason: ban.reason,
+        endTime: ban.endTime,
+      });
+    }
+
     const accessTokenExpirationTime = this.configService.get<msStringValue>(
       'JWT_ACCESS_TOKEN_EXPIRATION_TIME',
     );
@@ -140,6 +153,14 @@ export class AuthService {
     const user = await this.usersService.findUserById(userId);
     if (!user) {
       throw new UnauthorizedException('User not found');
+    }
+    const ban = await this.banService.findActiveBan(user.id);
+    if (ban) {
+      throw new ForbiddenException({
+        code: "BAN",
+        reason: ban.reason,
+        endTime: ban.endTime,
+      });
     }
     return user;
   }

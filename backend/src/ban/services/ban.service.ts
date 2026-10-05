@@ -11,8 +11,12 @@ export class BanService {
     private readonly usersService: UsersService,
   ) {}
 
-  findBanStatus(userId: string) : Promise<boolean> {
-    return this.banRepository.findBanStatus(userId);
+  async findBanStatus(userId: string) : Promise<boolean> {
+    return await this.banRepository.findBanStatus(userId) !== null;
+  }
+
+  async findActiveBan(userId: string) : Promise<Ban> {
+    return await this.banRepository.findBanStatus(userId);
   }
 
   findBans(userId: string) : Promise<Ban[]> {

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { useForm } from "@tanstack/react-form";
 import { useTranslation } from "react-i18next";
 
@@ -38,6 +38,7 @@ function LoginCredentialsForm() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [login, { isLoading }] = useLoginMutation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [serverError, setServerError] = useState<string | null>(null);
 
   // i18n.language force la recomputation quand la langue change (messages traduits).
@@ -60,6 +61,14 @@ function LoginCredentialsForm() {
           navigate(ROUTES.HOME, { replace: true });
         }
       } catch (error) {
+        const data = (error as {status?: number; data?: { code?: string; reason?: string; endTime?: Date}})
+        if (data.status === 403 && data.data?.code === "BAN") {
+          setSearchParams({
+            banned: "1",
+            reason: data.data?.reason,
+            ...(data.data?.endTime && { until: data.data?.endTime }),
+          });
+        }
         setServerError(getErrorMessage(error, t("auth.login.failed")));
       }
     },

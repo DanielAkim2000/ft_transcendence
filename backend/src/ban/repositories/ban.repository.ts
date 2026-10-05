@@ -8,12 +8,11 @@ import { NotFoundException } from "@nestjs/common"
 export class BanRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findBanStatus(userId: string) : Promise<boolean> {
+  async findBanStatus(userId: string) : Promise<Ban> {
     const banStatus = await this.prisma.ban.findFirst({
       where: { userId: userId, OR: [{ endTime: null }, { endTime: { gt: new Date() } }]},
       orderBy: { startTime: 'desc' },
     });
-    return banStatus === null ? false : true;
   }
 
   async findBans(userId: string) : Promise<Ban[]> {
@@ -28,14 +27,19 @@ export class BanRepository {
     userId: string,
     dto: CreateBanDto,
   ) : Promise<void> {
-    await this.prisma.ban.create({
-      data: {
-        userId,
-        endTime: dto.durationHours == 0 ? null
-          : new Date(Date.now().valueOf() + dto.durationHours * 3600000),
-        reason: dto.reason,
-      }
-    });
+    await this.prisma.$transaction([
+      this.prisma.ban.create({
+        data: {
+          userId,
+          endTime: dto.durationHours == 0 ? null
+            : new Date(Date.now().valueOf() + dto.durationHours * 3600000),
+          reason: dto.reason,
+        }
+      }),
+      this.prisma.refreshToken.deleteMany({
+        where: {userId: userId},
+      })
+    ]);
   }
 
   async unbanUser(userId: string) : Promise<number> {

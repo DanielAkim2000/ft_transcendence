@@ -23,6 +23,10 @@ export const banApi = api.injectEndpoints({
       query: (userId) => `/ban/${userId}/status`,
       providesTags: (_result, _error, userId) => [{ type: TAG_TYPES.BAN, id: userId }],
     }),
+    [BAN_ENDPOINTS.GET_ACTIVE_BAN]: builder.query<void, string>({
+      query: (userId) => `/ban/${userId}`,
+      providesTags: (_result, _error, userId) => [{ type: TAG_TYPES.BAN, id: userId }],
+    }),
     [BAN_ENDPOINTS.GET_BAN_HISTORY]: builder.query<Ban[], string>({
       query: (userId) => `/ban/${userId}/history`,
       providesTags: (_result, _error, userId) => [{ type: TAG_TYPES.BAN, id: userId }],
@@ -40,6 +44,7 @@ export const banApi = api.injectEndpoints({
 
 export const {
   useGetBanStatusQuery,
+  useGetActiveBanQuery,
   useGetBanHistoryQuery,
   useBanUserMutation,
   useUnbanUserMutation,

@@ -652,6 +652,13 @@
     "error_blocked": "Tu cuenta no se puede eliminar ahora (torneo abierto o partida en curso). Inténtalo más tarde.",
     "redirecting": "Redirigiendo a la página de inicio de sesión…"
   },
+  "notFoundPage": {
+    "label": "Error 404",
+    "title": "Página no encontrada",
+    "description": "Esta página no existe o se ha movido.",
+    "error": "No such file or directory",
+    "home": "Volver al inicio"
+  },
   "ranking": {
     "podium1": "1.er puesto (oro)",
     "podium2": "2.º puesto (plata)",

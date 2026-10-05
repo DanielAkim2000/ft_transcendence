@@ -652,6 +652,13 @@
     "error_blocked": "Ton compte ne peut pas être supprimé pour le moment (tournoi ouvert ou partie en cours). Réessaie plus tard.",
     "redirecting": "Redirection vers la page de connexion…"
   },
+  "notFoundPage": {
+    "label": "Erreur 404",
+    "title": "Page introuvable",
+    "description": "Cette page n’existe pas ou a été déplacée.",
+    "error": "No such file or directory",
+    "home": "Retour à l’accueil"
+  },
   "ranking": {
     "podium1": "1re place (or)",
     "podium2": "2e place (argent)",

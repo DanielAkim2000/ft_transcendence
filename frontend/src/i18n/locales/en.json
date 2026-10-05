@@ -652,6 +652,13 @@
     "error_blocked": "Your account can’t be deleted right now (open tournament or game in progress). Try again later.",
     "redirecting": "Redirecting to the login page…"
   },
+  "notFoundPage": {
+    "label": "Error 404",
+    "title": "Page not found",
+    "description": "This page doesn’t exist or has been moved.",
+    "error": "No such file or directory",
+    "home": "Back to home"
+  },
   "ranking": {
     "podium1": "1st place (gold)",
     "podium2": "2nd place (silver)",

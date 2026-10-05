@@ -101,3 +101,12 @@ export const GDPR_ENDPOINTS = {
   REQUEST_DELETION: "requestAccountDeletion",
   CONFIRM_DELETION: "confirmAccountDeletion",
 } as const;
+
+/** Noms des endpoints RTK Query — chessApi */
+export const CHESS_ENDPOINTS = {
+  LIST_GAMES: "listChessGames",
+  CREATE_GAME: "createChessGame",
+  GET_GAME: "getChessGame",
+  ACCEPT_GAME: "acceptChessGame",
+  DECLINE_GAME: "declineChessGame",
+} as const;

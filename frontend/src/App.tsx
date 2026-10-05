@@ -29,6 +29,7 @@ const TournamentDetail = lazyPage(() => import("@/pages/TournamentDetail"), "Tou
 const Status = lazyPage(() => import("@/pages/Status"), "Status");
 const ConfirmDeletion = lazyPage(() => import("@/pages/ConfirmDeletion"), "ConfirmDeletion");
 const Legal = lazyPage(() => import("@/pages/Legal"), "Legal");
+const Chess = lazyPage(() => import("@/pages/Chess"), "Chess");
 const NotFound = lazyPage(() => import("@/pages/NotFound"), "NotFound");
 
 function App() {
@@ -60,6 +61,8 @@ function App() {
             <Route path={ROUTES.SETTINGS} element={<Settings />} />
             <Route path={ROUTES.SETTINGS_2FA} element={<TwoFactorSettings />} />
             <Route path={ROUTES.NOTIFICATIONS} element={<Notifications />} />
+            <Route path={ROUTES.CHESS} element={<Chess />} />
+
           </Route>
         </Route>
 

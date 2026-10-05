@@ -10,10 +10,11 @@ import { AccessTokenGuard } from './guards/access-token.guard';
 import { PreAuthTokenStrategy } from './strategies/pre-auth-token.strategy';
 import { PreAuthTokenGuard } from './guards/pre-auth-token.guard';
 import { RolesGuard } from './guards/roles.guard';
+import { MailModule } from '../mail/mail.module';
 
 /** Authentification : inscription/connexion, JWT (access, refresh, pré-auth 2FA), OAuth 42, 2FA et gardes de rôles. Exporte AuthService et les guards. */
 @Module({
-  imports: [forwardRef(() => UsersModule)],
+  imports: [forwardRef(() => UsersModule), MailModule],
   providers: [
     AuthService,
     FortyTwoStrategy,
@@ -28,4 +29,4 @@ import { RolesGuard } from './guards/roles.guard';
   controllers: [AuthController],
   exports: [AuthService, AccessTokenGuard, RolesGuard],
 })
-export class AuthModule {}
+export class AuthModule { }

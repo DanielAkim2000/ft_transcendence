@@ -23,6 +23,7 @@ export const ROUTES = {
   TOURNAMENT_BY_ID: "/tournaments/:id",
   SETTINGS: "/settings",
   SETTINGS_2FA: "/settings/2fa",
+  CHESS: "/waiting/chess",
   profile: (id: string) => `/profile/${id}`,
   tournament: (id: string) => `/tournaments/${id}`,
   chatWith: (userId: string) => `/chat?user=${userId}`,

@@ -140,6 +140,38 @@ enum RadiusPreference {
   large
 }
 
+enum ChessColor {
+  WHITE
+  BLACK
+}
+
+enum ChessGameStatus {
+  PENDING   // défi envoyé, pas encore accepté
+  DECLINED
+  ACTIVE    // partie en cours
+  FINISHED  // terminée (voir result + endReason)
+}
+
+enum ChessResult {
+  WHITE_WIN
+  BLACK_WIN
+  DRAW
+  ABORTED
+}
+
+enum ChessEndReason {
+  CHECKMATE
+  RESIGNATION
+  TIMEOUT
+  STALEMATE
+  AGREEMENT
+  INSUFFICIENT_MATERIAL
+  THREEFOLD_REPETITION
+  FIFTY_MOVE_RULE
+  ABANDONED
+  ABORTED
+}
+
 model RefreshToken {
   id        String   @id @default(cuid())
   userId    String
@@ -212,6 +244,12 @@ model User {
   tournamentsCreated         Tournament[]       @relation("TournamentCreatedBy")
   tournamentEntriesAsPlayer1 TournamentEntry[]  @relation("TournamentEntryPlayer1")
   tournamentEntriesAsPlayer2 TournamentEntry[]  @relation("TournamentEntryPlayer2")
+  chessProfile      ChessProfile?
+  chessGamesAsWhite ChessGame[] @relation("ChessGameWhite")
+  chessGamesAsBlack ChessGame[] @relation("ChessGameBlack")
+  chessGamesWon     ChessGame[] @relation("ChessGameWinner")
+  chessDrawOffers   ChessGame[] @relation("ChessGameDrawOfferedBy")
+  chessMoves        ChessMove[]
   createdAt                  DateTime           @default(now())
   updatedAt                  DateTime           @updatedAt
 }
@@ -468,4 +506,100 @@ model Notification {
   createdAt DateTime         @default(now())
 
   @@index([userId, read, createdAt])
+}
+
+model ChessProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating      Int      @default(1200)
+  peakRating  Int      @default(1200)
+  gamesPlayed Int      @default(0)
+  wins        Int      @default(0)
+  losses      Int      @default(0)
+  draws       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([rating])
+}
+
+// Parties en cours ET historique (on filtre sur status)
+model ChessGame {
+  id     String          @id @default(cuid())
+  status ChessGameStatus @default(PENDING)
+
+  challengerId String
+
+  whitePlayerId String
+  whitePlayer   User   @relation("ChessGameWhite", fields: [whitePlayerId], references: [id], onDelete: Cascade)
+  blackPlayerId String
+  blackPlayer   User   @relation("ChessGameBlack", fields: [blackPlayerId], references: [id], onDelete: Cascade)
+
+  // Plateau = FEN (pièces, trait, roques, en passant, compteurs)
+  fen             String     @default("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+  turn            ChessColor @default(WHITE) // à qui de jouer
+  moveCount       Int        @default(0)
+  positionHistory String[]   // pour la nulle par répétition
+
+  // Pendule (ms), null = pas de limite
+  timeControlMs Int?
+  incrementMs   Int       @default(0)
+  whiteTimeMs   Int?
+  blackTimeMs   Int?
+  lastMoveAt    DateTime?
+
+  drawOfferedById String?
+  drawOfferedBy   User?   @relation("ChessGameDrawOfferedBy", fields: [drawOfferedById], references: [id], onDelete: SetNull)
+
+  // Fin de partie
+  result    ChessResult?
+  endReason ChessEndReason?
+  winnerId  String?
+  winner    User?           @relation("ChessGameWinner", fields: [winnerId], references: [id], onDelete: SetNull)
+  pgn       String?
+
+  // Classement
+  rated             Boolean @default(true)
+  whiteRatingBefore Int?
+  blackRatingBefore Int?
+  whiteRatingDelta  Int?
+  blackRatingDelta  Int?
+
+  version Int @default(0)
+
+  moves ChessMove[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  startedAt DateTime?
+  endedAt   DateTime?
+
+  @@index([whitePlayerId, status])
+  @@index([blackPlayerId, status])
+  @@index([status, updatedAt])
+  @@index([endedAt])
+}
+
+model ChessMove {
+  id       String     @id @default(cuid())
+  gameId   String
+  game     ChessGame  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  ply      Int
+  color    ChessColor
+  playerId String
+  player   User       @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  san         String
+  from        String
+  to          String
+  promotion   String?
+  fenAfter    String
+  timeSpentMs Int?
+
+  createdAt DateTime @default(now())
+
+  @@unique([gameId, ply])
+  @@index([gameId, ply])
+  @@index([playerId])
 }

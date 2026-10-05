@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Post,
   Req,
   Res,
@@ -17,6 +19,8 @@ import { AccessTokenGuard } from './guards/access-token.guard';
 import { RegisterDto } from './dtos/register.dto';
 import { LoginDto } from './dtos/login.dto';
 import { TwoFactorCodeDto } from './dtos/two-factor-code.dto';
+import { ForgotPasswordDto } from './dtos/forgot-password.dto';
+import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { PreAuthTokenGuard } from './guards/pre-auth-token.guard';
 import { AuthRoles } from './decorators/auth-roles.decorator';
 import { ConfigService } from '@nestjs/config';
@@ -25,13 +29,13 @@ import type { Request, Response } from 'express';
 
 type SwitchResult =
   | {
-      twoFactorEnabled: false;
-      user: UserEntity;
-      accessToken: string;
-    }
+    twoFactorEnabled: false;
+    user: UserEntity;
+    accessToken: string;
+  }
   | {
-      twoFactorEnabled: true;
-    };
+    twoFactorEnabled: true;
+  };
 
 @Controller('auth')
 export class AuthController {
@@ -39,7 +43,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   /** POST /auth/register : crée un compte (email, nom, mot de passe), pose le cookie de refresh token et retourne l'utilisateur avec son access token. */
   @Post('register')
@@ -84,7 +88,7 @@ export class AuthController {
   /** GET /auth/42/login : point d'entrée qui redirige vers l'OAuth 42 (géré par le guard Passport). */
   @Get('42/login')
   @UseGuards(AuthGuard(FOURTY_TWO_STRATEGY))
-  loginFrom42Profile() {}
+  loginFrom42Profile() { }
 
   /** GET /auth/42/callback : retour de l'OAuth 42 ; pose le cookie de refresh (ou de pré-authentification si 2FA) puis redirige vers le frontend. */
   @Get('42/callback')

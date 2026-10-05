@@ -57,6 +57,12 @@ export const API_ROUTES = {
   tournamentCancel: (id: string) => `/tournaments/${id}/cancel`,
 
   badges: (userId: string) => `/badges/${userId}`,
+  
+  CHESS_GAMES: "/chess/games",
+  CHESS_GAMES_ME: "/chess/games/me",
+  chessGame: (gameId: string) => `/chess/games/${gameId}`,
+  chessGameAccept: (gameId: string) => `/chess/games/${gameId}/accept`,
+  chessGameDecline: (gameId: string) => `/chess/games/${gameId}/decline`,
 
   NOTIFICATIONS: "/notifications",
   NOTIFICATIONS_UNREAD_COUNT: "/notifications/unread-count",

@@ -63,6 +63,7 @@ function LoginCredentialsForm() {
       } catch (error) {
         const data = (error as {status?: number; data?: { code?: string; reason?: string; endTime?: Date}})
         if (data.status === 403 && data.data?.code === "BAN") {
+          console.log("OK");
           setSearchParams({
             banned: "1",
             reason: data.data?.reason,

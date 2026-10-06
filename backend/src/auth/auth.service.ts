@@ -75,11 +75,9 @@ export class AuthService {
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const ban = await this.banService.findActiveBan(user.id);
     if (ban) {
-      throw new ForbiddenException({
-        code: "BAN",
-        reason: ban.reason,
-        endTime: ban.endTime,
-      });
+      throw new ForbiddenException(
+        "Banned: until: " + (ban.endTime ? ban.endTime : "Permanent") + ", reason: " + ban.reason
+      );
     }
 
     const accessTokenExpirationTime = this.configService.get<msStringValue>(

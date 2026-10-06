@@ -15,7 +15,7 @@ export class BanService {
     return await this.banRepository.findBanStatus(userId) !== null;
   }
 
-  async findActiveBan(userId: string) : Promise<Ban> {
+  async findActiveBan(userId: string) : Promise<Ban | null> {
     return await this.banRepository.findBanStatus(userId);
   }
 

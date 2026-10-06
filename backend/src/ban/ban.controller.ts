@@ -23,15 +23,6 @@ export class BanController {
 
   @Get(':userId/status')
   async getBanStatus(@Param('userId') userId: string) {
-    const ban = await this.banService.findActiveBan(userId);
-
-    if (ban !== null) {
-      throw new ForbiddenException({
-        code: "BAN",
-        reason: ban.reason,
-        endTime: ban.endTime,
-      });
-    }
     return this.banService.findBanStatus(userId);
   }
 

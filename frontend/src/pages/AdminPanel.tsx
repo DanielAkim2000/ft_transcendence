@@ -55,21 +55,13 @@ function UserRow({
               {getInitials(user.displayname)}
             </AvatarFallback>
           </Avatar>
-            <span
-              className={`absolute right-0 bottom-0 size-2.5 rounded-full ring-2 ring-background ${user.isOnline ? "bg-emerald-500" : "bg-zinc-400"
-                }`}
-              aria-hidden
-            />
         </div>
         <div className="min-w-0">
           <p className="truncate font-heading text-sm font-medium">
             {user.displayname}
           </p>
-          <p
-            className={`truncate text-xs font-medium ${banStatus ? "text-emerald-600" : "text-muted-foreground"
-              }`}
-          >
-            {banStatus ? t("profile.online") : t("profile.offline")}
+          <p className="truncate text-xs font-medium text-red-600">
+            {banStatus && "Banned"}
           </p>
         </div>
       </Link>

@@ -8,11 +8,12 @@ import { NotFoundException } from "@nestjs/common"
 export class BanRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findBanStatus(userId: string) : Promise<Ban> {
-    const banStatus = await this.prisma.ban.findFirst({
+  async findBanStatus(userId: string) : Promise<Ban | null> {
+    const banStatus = this.prisma.ban.findFirst({
       where: { userId: userId, OR: [{ endTime: null }, { endTime: { gt: new Date() } }]},
       orderBy: { startTime: 'desc' },
     });
+    return banStatus;
   }
 
   async findBans(userId: string) : Promise<Ban[]> {

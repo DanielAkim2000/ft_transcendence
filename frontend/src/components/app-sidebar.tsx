@@ -1,4 +1,5 @@
 import {
+  ShieldIcon,
   BellIcon,
   HistoryIcon,
   HomeIcon,
@@ -102,7 +103,12 @@ export function AppSidebar() {
         // },
       ],
     },
-    },
+    ...(userInfo?.role === "ADMIN" ? [{
+      label: "Admin",
+      items: [
+        { title: "Ban", url: ROUTES.BAN, icon: ShieldIcon },
+      ],
+    }] : []),
   ] as const;
 
   const dotLabel = (url: string): string | null => {

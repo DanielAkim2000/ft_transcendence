@@ -33,7 +33,7 @@ const ConfirmDeletion = lazyPage(() => import("@/pages/ConfirmDeletion"), "Confi
 const Legal = lazyPage(() => import("@/pages/Legal"), "Legal");
 const Chess = lazyPage(() => import("@/pages/Chess"), "Chess");
 const NotFound = lazyPage(() => import("@/pages/NotFound"), "NotFound");
-const AdminPanel = lazyPage(() => import("@/pages/AdminPanel"), "AdminPanel");
+const BanPanel= lazyPage(() => import("@/pages/BanPanel"), "BanPanel");
 
 function App() {
   return (
@@ -68,7 +68,7 @@ function App() {
             <Route path={ROUTES.NOTIFICATIONS} element={<Notifications />} />
             <Route path={ROUTES.CHESS} element={<Chess />} />
 
-            <Route path={ROUTES.ADMIN_PANEL} element={<AdminPanel />} />
+            <Route path={ROUTES.BAN} element={<BanPanel/>} />
           </Route>
         </Route>
 

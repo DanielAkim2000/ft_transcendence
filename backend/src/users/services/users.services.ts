@@ -380,6 +380,26 @@ export class UsersService {
     );
   }
 
+  /** Remplace les codes de secours 2FA de l'utilisateur par un nouveau lot (hashs). */
+  replaceRecoveryCodes(userId: string, codeHashes: string[]): Promise<void> {
+    return this.userRepository.replaceRecoveryCodes(userId, codeHashes);
+  }
+
+  /** Supprime les codes de secours 2FA de l'utilisateur. */
+  deleteRecoveryCodes(userId: string): Promise<void> {
+    return this.userRepository.deleteRecoveryCodes(userId);
+  }
+
+  /** Consomme un code de secours (usage unique) ; retourne true s'il était valide. */
+  consumeRecoveryCode(userId: string, codeHash: string): Promise<boolean> {
+    return this.userRepository.consumeRecoveryCode(userId, codeHash);
+  }
+
+  /** Nombre de codes de secours encore utilisables. */
+  countUnusedRecoveryCodes(userId: string): Promise<number> {
+    return this.userRepository.countUnusedRecoveryCodes(userId);
+  }
+
   /** Retrouve un refresh token de l'utilisateur à partir de son hash, ou null. */
   findRefreshToken(
     userId: string,

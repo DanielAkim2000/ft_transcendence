@@ -16,6 +16,8 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import ms, { StringValue as msStringValue } from 'ms';
 import { RegisterDto } from './dtos/register.dto';
+import { ToggleTwoFactorDto } from './dtos/toggle-two-factor.dto';
+import { RegenerateRecoveryCodesDto } from './dtos/regenerate-recovery-codes.dto';
 import { LoginDto } from './dtos/login.dto';
 import * as bcrypt from 'bcrypt';
 import { verify, generateSecret, generateURI } from 'otplib';
@@ -26,6 +28,10 @@ import type { MailLanguage } from '../gdpr/gdpr.messages';
 
 const PASSWORD_RESET_TTL_MINUTES = 60;
 const PASSWORD_RESET_COOLDOWN_MS = 60_000;
+const RECOVERY_CODE_COUNT = 10;
+const RECOVERY_CODE_LENGTH = 10;
+// 32 symboles (2^5) sans caractères ambigus (0/O, 1/I) : chaque octet aléatoire se ramène à un symbole sans biais.
+const RECOVERY_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 @Injectable()
 export class AuthService {
@@ -231,15 +237,25 @@ export class AuthService {
     return { secret, otpauthUrl };
   }
 
-  /** Désactive la 2FA (code requis) ou l'active en confirmant le secret en attente avec un code valide ; retourne le nouvel état. */
-  async toggle2fa(user: UserEntity, code: string): Promise<boolean> {
+  /** Désactive la 2FA (code TOTP ou code de secours requis) ou l'active en confirmant le secret en attente avec un code valide. À l'activation, génère et retourne les codes de secours (seule fois où ils sont visibles). */
+  async toggle2fa(
+    user: UserEntity,
+    dto: ToggleTwoFactorDto,
+  ): Promise<{ enabled: boolean; recoveryCodes: string[] | null }> {
     if (user.twoFactorEnabled) {
-      await this.assertValidTotp(user.twoFactorSecret, code);
+      if (dto.recoveryCode) {
+        await this.consumeRecoveryCode(user.id, dto.recoveryCode);
+      } else if (dto.code) {
+        await this.assertValidTotp(user.twoFactorSecret, dto.code);
+      } else {
+        throw new BadRequestException('A code or a recovery code is required');
+      }
       user.twoFactorEnabled = false;
       user.twoFactorSecret = null;
       user.twoFactorPendingSecret = null;
       await this.usersService.updateUser(user);
-      return false;
+      await this.usersService.deleteRecoveryCodes(user.id);
+      return { enabled: false, recoveryCodes: null };
     }
 
     if (!user.twoFactorPendingSecret) {
@@ -247,13 +263,92 @@ export class AuthService {
         'Generate a QR code before enabling two-factor authentication',
       );
     }
+    if (!dto.code) {
+      throw new BadRequestException('A code is required');
+    }
 
-    await this.assertValidTotp(user.twoFactorPendingSecret, code);
+    await this.assertValidTotp(user.twoFactorPendingSecret, dto.code);
     user.twoFactorEnabled = true;
     user.twoFactorSecret = user.twoFactorPendingSecret;
     user.twoFactorPendingSecret = null;
     await this.usersService.updateUser(user);
-    return true;
+    const recoveryCodes = await this.issueRecoveryCodes(user.id);
+    return { enabled: true, recoveryCodes };
+  }
+
+  /** Génère un nouveau lot de codes de secours (format XXXXX-XXXXX), remplace l'ancien en base (hashs seulement) et retourne les codes en clair. */
+  private async issueRecoveryCodes(userId: string): Promise<string[]> {
+    const codes = Array.from({ length: RECOVERY_CODE_COUNT }, () => {
+      const bytes = randomBytes(RECOVERY_CODE_LENGTH);
+      const raw = Array.from(
+        bytes,
+        (byte) => RECOVERY_CODE_ALPHABET[byte & 31],
+      ).join('');
+      return `${raw.slice(0, 5)}-${raw.slice(5)}`;
+    });
+    await this.usersService.replaceRecoveryCodes(
+      userId,
+      codes.map((code) => this.hashRecoveryCode(code)),
+    );
+    return codes;
+  }
+
+  /** Hash d'un code de secours après normalisation (casse, tirets et espaces ignorés). */
+  private hashRecoveryCode(code: string): string {
+    return hashToken(code.replace(/[\s-]/g, '').toUpperCase());
+  }
+
+  /** Consomme un code de secours (usage unique) ; lève une UnauthorizedException s'il est invalide ou déjà utilisé. */
+  private async consumeRecoveryCode(
+    userId: string,
+    code: string,
+  ): Promise<void> {
+    const consumed = await this.usersService.consumeRecoveryCode(
+      userId,
+      this.hashRecoveryCode(code),
+    );
+    if (!consumed) {
+      throw new UnauthorizedException('Invalid recovery code');
+    }
+  }
+
+  /** Connexion avec un code de secours à la place du code TOTP : le consomme, prévient l'utilisateur par email et retourne le nombre de codes restants. */
+  async useRecoveryCode(user: UserEntity, code: string): Promise<number> {
+    await this.consumeRecoveryCode(user.id, code);
+    const remaining = await this.usersService.countUnusedRecoveryCodes(user.id);
+    const mail = authMails.recoveryCodeUsed(
+      this.mailLanguage(user),
+      user.displayname,
+      remaining,
+    );
+    await this.mailService.sendQuietly(user.email, mail.subject, mail.text);
+    return remaining;
+  }
+
+  /** Nombre de codes de secours encore utilisables. */
+  countRecoveryCodes(user: UserEntity): Promise<number> {
+    return this.usersService.countUnusedRecoveryCodes(user.id);
+  }
+
+  /** Régénère les codes de secours (les anciens deviennent invalides) après re-confirmation par code TOTP ou mot de passe ; retourne les nouveaux codes. */
+  async regenerateRecoveryCodes(
+    user: UserEntity,
+    dto: RegenerateRecoveryCodesDto,
+  ): Promise<string[]> {
+    if (!user.twoFactorEnabled) {
+      throw new ConflictException('Two-factor authentication is not enabled');
+    }
+    if (dto.code) {
+      await this.assertValidTotp(user.twoFactorSecret, dto.code);
+    } else if (dto.password) {
+      const valid =
+        !!user.passwordHash &&
+        (await bcrypt.compare(dto.password, user.passwordHash));
+      if (!valid) throw new UnauthorizedException('Invalid password');
+    } else {
+      throw new BadRequestException('A code or the password is required');
+    }
+    return this.issueRecoveryCodes(user.id);
   }
 
   /** Supprime le refresh token en base ; lève une UnauthorizedException s'il n'existe pas. */

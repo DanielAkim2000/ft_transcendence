@@ -11,6 +11,9 @@ export const API_ROUTES = {
   AUTH_2FA_VERIFY: "/auth/2fa/verify",
   AUTH_2FA_SETUP: "/auth/2fa/setup",
   AUTH_2FA_TOGGLE: "/auth/2fa/toggle",
+  AUTH_2FA_USE_RECOVERY_CODE: "/auth/2fa/use-recovery-code",
+  AUTH_2FA_RECOVERY_CODES: "/auth/2fa/recovery-codes",
+  AUTH_2FA_RECOVERY_CODES_REGENERATE: "/auth/2fa/recovery-codes/regenerate",
   AUTH_42_LOGIN: "/auth/42/login",
 
   USERS: "/users",
@@ -87,6 +90,8 @@ export const AUTH_NO_REFRESH_PATHS = [
   API_ROUTES.AUTH_REGISTER,
   API_ROUTES.AUTH_2FA_VERIFY,
   API_ROUTES.AUTH_2FA_TOGGLE,
+  API_ROUTES.AUTH_2FA_USE_RECOVERY_CODE,
+  API_ROUTES.AUTH_2FA_RECOVERY_CODES_REGENERATE,
   API_ROUTES.AUTH_2FA_SETUP,
   API_ROUTES.AUTH_2FA_PENDING,
 ] as const;

@@ -11,6 +11,9 @@ export const AUTH_ENDPOINTS = {
   VERIFY_2FA: "verify2fa",
   SETUP_2FA: "setup2fa",
   TOGGLE_2FA: "toggle2fa",
+  USE_RECOVERY_CODE: "useRecoveryCode",
+  GET_RECOVERY_CODES_STATUS: "getRecoveryCodesStatus",
+  REGENERATE_RECOVERY_CODES: "regenerateRecoveryCodes",
 } as const;
 
 /** Noms des endpoints RTK Query — usersApi */

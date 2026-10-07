@@ -19,6 +19,9 @@ import { AccessTokenGuard } from './guards/access-token.guard';
 import { RegisterDto } from './dtos/register.dto';
 import { LoginDto } from './dtos/login.dto';
 import { TwoFactorCodeDto } from './dtos/two-factor-code.dto';
+import { RecoveryCodeDto } from './dtos/recovery-code.dto';
+import { ToggleTwoFactorDto } from './dtos/toggle-two-factor.dto';
+import { RegenerateRecoveryCodesDto } from './dtos/regenerate-recovery-codes.dto';
 import { ForgotPasswordDto } from './dtos/forgot-password.dto';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { PreAuthTokenGuard } from './guards/pre-auth-token.guard';
@@ -231,14 +234,64 @@ export class AuthController {
     return await this.authService.generate2faSecret(req.user);
   }
 
-  /** POST /auth/2fa/toggle : active ou désactive la 2FA après vérification d'un code ; retourne le nouvel état. */
+  /** POST /auth/2fa/toggle : active ou désactive la 2FA après vérification d'un code (ou d'un code de secours pour désactiver) ; retourne le nouvel état et, à l'activation, les codes de secours. */
   @Post('2fa/toggle')
   @UseGuards(AccessTokenGuard)
   async toggle2fa(
     @Req() req: Request & { user: UserEntity },
-    @Body() dto: TwoFactorCodeDto,
-  ): Promise<boolean> {
-    return await this.authService.toggle2fa(req.user, dto.code);
+    @Body() dto: ToggleTwoFactorDto,
+  ): Promise<{ enabled: boolean; recoveryCodes: string[] | null }> {
+    return await this.authService.toggle2fa(req.user, dto);
+  }
+
+  /** POST /auth/2fa/use-recovery-code : comme 2fa/verify mais avec un code de secours à usage unique (appli d'authentification perdue). */
+  @Post('2fa/use-recovery-code')
+  @UseGuards(PreAuthTokenGuard)
+  async useRecoveryCode(
+    @Req() req: Request & { user: UserEntity },
+    @Body() dto: RecoveryCodeDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{
+    user: UserEntity;
+    accessToken: string;
+    remainingRecoveryCodes: number;
+  }> {
+    const remainingRecoveryCodes = await this.authService.useRecoveryCode(
+      req.user,
+      dto.recoveryCode,
+    );
+    const tokens = await this.authService.createTokens(req.user);
+    await this.setRefreshCookie(req.user, res, tokens.refreshToken);
+    res.clearCookie('preAuthToken', { path: '/auth' });
+    return {
+      user: req.user,
+      accessToken: tokens.accessToken,
+      remainingRecoveryCodes,
+    };
+  }
+
+  /** GET /auth/2fa/recovery-codes : nombre de codes de secours encore utilisables (les codes eux-mêmes ne sont jamais relisibles). */
+  @Get('2fa/recovery-codes')
+  @UseGuards(AccessTokenGuard)
+  async recoveryCodesStatus(
+    @Req() req: Request & { user: UserEntity },
+  ): Promise<{ remaining: number }> {
+    return { remaining: await this.authService.countRecoveryCodes(req.user) };
+  }
+
+  /** POST /auth/2fa/recovery-codes/regenerate : après re-confirmation (code TOTP ou mot de passe), remplace les codes de secours et retourne le nouveau lot, visible une seule fois. */
+  @Post('2fa/recovery-codes/regenerate')
+  @UseGuards(AccessTokenGuard)
+  async regenerateRecoveryCodes(
+    @Req() req: Request & { user: UserEntity },
+    @Body() dto: RegenerateRecoveryCodesDto,
+  ): Promise<{ recoveryCodes: string[] }> {
+    return {
+      recoveryCodes: await this.authService.regenerateRecoveryCodes(
+        req.user,
+        dto,
+      ),
+    };
   }
 
   /** Indique si les cookies doivent être « secure » (production ou frontend en https). */

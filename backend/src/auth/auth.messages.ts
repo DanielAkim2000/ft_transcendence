@@ -28,6 +28,22 @@ export const authMails = {
       },
     })[lang],
 
+  recoveryCodeUsed: (lang: MailLanguage, name: string, left: number): Mail =>
+    ({
+      en: {
+        subject: 'A recovery code was used to sign in',
+        text: `Hi ${name},\n\nA two-factor recovery code was just used to sign in to your account. You have ${left} recovery code(s) left. If this was not you, change your password and regenerate your recovery codes right away.\n\n— 42 Baby`,
+      },
+      fr: {
+        subject: 'Un code de secours a été utilisé pour te connecter',
+        text: `Salut ${name},\n\nUn code de secours 2FA vient d'être utilisé pour se connecter à ton compte. Il te reste ${left} code(s) de secours. Si ce n'était pas toi, change ton mot de passe et régénère tes codes de secours immédiatement.\n\n— 42 Baby`,
+      },
+      es: {
+        subject: 'Se usó un código de recuperación para iniciar sesión',
+        text: `Hola ${name},\n\nSe acaba de usar un código de recuperación 2FA para iniciar sesión en tu cuenta. Te quedan ${left} código(s). Si no has sido tú, cambia tu contraseña y regenera tus códigos de recuperación de inmediato.\n\n— 42 Baby`,
+      },
+    })[lang],
+
   passwordChanged: (lang: MailLanguage, name: string): Mail =>
     ({
       en: {

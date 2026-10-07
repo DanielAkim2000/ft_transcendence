@@ -88,7 +88,14 @@
       "codePlaceholder": "123456",
       "submit": "Verify",
       "submitting": "Verifying…",
-      "failed": "Invalid code. Please try again."
+      "failed": "Invalid code. Please try again.",
+      "useRecovery": "Lost your authenticator? Use a recovery code",
+      "useCode": "Use the authenticator code instead",
+      "recoveryTitle": "Recovery code",
+      "recoveryDescription": "Enter one of your single-use recovery codes to sign in.",
+      "recoveryCode": "Recovery code",
+      "recoveryPlaceholder": "XXXXX-XXXXX",
+      "recoveryFailed": "Invalid or already used recovery code."
     },
     "validation": {
       "emailInvalid": "Invalid email.",
@@ -100,7 +107,8 @@
       "passwordSymbol": "Password must include a special character.",
       "usernameMin": "Username must be at least 3 characters.",
       "usernameMax": "Username must be at most 32 characters.",
-      "codeInvalid": "Code must be exactly 6 digits."
+      "codeInvalid": "Code must be exactly 6 digits.",
+      "recoveryCodeInvalid": "Recovery codes look like XXXXX-XXXXX."
     }
   },
   "home": {
@@ -190,7 +198,35 @@
       "toggling": "Updating…",
       "toggleFailed": "Could not update 2FA.",
       "enabledSuccess": "2FA is now enabled.",
-      "disabledSuccess": "2FA is now disabled."
+      "disabledSuccess": "2FA is now disabled.",
+      "recovery": {
+        "title": "Recovery codes",
+        "description": "Single-use codes to sign in if you lose your authenticator app.",
+        "remaining_one": "{{count}} recovery code left.",
+        "remaining_other": "{{count}} recovery codes left.",
+        "lowWarning": "You are running low: regenerate a new set.",
+        "regenerate": "Regenerate codes",
+        "regenerateHint": "This invalidates all your current codes. Confirm it's you first.",
+        "confirmWithCode": "Authenticator code",
+        "confirmWithPassword": "Password",
+        "usePassword": "Use my password instead",
+        "useAuthenticator": "Use an authenticator code instead",
+        "submit": "Generate new codes",
+        "submitting": "Generating…",
+        "cancel": "Cancel",
+        "failed": "Could not regenerate the codes. Check your code or password.",
+        "newTitle": "Your recovery codes",
+        "newWarning": "Write them down or save them somewhere safe NOW. They will never be shown again. If you lose them you can only regenerate new ones while signed in.",
+        "copy": "Copy",
+        "copied": "Copied",
+        "download": "Download",
+        "filename": "recovery-codes.txt",
+        "saved": "I saved them",
+        "signedInWithRecovery": "You signed in with a recovery code. If you lost your authenticator, disable 2FA below with another recovery code, then set it up again to get a new set.",
+        "disableWithRecovery": "Lost your app? Use a recovery code",
+        "disableWithCode": "Use the authenticator code instead",
+        "recoveryLabel": "Recovery code"
+      }
     },
     "security": {
       "title": "Security",

@@ -88,7 +88,14 @@
       "codePlaceholder": "123456",
       "submit": "Verificar",
       "submitting": "Verificando…",
-      "failed": "Código no válido. Inténtalo de nuevo."
+      "failed": "Código no válido. Inténtalo de nuevo.",
+      "useRecovery": "¿Perdiste la app? Usa un código de recuperación",
+      "useCode": "Usar el código de la app",
+      "recoveryTitle": "Código de recuperación",
+      "recoveryDescription": "Introduce uno de tus códigos de recuperación de un solo uso para iniciar sesión.",
+      "recoveryCode": "Código de recuperación",
+      "recoveryPlaceholder": "XXXXX-XXXXX",
+      "recoveryFailed": "Código de recuperación inválido o ya usado."
     },
     "validation": {
       "emailInvalid": "Email no válido.",
@@ -100,7 +107,8 @@
       "passwordSymbol": "La contraseña debe incluir un carácter especial.",
       "usernameMin": "El usuario debe tener al menos 3 caracteres.",
       "usernameMax": "El usuario debe tener como máximo 32 caracteres.",
-      "codeInvalid": "El código debe tener exactamente 6 dígitos."
+      "codeInvalid": "El código debe tener exactamente 6 dígitos.",
+      "recoveryCodeInvalid": "Un código de recuperación tiene el formato XXXXX-XXXXX."
     }
   },
   "home": {
@@ -190,7 +198,35 @@
       "toggling": "Actualizando…",
       "toggleFailed": "No se pudo actualizar la 2FA.",
       "enabledSuccess": "La 2FA está ahora activada.",
-      "disabledSuccess": "La 2FA está ahora desactivada."
+      "disabledSuccess": "La 2FA está ahora desactivada.",
+      "recovery": {
+        "title": "Códigos de recuperación",
+        "description": "Códigos de un solo uso para iniciar sesión si pierdes tu app de autenticación.",
+        "remaining_one": "Queda {{count}} código de recuperación.",
+        "remaining_other": "Quedan {{count}} códigos de recuperación.",
+        "lowWarning": "Quedan pocos: regenera un nuevo lote.",
+        "regenerate": "Regenerar códigos",
+        "regenerateHint": "Esto invalida todos tus códigos actuales. Confirma primero que eres tú.",
+        "confirmWithCode": "Código de la app",
+        "confirmWithPassword": "Contraseña",
+        "usePassword": "Usar mi contraseña",
+        "useAuthenticator": "Usar un código de la app",
+        "submit": "Generar nuevos códigos",
+        "submitting": "Generando…",
+        "cancel": "Cancelar",
+        "failed": "No se pudieron regenerar los códigos. Comprueba tu código o contraseña.",
+        "newTitle": "Tus códigos de recuperación",
+        "newWarning": "Anótalos o guárdalos en un lugar seguro AHORA. No se volverán a mostrar. Si los pierdes, solo podrás regenerar otros nuevos con la sesión iniciada.",
+        "copy": "Copiar",
+        "copied": "Copiado",
+        "download": "Descargar",
+        "filename": "codigos-de-recuperacion.txt",
+        "saved": "Ya los guardé",
+        "signedInWithRecovery": "Iniciaste sesión con un código de recuperación. Si perdiste tu app, desactiva la 2FA abajo con otro código de recuperación y vuelve a configurarla para obtener un nuevo lote.",
+        "disableWithRecovery": "¿Perdiste la app? Usa un código de recuperación",
+        "disableWithCode": "Usar el código de la app",
+        "recoveryLabel": "Código de recuperación"
+      }
     },
     "security": {
       "title": "Seguridad",

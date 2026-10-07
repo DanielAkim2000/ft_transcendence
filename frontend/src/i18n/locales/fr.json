@@ -88,7 +88,14 @@
       "codePlaceholder": "123456",
       "submit": "Vérifier",
       "submitting": "Vérification…",
-      "failed": "Code invalide. Réessaie."
+      "failed": "Code invalide. Réessaie.",
+      "useRecovery": "Appli perdue ? Utiliser un code de secours",
+      "useCode": "Utiliser le code de l'appli à la place",
+      "recoveryTitle": "Code de secours",
+      "recoveryDescription": "Saisis l'un de tes codes de secours à usage unique pour te connecter.",
+      "recoveryCode": "Code de secours",
+      "recoveryPlaceholder": "XXXXX-XXXXX",
+      "recoveryFailed": "Code de secours invalide ou déjà utilisé."
     },
     "validation": {
       "emailInvalid": "Email invalide.",
@@ -100,7 +107,8 @@
       "passwordSymbol": "Le mot de passe doit contenir un caractère spécial.",
       "usernameMin": "Le pseudo doit contenir au moins 3 caractères.",
       "usernameMax": "Le pseudo doit contenir au plus 32 caractères.",
-      "codeInvalid": "Le code doit contenir exactement 6 chiffres."
+      "codeInvalid": "Le code doit contenir exactement 6 chiffres.",
+      "recoveryCodeInvalid": "Un code de secours ressemble à XXXXX-XXXXX."
     }
   },
   "home": {
@@ -190,7 +198,35 @@
       "toggling": "Mise à jour…",
       "toggleFailed": "Impossible de mettre à jour la 2FA.",
       "enabledSuccess": "La 2FA est maintenant activée.",
-      "disabledSuccess": "La 2FA est maintenant désactivée."
+      "disabledSuccess": "La 2FA est maintenant désactivée.",
+      "recovery": {
+        "title": "Codes de secours",
+        "description": "Codes à usage unique pour te connecter si tu perds ton appli d'authentification.",
+        "remaining_one": "{{count}} code de secours restant.",
+        "remaining_other": "{{count}} codes de secours restants.",
+        "lowWarning": "Il t'en reste peu : régénère un nouveau lot.",
+        "regenerate": "Régénérer les codes",
+        "regenerateHint": "Cela invalide tous tes codes actuels. Confirme d'abord que c'est bien toi.",
+        "confirmWithCode": "Code de l'appli",
+        "confirmWithPassword": "Mot de passe",
+        "usePassword": "Utiliser mon mot de passe",
+        "useAuthenticator": "Utiliser un code de l'appli",
+        "submit": "Générer de nouveaux codes",
+        "submitting": "Génération…",
+        "cancel": "Annuler",
+        "failed": "Impossible de régénérer les codes. Vérifie ton code ou ton mot de passe.",
+        "newTitle": "Tes codes de secours",
+        "newWarning": "Note-les ou enregistre-les en lieu sûr MAINTENANT. Ils ne seront plus jamais affichés. Si tu les perds, tu ne pourras qu'en régénérer de nouveaux en étant connecté.",
+        "copy": "Copier",
+        "copied": "Copié",
+        "download": "Télécharger",
+        "filename": "codes-de-secours.txt",
+        "saved": "Je les ai notés",
+        "signedInWithRecovery": "Tu t'es connecté avec un code de secours. Si tu as perdu ton appli, désactive la 2FA ci-dessous avec un autre code de secours, puis reconfigure-la pour obtenir un nouveau lot.",
+        "disableWithRecovery": "Appli perdue ? Utiliser un code de secours",
+        "disableWithCode": "Utiliser le code de l'appli à la place",
+        "recoveryLabel": "Code de secours"
+      }
     },
     "security": {
       "title": "Sécurité",

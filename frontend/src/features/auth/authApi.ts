@@ -72,7 +72,24 @@ interface Verify2faRequest {
 }
 
 interface Toggle2faRequest {
-  code: string;
+  code?: string;
+  /** Désactivation uniquement : code de secours si l'appli d'authentification est perdue. */
+  recoveryCode?: string;
+}
+
+interface Toggle2faResponse {
+  enabled: boolean;
+  /** Présent uniquement à l'activation : seule fois où les codes sont visibles. */
+  recoveryCodes: string[] | null;
+}
+
+interface UseRecoveryCodeRequest {
+  recoveryCode: string;
+}
+
+interface RegenerateRecoveryCodesRequest {
+  code?: string;
+  password?: string;
 }
 
 export const authApi = api.injectEndpoints({
@@ -212,9 +229,49 @@ export const authApi = api.injectEndpoints({
         method: "POST",
       }),
     }),
-    [AUTH_ENDPOINTS.TOGGLE_2FA]: builder.mutation<boolean, Toggle2faRequest>({
+    [AUTH_ENDPOINTS.TOGGLE_2FA]: builder.mutation<Toggle2faResponse, Toggle2faRequest>({
       query: (body) => ({
         url: API_ROUTES.AUTH_2FA_TOGGLE,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [TAG_TYPES.AUTH],
+    }),
+    [AUTH_ENDPOINTS.USE_RECOVERY_CODE]: builder.mutation<
+      { user: User; accessToken: string; remainingRecoveryCodes: number },
+      UseRecoveryCodeRequest
+    >({
+      query: (body) => ({
+        url: API_ROUTES.AUTH_2FA_USE_RECOVERY_CODE,
+        method: "POST",
+        body,
+      }),
+      async onQueryStarted(_args, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(setAccessToken({ accessToken: data.accessToken }));
+        } catch (error) {
+          logger(error, "error");
+        }
+      },
+      invalidatesTags: [TAG_TYPES.AUTH],
+    }),
+    [AUTH_ENDPOINTS.GET_RECOVERY_CODES_STATUS]: builder.query<
+      { remaining: number },
+      void
+    >({
+      query: () => ({
+        url: API_ROUTES.AUTH_2FA_RECOVERY_CODES,
+        method: "GET",
+      }),
+      providesTags: [TAG_TYPES.AUTH],
+    }),
+    [AUTH_ENDPOINTS.REGENERATE_RECOVERY_CODES]: builder.mutation<
+      { recoveryCodes: string[] },
+      RegenerateRecoveryCodesRequest
+    >({
+      query: (body) => ({
+        url: API_ROUTES.AUTH_2FA_RECOVERY_CODES_REGENERATE,
         method: "POST",
         body,
       }),
@@ -235,4 +292,7 @@ export const {
   useVerify2faMutation,
   useSetup2faMutation,
   useToggle2faMutation,
+  useUseRecoveryCodeMutation,
+  useGetRecoveryCodesStatusQuery,
+  useRegenerateRecoveryCodesMutation,
 } = authApi;

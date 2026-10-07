@@ -23,10 +23,14 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import {
   useLoginMutation,
+  useUseRecoveryCodeMutation,
   useVerify2faMutation,
 } from "@/features/auth/authApi";
 import { createLoginSchema } from "@/features/auth/login.schema";
-import { createTwoFactorSchema } from "@/features/auth/two-factor.schema";
+import {
+  createRecoveryCodeSchema,
+  createTwoFactorSchema,
+} from "@/features/auth/two-factor.schema";
 import { clearCredentials } from "@/features/auth/authSlice";
 import { AuthShell } from "@/layouts/AuthShell";
 import { ROUTES } from "@/constants/routes";
@@ -217,7 +221,125 @@ function LoginCredentialsForm() {
   );
 }
 
-function TwoFactorForm() {
+function RecoveryCodeForm({
+  onRecovering,
+  onBack,
+}: {
+  /** Appelé avant l'envoi (true) et en cas d'échec (false) : fixe la destination post-connexion. */
+  onRecovering: (recovering: boolean) => void;
+  onBack: () => void;
+}) {
+  const { t, i18n } = useTranslation();
+  const [signInWithRecovery, { isLoading }] = useUseRecoveryCodeMutation();
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  // i18n.language force la recomputation quand la langue change (messages traduits).
+  const recoverySchema = useMemo(
+    () => createRecoveryCodeSchema(t),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, i18n.language],
+  );
+
+  const form = useForm({
+    defaultValues: { recoveryCode: "" },
+    validators: { onSubmit: recoverySchema },
+    onSubmit: async ({ value }) => {
+      setServerError(null);
+      // La redirection post-connexion (réglages 2FA) est décidée avant la réponse, pour éviter une course avec la redirection vers l'accueil.
+      onRecovering(true);
+      try {
+        await signInWithRecovery({
+          recoveryCode: value.recoveryCode.trim(),
+        }).unwrap();
+      } catch (error) {
+        onRecovering(false);
+        setServerError(getErrorMessage(error, t("auth.twoFactor.recoveryFailed")));
+      }
+    },
+  });
+
+  return (
+    <Card className="w-full border-border bg-card/80 shadow-sm backdrop-blur-sm">
+      <CardHeader>
+        <CardTitle className="text-2xl font-bold tracking-tight">
+          {t("auth.twoFactor.recoveryTitle")}
+        </CardTitle>
+        <CardDescription className="font-sans">
+          {t("auth.twoFactor.recoveryDescription")}
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent>
+        <form
+          id="recovery-code-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            form.handleSubmit();
+          }}
+        >
+          <FieldGroup>
+            <form.Field
+              name="recoveryCode"
+              children={(field) => {
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid;
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>
+                      {t("auth.twoFactor.recoveryCode")}
+                    </FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-invalid={isInvalid}
+                      placeholder={t("auth.twoFactor.recoveryPlaceholder")}
+                      autoComplete="off"
+                      autoFocus
+                      className="h-10 font-mono"
+                    />
+                    {isInvalid && (
+                      <FieldError errors={field.state.meta.errors} />
+                    )}
+                  </Field>
+                );
+              }}
+            />
+
+            {serverError ? <FieldError>{serverError}</FieldError> : null}
+          </FieldGroup>
+        </form>
+      </CardContent>
+
+      <CardFooter className="flex flex-col items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          className="h-10 w-full"
+          onClick={onBack}
+        >
+          {t("auth.twoFactor.useCode")}
+        </Button>
+        <Button
+          type="submit"
+          form="recovery-code-form"
+          size="lg"
+          className="h-10 w-full"
+          disabled={isLoading || form.state.isSubmitting}
+        >
+          {isLoading || form.state.isSubmitting
+            ? t("auth.twoFactor.submitting")
+            : t("auth.twoFactor.submit")}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+function TwoFactorForm({ onUseRecovery }: { onUseRecovery: () => void }) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -302,6 +424,13 @@ function TwoFactorForm() {
       </CardContent>
 
       <CardFooter className="flex flex-col items-center gap-2">
+        <button
+          type="button"
+          className="font-sans text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          onClick={onUseRecovery}
+        >
+          {t("auth.twoFactor.useRecovery")}
+        </button>
         <Button
           type="button"
           variant="outline"
@@ -334,13 +463,32 @@ export const Login = () => {
   const accessToken = useAppSelector((s) => s.auth.accessToken);
   const twoFactorRequired = useAppSelector((s) => s.auth.twoFactorRequired);
 
+  const [recoveryMode, setRecoveryMode] = useState(false);
+  const [recovering, setRecovering] = useState(false);
+
   if (accessToken) {
-    return <Navigate to={ROUTES.HOME} replace />;
+    // Connecté via un code de secours : on amène l'utilisateur sur les réglages 2FA pour reconfigurer.
+    return recovering ? (
+      <Navigate to={ROUTES.SETTINGS_2FA} state={{ recovered: true }} replace />
+    ) : (
+      <Navigate to={ROUTES.HOME} replace />
+    );
   }
 
   return (
     <AuthShell>
-      {twoFactorRequired ? <TwoFactorForm /> : <LoginCredentialsForm />}
+      {twoFactorRequired ? (
+        recoveryMode ? (
+          <RecoveryCodeForm
+            onRecovering={setRecovering}
+            onBack={() => setRecoveryMode(false)}
+          />
+        ) : (
+          <TwoFactorForm onUseRecovery={() => setRecoveryMode(true)} />
+        )
+      ) : (
+        <LoginCredentialsForm />
+      )}
     </AuthShell>
   );
 };

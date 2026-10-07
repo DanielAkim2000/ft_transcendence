@@ -173,6 +173,8 @@ export class GdprRepository {
     ];
     await this.prisma.$transaction([
       this.prisma.refreshToken.deleteMany({ where: { userId } }),
+      this.prisma.passwordResetToken.deleteMany({ where: { userId } }),
+      this.prisma.twoFactorRecoveryCode.deleteMany({ where: { userId } }),
       this.prisma.friendship.deleteMany({
         where: { OR: [{ requesterId: userId }, { addresseeId: userId }] },
       }),

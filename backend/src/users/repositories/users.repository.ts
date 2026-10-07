@@ -214,6 +214,43 @@ export class UserRepository {
     });
   }
 
+  /** Remplace tous les codes de secours 2FA de l'utilisateur par un nouveau lot (hashs). */
+  async replaceRecoveryCodes(
+    userId: string,
+    codeHashes: string[],
+  ): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.twoFactorRecoveryCode.deleteMany({ where: { userId } }),
+      this.prisma.twoFactorRecoveryCode.createMany({
+        data: codeHashes.map((codeHash) => ({ userId, codeHash })),
+      }),
+    ]);
+  }
+
+  /** Supprime tous les codes de secours 2FA de l'utilisateur. */
+  async deleteRecoveryCodes(userId: string): Promise<void> {
+    await this.prisma.twoFactorRecoveryCode.deleteMany({ where: { userId } });
+  }
+
+  /** Marque un code de secours comme utilisé ; retourne true s'il existait et n'avait pas déjà servi (usage unique, même en concurrence). */
+  async consumeRecoveryCode(
+    userId: string,
+    codeHash: string,
+  ): Promise<boolean> {
+    const result = await this.prisma.twoFactorRecoveryCode.updateMany({
+      where: { userId, codeHash, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+    return result.count > 0;
+  }
+
+  /** Nombre de codes de secours encore utilisables. */
+  countUnusedRecoveryCodes(userId: string): Promise<number> {
+    return this.prisma.twoFactorRecoveryCode.count({
+      where: { userId, usedAt: null },
+    });
+  }
+
   /** Cherche des utilisateurs par nom ou email (insensible à la casse), triés par nom, en excluant l'utilisateur donné : une page de résultats plus le total. */
   async searchUsers(
     excludeUserId: string,

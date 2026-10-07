@@ -194,6 +194,18 @@ model PasswordResetToken {
   @@index([userId])
 }
 
+// Codes de secours 2FA : hashés, à usage unique (usedAt renseigné une fois consommé).
+model TwoFactorRecoveryCode {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String    @unique
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
 model Friendship {
   id          String           @id @default(cuid())
   requesterId String
@@ -248,6 +260,7 @@ model User {
   badges                     UserBadge[]
   refreshTokens              RefreshToken[]
   passwordResetTokens        PasswordResetToken[]
+  recoveryCodes              TwoFactorRecoveryCode[]
   friendshipsSent            Friendship[]       @relation("FriendshipsSent")
   friendshipsReceived        Friendship[]       @relation("FriendshipsReceived")
   conversationsAsA           Conversation[]     @relation("ConversationsAsA")

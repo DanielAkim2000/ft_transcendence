@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useLocation } from "react-router";
 import { useForm } from "@tanstack/react-form";
 import { useTranslation } from "react-i18next";
 import QRCode from "qrcode";
@@ -19,6 +20,8 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { CodeInput } from "@/components/ui/code-input";
+import { Input } from "@/components/ui/input";
+import { RecoveryCodesCard } from "@/features/auth/RecoveryCodesCard";
 import {
   useMeQuery,
   useSetup2faMutation,
@@ -39,6 +42,12 @@ export const TwoFactorSettings = () => {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [newCodes, setNewCodes] = useState<string[] | null>(null);
+  const [recoveryMode, setRecoveryMode] = useState(false);
+  const [recoveryCode, setRecoveryCode] = useState("");
+  const location = useLocation();
+  const signedInWithRecovery =
+    (location.state as { recovered?: boolean } | null)?.recovered === true;
 
   const twoFactorSchema = useMemo(() => createTwoFactorSchema(t), [t]);
 
@@ -58,9 +67,10 @@ export const TwoFactorSettings = () => {
       setServerError(null);
       setSuccessMessage(null);
       try {
-        const enabled = await toggle2fa({ code: value.code }).unwrap();
+        const result = await toggle2fa({ code: value.code }).unwrap();
+        setNewCodes(result.recoveryCodes);
         setSuccessMessage(
-          enabled
+          result.enabled
             ? t("settings.twoFactor.enabledSuccess")
             : t("settings.twoFactor.disabledSuccess"),
         );
@@ -93,6 +103,28 @@ export const TwoFactorSettings = () => {
     }
   };
 
+  /** Désactivation avec un code de secours (appli perdue) ; sinon passe par le formulaire du code de l'appli. */
+  const handleDisable = async () => {
+    if (!recoveryMode) {
+      await form.handleSubmit();
+      return;
+    }
+    setServerError(null);
+    setSuccessMessage(null);
+    try {
+      await toggle2fa({ recoveryCode }).unwrap();
+      setSuccessMessage(t("settings.twoFactor.disabledSuccess"));
+      setRecoveryMode(false);
+      setRecoveryCode("");
+      setNewCodes(null);
+      clearSetupPreview();
+    } catch (error) {
+      setServerError(
+        getErrorMessage(error, t("settings.twoFactor.toggleFailed")),
+      );
+    }
+  };
+
   if (isLoadingUser) {
     return <PageFallback />;
   }
@@ -109,6 +141,12 @@ export const TwoFactorSettings = () => {
           {t("settings.twoFactor.description")}
         </p>
       </div>
+
+      {signedInWithRecovery && (
+        <p className="border border-border p-4 font-sans text-sm">
+          {t("settings.twoFactor.recovery.signedInWithRecovery")}
+        </p>
+      )}
 
       <Card>
         <CardHeader>
@@ -163,6 +201,21 @@ export const TwoFactorSettings = () => {
             }}
           >
             <FieldGroup>
+              {isEnabled && recoveryMode ? (
+                <div className="flex flex-col gap-2">
+                  <FieldLabel htmlFor="recovery-code">
+                    {t("settings.twoFactor.recovery.recoveryLabel")}
+                  </FieldLabel>
+                  <Input
+                    id="recovery-code"
+                    value={recoveryCode}
+                    onChange={(e) => setRecoveryCode(e.target.value)}
+                    placeholder="XXXXX-XXXXX"
+                    autoComplete="off"
+                    className="h-10 max-w-xs font-mono"
+                  />
+                </div>
+              ) : (
               <form.Field
                 name="code"
                 children={(field) => {
@@ -188,6 +241,22 @@ export const TwoFactorSettings = () => {
                   );
                 }}
               />
+              )}
+
+              {isEnabled && (
+                <button
+                  type="button"
+                  className="w-fit text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                  onClick={() => {
+                    setServerError(null);
+                    setRecoveryMode(!recoveryMode);
+                  }}
+                >
+                  {recoveryMode
+                    ? t("settings.twoFactor.recovery.disableWithCode")
+                    : t("settings.twoFactor.recovery.disableWithRecovery")}
+                </button>
+              )}
 
               {serverError ? <FieldError>{serverError}</FieldError> : null}
               {successMessage ? (
@@ -203,7 +272,7 @@ export const TwoFactorSettings = () => {
               description={t("confirm.disable2faDescription")}
               confirmLabel={t("settings.twoFactor.disable")}
               loading={isToggling || form.state.isSubmitting}
-              onConfirm={() => form.handleSubmit()}
+              onConfirm={handleDisable}
             >
               <Button
                 type="button"
@@ -229,6 +298,10 @@ export const TwoFactorSettings = () => {
           )}
         </CardFooter>
       </Card>
+
+      {(isEnabled || newCodes) && (
+        <RecoveryCodesCard codes={newCodes} onCodesChange={setNewCodes} />
+      )}
     </div>
   );
 };

@@ -1,6 +1,8 @@
+import i18n from "@/i18n";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { getPieceGeometry } from "./pieceModels";
 import type { Piece, Position } from "./utils";
 
 type ChessBoard3DProps = {
@@ -8,44 +10,80 @@ type ChessBoard3DProps = {
     positions: Position[];
     selectedPosition: Position | null;
     onSquareClick: (rowIndex: number, colIndex: number) => void;
+    /** Vrai pour le joueur des noirs : le plateau est vu depuis son côté (noirs en bas, blancs en haut). */
+    flipped?: boolean;
 };
 
 const BOARD_LIGHT = 0xc9a66b;
 const BOARD_DARK = 0x604331;
 const BOARD_EDGE = 0x281d19;
+const BOARD_RIM = 0x3a2a22;
 const LEGAL_MOVE = 0x3cbf87;
 const SELECTED_SQUARE = 0xe2a93b;
+const WHITE_PIECE = 0xf1e8d4;
+const BLACK_PIECE = 0x2b2522;
 
-function getPieceImage(piece: Piece): string {
-    const pieceLetters: Record<Piece["type"], string> = {
-        pawn: "P",
-        rook: "R",
-        knight: "N",
-        bishop: "B",
-        queen: "Q",
-        king: "K",
-    };
-    return `/chess/${piece.color === "black" ? "b" : "w"}${pieceLetters[piece.type]}.svg`;
+/** Hauteur du dessus des cases (la case est une boîte de 0.22 centrée sur y = 0). */
+const SQUARE_TOP = 0.11;
+/** Échelle des pièces : une case fait 1 de côté. */
+const PIECE_SCALE = 0.92;
+/** Hauteur dont la pièce sélectionnée se soulève. */
+const LIFT = 0.22;
+/** Caméra en perspective, côté des blancs par défaut (z positif) ou des noirs (z négatif) si le plateau est retourné. */
+const CAMERA_HEIGHT = 11.5;
+const CAMERA_DISTANCE = 10;
+/** Déplacement du pointeur (px) au-delà duquel un appui est un geste de rotation et non un clic sur une case. */
+const CLICK_TOLERANCE = 6;
+
+/** Couleur d'accent du joueur (variable CSS --primary posée par son réglage et le thème), en entier 0xRRGGBB ; vert par défaut si elle est illisible. Le canvas convertit n'importe quel format CSS (hex, oklch…) en RGB. */
+function readAccentColor(): number {
+    try {
+        const value = getComputedStyle(document.documentElement).getPropertyValue("--primary").trim();
+        if (!value) return LEGAL_MOVE;
+        const context = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
+        if (!context) return LEGAL_MOVE;
+        context.fillStyle = "#000000";
+        context.fillStyle = value;
+        context.fillRect(0, 0, 1, 1);
+        const [red, green, blue] = context.getImageData(0, 0, 1, 1).data;
+        return (red << 16) | (green << 8) | blue;
+    } catch {
+        return LEGAL_MOVE;
+    }
 }
 
 function isLegalPosition(positions: Position[], rowIndex: number, colIndex: number): boolean {
     return positions.some((position) => position.x === colIndex && position.y === rowIndex);
 }
 
-export function ChessBoard3D({ board, positions, selectedPosition, onSquareClick }: ChessBoard3DProps) {
+type SceneState = {
+    renderer: THREE.WebGLRenderer;
+    camera: THREE.PerspectiveCamera;
+    controls: OrbitControls;
+    pieceGroup: THREE.Group;
+    highlightGroup: THREE.Group;
+    squareMeshes: THREE.Mesh[];
+    pieceMaterials: Record<"white" | "black", THREE.MeshStandardMaterial>;
+    /** Pièces actuellement posées, pour les retrouver au clic. */
+    pieceMeshes: THREE.Mesh[];
+};
+
+/** Retire un groupe de sa scène et libère les géométries/matériaux créés pour lui. */
+function clearGroup(group: THREE.Group): void {
+    group.traverse((object: THREE.Object3D) => {
+        if (object instanceof THREE.Mesh) {
+            object.geometry.dispose();
+            (Array.isArray(object.material) ? object.material : [object.material]).forEach((material: THREE.Material) => material.dispose());
+        }
+    });
+    group.clear();
+}
+
+export function ChessBoard3D({ board, positions, selectedPosition, onSquareClick, flipped = false }: ChessBoard3DProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const clickHandlerRef = useRef(onSquareClick);
-    const sceneStateRef = useRef<{
-        renderer: THREE.WebGLRenderer;
-        camera: THREE.OrthographicCamera;
-        controls: OrbitControls;
-        boardGroup: THREE.Group;
-        pieceGroup: THREE.Group;
-        highlightGroup: THREE.Group;
-        squareMeshes: THREE.Mesh[];
-        pieceSprites: THREE.Sprite[];
-        pieceTextures: Map<string, THREE.Texture>;
-    } | null>(null);
+    const sceneStateRef = useRef<SceneState | null>(null);
+
     useEffect(() => {
         clickHandlerRef.current = onSquareClick;
     }, [onSquareClick]);
@@ -56,10 +94,11 @@ export function ChessBoard3D({ board, positions, selectedPosition, onSquareClick
 
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x171412);
-        const camera = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.1, 100);
-        camera.position.set(0, 12, 0.01);
-        camera.lookAt(0, 0, 0);
-        camera.zoom = 1.05;
+        scene.fog = new THREE.Fog(0x171412, 18, 34);
+
+        const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 80);
+        camera.position.set(0, CAMERA_HEIGHT, CAMERA_DISTANCE);
+        camera.lookAt(0, 0.3, 0);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -67,47 +106,65 @@ export function ChessBoard3D({ board, positions, selectedPosition, onSquareClick
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         container.replaceChildren(renderer.domElement);
-        renderer.domElement.setAttribute("aria-label", "Plateau d'échecs en 3D");
+        renderer.domElement.setAttribute("aria-label", i18n.t("chess.page.boardAria"));
         renderer.domElement.setAttribute("role", "img");
+        renderer.domElement.style.touchAction = "none";
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
         controls.enablePan = false;
-        controls.enableRotate = true;
-        controls.rotateSpeed = 0.55;
-        controls.minZoom = 0.9;
-        controls.maxZoom = 1.7;
-        controls.minPolarAngle = 0.01;
-        controls.maxPolarAngle = 0.01;
-        controls.target.set(0, 0, 0);
+        controls.rotateSpeed = 0.7;
+        controls.minDistance = 9;
+        controls.maxDistance = 20;
+        // On peut tourner autour du plateau et l'incliner, mais jamais passer dessous.
+        controls.minPolarAngle = 0.15;
+        controls.maxPolarAngle = Math.PI / 2 - 0.12;
+        controls.target.set(0, 0.3, 0);
 
-        scene.add(new THREE.HemisphereLight(0xffead0, 0x211916, 2.1));
-        const keyLight = new THREE.DirectionalLight(0xfff1d2, 3.4);
-        keyLight.position.set(-5, 10, 4);
+        scene.add(new THREE.HemisphereLight(0xffead0, 0x211916, 1.7));
+        const keyLight = new THREE.DirectionalLight(0xfff1d2, 3.2);
+        keyLight.position.set(-5, 11, 6);
         keyLight.castShadow = true;
-        keyLight.shadow.mapSize.set(1024, 1024);
+        keyLight.shadow.mapSize.set(2048, 2048);
+        keyLight.shadow.camera.left = -7;
+        keyLight.shadow.camera.right = 7;
+        keyLight.shadow.camera.top = 7;
+        keyLight.shadow.camera.bottom = -7;
+        keyLight.shadow.camera.near = 1;
+        keyLight.shadow.camera.far = 30;
+        keyLight.shadow.bias = -0.0004;
         scene.add(keyLight);
+        const fillLight = new THREE.DirectionalLight(0x9ec5ff, 0.7);
+        fillLight.position.set(6, 5, -7);
+        scene.add(fillLight);
 
+        // Socle et cadre du plateau.
         const base = new THREE.Mesh(
-            new THREE.BoxGeometry(8.7, 0.55, 8.7),
+            new THREE.BoxGeometry(9.1, 0.5, 9.1),
             new THREE.MeshStandardMaterial({ color: BOARD_EDGE, roughness: 0.7, metalness: 0.08 }),
         );
-        base.position.y = -0.28;
+        base.position.y = -0.3;
         base.receiveShadow = true;
+        base.castShadow = true;
         scene.add(base);
+        const rim = new THREE.Mesh(
+            new THREE.BoxGeometry(8.6, 0.18, 8.6),
+            new THREE.MeshStandardMaterial({ color: BOARD_RIM, roughness: 0.6, metalness: 0.1 }),
+        );
+        rim.position.y = -0.02;
+        rim.receiveShadow = true;
+        scene.add(rim);
 
-        const boardGroup = new THREE.Group();
-        const pieceGroup = new THREE.Group();
-        const highlightGroup = new THREE.Group();
+        const squareGeometry = new THREE.BoxGeometry(0.98, 0.22, 0.98);
         const squareMeshes: THREE.Mesh[] = [];
-        const pieceSprites: THREE.Sprite[] = [];
-
+        const boardGroup = new THREE.Group();
         for (let rowIndex = 0; rowIndex < 8; rowIndex += 1) {
             for (let colIndex = 0; colIndex < 8; colIndex += 1) {
                 const color = (rowIndex + colIndex) % 2 === 0 ? BOARD_LIGHT : BOARD_DARK;
                 const square = new THREE.Mesh(
-                    new THREE.BoxGeometry(0.96, 0.22, 0.96),
-                    new THREE.MeshStandardMaterial({ color, roughness: 0.78, metalness: 0.02 }),
+                    squareGeometry,
+                    new THREE.MeshStandardMaterial({ color, roughness: 0.62, metalness: 0.03 }),
                 );
                 square.position.set(colIndex - 3.5, 0, rowIndex - 3.5);
                 square.receiveShadow = true;
@@ -116,50 +173,48 @@ export function ChessBoard3D({ board, positions, selectedPosition, onSquareClick
                 squareMeshes.push(square);
             }
         }
-        for (let squareIndex = 0; squareIndex < 64; squareIndex += 1) {
-            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false }));
-            sprite.scale.set(0.72, 0.72, 1);
-            sprite.visible = false;
-            pieceSprites.push(sprite);
-            pieceGroup.add(sprite);
-        }
-        boardGroup.add(highlightGroup, pieceGroup);
         scene.add(boardGroup);
-        sceneStateRef.current = {
-            renderer,
-            camera,
-            controls,
-            boardGroup,
-            pieceGroup,
-            highlightGroup,
-            squareMeshes,
-            pieceSprites,
-            pieceTextures: new Map(),
+
+        const pieceGroup = new THREE.Group();
+        const highlightGroup = new THREE.Group();
+        scene.add(pieceGroup, highlightGroup);
+
+        const pieceMaterials = {
+            white: new THREE.MeshStandardMaterial({ color: WHITE_PIECE, roughness: 0.32, metalness: 0.08 }),
+            black: new THREE.MeshStandardMaterial({ color: BLACK_PIECE, roughness: 0.38, metalness: 0.15 }),
         };
 
+        sceneStateRef.current = { renderer, camera, controls, pieceGroup, highlightGroup, squareMeshes, pieceMaterials, pieceMeshes: [] };
+
+        // Sélection d'une case ou d'une pièce au clic ; un glisser (rotation de la vue) n'est pas un clic.
         const pointer = new THREE.Vector2();
         const raycaster = new THREE.Raycaster();
+        let pressedAt: { x: number; y: number } | null = null;
         const handlePointerDown = (event: PointerEvent) => {
+            pressedAt = { x: event.clientX, y: event.clientY };
+        };
+        const handlePointerUp = (event: PointerEvent) => {
+            const start = pressedAt;
+            pressedAt = null;
+            if (!start || Math.hypot(event.clientX - start.x, event.clientY - start.y) > CLICK_TOLERANCE) return;
             const bounds = renderer.domElement.getBoundingClientRect();
             pointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
             pointer.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1;
             raycaster.setFromCamera(pointer, camera);
-            const square = raycaster.intersectObjects(squareMeshes, false)[0]?.object as THREE.Mesh | undefined;
-            if (!square) return;
-            const { rowIndex, colIndex } = square.userData as { rowIndex: number; colIndex: number };
+            const targets = [...(sceneStateRef.current?.pieceMeshes ?? []), ...squareMeshes];
+            const hit = raycaster.intersectObjects(targets, false)[0]?.object;
+            if (!hit) return;
+            const { rowIndex, colIndex } = hit.userData as { rowIndex: number; colIndex: number };
             clickHandlerRef.current(rowIndex, colIndex);
         };
         renderer.domElement.addEventListener("pointerdown", handlePointerDown);
+        renderer.domElement.addEventListener("pointerup", handlePointerUp);
 
         const resizeObserver = new ResizeObserver(() => {
             const width = container.clientWidth;
             const height = container.clientHeight;
             if (!width || !height) return;
-            const aspect = width / height;
-            camera.left = -5 * aspect;
-            camera.right = 5 * aspect;
-            camera.top = 5;
-            camera.bottom = -5;
+            camera.aspect = width / height;
             camera.updateProjectionMatrix();
             renderer.setSize(width, height, false);
         });
@@ -177,74 +232,84 @@ export function ChessBoard3D({ board, positions, selectedPosition, onSquareClick
             window.cancelAnimationFrame(frame);
             resizeObserver.disconnect();
             renderer.domElement.removeEventListener("pointerdown", handlePointerDown);
+            renderer.domElement.removeEventListener("pointerup", handlePointerUp);
             controls.dispose();
-            sceneStateRef.current?.pieceTextures.forEach((texture) => texture.dispose());
-            boardGroup.traverse((object: THREE.Object3D) => {
-                if (object instanceof THREE.Mesh || object instanceof THREE.Sprite) {
-                    object.geometry.dispose();
-                    if (Array.isArray(object.material)) object.material.forEach((material: THREE.Material) => material.dispose());
-                    else object.material.dispose();
-                }
+            clearGroup(highlightGroup);
+            // Les géométries des pièces sont partagées (cache du module) : on ne libère que les matériaux.
+            pieceGroup.clear();
+            pieceMaterials.white.dispose();
+            pieceMaterials.black.dispose();
+            squareMeshes.forEach((square) => (square.material as THREE.Material).dispose());
+            squareGeometry.dispose();
+            [base, rim].forEach((mesh) => {
+                mesh.geometry.dispose();
+                (mesh.material as THREE.Material).dispose();
             });
-            base.geometry.dispose();
-            base.material.dispose();
             renderer.dispose();
             container.replaceChildren();
             sceneStateRef.current = null;
         };
     }, []);
 
+    // Orientation du plateau (après la création de la scène, qui pose la caméra par défaut) : l'équipe du joueur est toujours en bas de son écran.
     useEffect(() => {
         const sceneState = sceneStateRef.current;
         if (!sceneState) return;
+        const { camera, controls } = sceneState;
+        camera.position.set(0, CAMERA_HEIGHT, flipped ? -CAMERA_DISTANCE : CAMERA_DISTANCE);
+        camera.lookAt(0, 0.3, 0);
+        controls.update();
+    }, [flipped]);
 
-        const { highlightGroup, squareMeshes, pieceSprites, pieceTextures } = sceneState;
-        const disposeGroup = (group: THREE.Group) => {
-            group.traverse((object: THREE.Object3D) => {
-                if (object instanceof THREE.Mesh || object instanceof THREE.Sprite) {
-                    object.geometry.dispose();
-                    if (Array.isArray(object.material)) object.material.forEach((material: THREE.Material) => material.dispose());
-                    else object.material.dispose();
-                }
-            });
-            group.clear();
-        };
+    // Pièces, case sélectionnée et destinations possibles.
+    useEffect(() => {
+        const sceneState = sceneStateRef.current;
+        if (!sceneState) return;
+        const { highlightGroup, pieceGroup, squareMeshes, pieceMaterials } = sceneState;
 
-        disposeGroup(highlightGroup);
+        clearGroup(highlightGroup);
+        pieceGroup.clear();
+        sceneState.pieceMeshes = [];
+        const accent = readAccentColor();
 
         squareMeshes.forEach((square, index) => {
             const rowIndex = Math.floor(index / 8);
             const colIndex = index % 8;
             const selected = selectedPosition?.y === rowIndex && selectedPosition.x === colIndex;
-            const material = square.material as THREE.MeshStandardMaterial;
-            material.color.setHex(selected ? SELECTED_SQUARE : (rowIndex + colIndex) % 2 === 0 ? BOARD_LIGHT : BOARD_DARK);
+            (square.material as THREE.MeshStandardMaterial).color.setHex(
+                selected ? SELECTED_SQUARE : (rowIndex + colIndex) % 2 === 0 ? BOARD_LIGHT : BOARD_DARK,
+            );
 
-            if (isLegalPosition(positions, rowIndex, colIndex)) {
-                const marker = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.13, 0.13, 0.04, 24),
-                    new THREE.MeshStandardMaterial({ color: LEGAL_MOVE, roughness: 0.45, metalness: 0.1 }),
+            if (!isLegalPosition(positions, rowIndex, colIndex)) return;
+            const capture = Boolean(board[rowIndex]?.[colIndex]);
+            // Case libre : un disque ; case occupée par une pièce adverse (prise) : un anneau autour d'elle.
+            const marker = capture
+                ? new THREE.Mesh(
+                    new THREE.RingGeometry(0.34, 0.46, 40),
+                    new THREE.MeshBasicMaterial({ color: accent, side: THREE.DoubleSide, transparent: true, opacity: 0.95 }),
+                )
+                : new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.16, 0.16, 0.03, 32),
+                    new THREE.MeshStandardMaterial({ color: accent, emissive: accent, emissiveIntensity: 0.35, roughness: 0.45, metalness: 0.1 }),
                 );
-                marker.position.set(colIndex - 3.5, 0.15, rowIndex - 3.5);
-                highlightGroup.add(marker);
-            }
+            if (capture) marker.rotation.x = -Math.PI / 2;
+            marker.position.set(colIndex - 3.5, SQUARE_TOP + (capture ? 0.01 : 0.02), rowIndex - 3.5);
+            highlightGroup.add(marker);
         });
 
-        const textureLoader = new THREE.TextureLoader();
         board.forEach((row, rowIndex) => row.forEach((piece, colIndex) => {
-            const sprite = pieceSprites[rowIndex * 8 + colIndex];
-            sprite.visible = Boolean(piece);
             if (!piece) return;
-            const texturePath = getPieceImage(piece);
-            let texture = pieceTextures.get(texturePath);
-            if (!texture) {
-                texture = textureLoader.load(texturePath);
-                texture.colorSpace = THREE.SRGBColorSpace;
-                pieceTextures.set(texturePath, texture);
-            }
-            const material = sprite.material as THREE.SpriteMaterial;
-            material.map = texture;
-            material.needsUpdate = true;
-            sprite.position.set(colIndex - 3.5, 0.9, rowIndex - 3.5);
+            const mesh = new THREE.Mesh(getPieceGeometry(piece.type), pieceMaterials[piece.color]);
+            const selected = selectedPosition?.y === rowIndex && selectedPosition.x === colIndex;
+            mesh.scale.setScalar(PIECE_SCALE);
+            mesh.position.set(colIndex - 3.5, SQUARE_TOP + (selected ? LIFT : 0), rowIndex - 3.5);
+            // Les cavaliers regardent en diagonale vers le camp adverse : de la caméra on voit leur profil (de dos, la tête serait une simple plaque).
+            if (piece.type === "knight") mesh.rotation.y = piece.color === "white" ? Math.PI / 4 : (-3 * Math.PI) / 4;
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            mesh.userData = { rowIndex, colIndex };
+            pieceGroup.add(mesh);
+            sceneState.pieceMeshes.push(mesh);
         }));
     }, [board, positions, selectedPosition]);
 

@@ -14,7 +14,7 @@ import {
 } from '../entities/queue-group.entity';
 import { QueueGateway } from '../queue.gateway';
 import { TablesService } from '../../tables/services/tables.service';
-import { TableEntity } from '../../tables/entities/table.entity';
+import { TableEntity, TableStatus } from '../../tables/entities/table.entity';
 import { UsersService } from '../../users/services/users.services';
 import { MatchFormat } from '../../matches/entities/match.entity';
 import { Prisma } from '../../generated/prisma/client';
@@ -83,22 +83,35 @@ export class QueueService implements OnModuleInit {
   ): Promise<QueueGroupEntity> {
     const table = await this.queueRepository.getTable(tableId);
     if (!table) {
-      throw new NotFoundException('Table not found');
+      throw new NotFoundException({
+        message: 'Table not found',
+        code: 'TABLE_NOT_FOUND',
+      });
     }
     if (table.claimedByTournament) {
-      throw new ConflictException('Table reserved for an ongoing tournament');
+      throw new ConflictException({
+        message: 'Table reserved for an ongoing tournament',
+        code: 'TABLE_RESERVED_TOURNAMENT',
+      });
     }
     if (await this.queueRepository.findActiveGroupForUser(userId)) {
-      throw new ConflictException('You are already on a table or in a queue');
+      throw new ConflictException({
+        message: 'You are already on a table or in a queue',
+        code: 'ALREADY_ON_TABLE_OR_QUEUE',
+      });
     }
     if (table.format && format && format !== table.format) {
-      throw new ConflictException(`This table is playing ${table.format}`);
+      throw new ConflictException({
+        message: `This table is playing ${table.format}`,
+        code: `TABLE_PLAYING_${table.format}`,
+      });
     }
     const groupFormat = table.format ?? format;
     if (!groupFormat) {
-      throw new BadRequestException(
-        'format is required when the table is empty',
-      );
+      throw new BadRequestException({
+        message: 'format is required when the table is empty',
+        code: 'TABLE_FORMAT_REQUIRED',
+      });
     }
     const isTwoVTwo = groupFormat === MatchFormat.TWO_V_TWO;
     if (isTwoVTwo) {
@@ -121,14 +134,18 @@ export class QueueService implements OnModuleInit {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        throw new ConflictException(
-          'You or your teammate is already on a table or in a queue',
-        );
+        throw new ConflictException({
+          message: 'You or your teammate is already on a table or in a queue',
+          code: 'TEAM_ALREADY_ON_TABLE_OR_QUEUE',
+        });
       }
       throw error;
     }
     if (!group) {
-      throw new ConflictException('This table is playing another format');
+      throw new ConflictException({
+        message: 'This table is playing another format',
+        code: 'TABLE_PLAYING_OTHER_FORMAT',
+      });
     }
 
     if (isTwoVTwo && teammateId) {
@@ -165,11 +182,17 @@ export class QueueService implements OnModuleInit {
   ): Promise<QueueGroupEntity | null> {
     const group = await this.getGroup(groupId);
     if (group.status !== QueueGroupStatus.INVITING) {
-      throw new ConflictException('This invitation is no longer pending');
+      throw new ConflictException({
+        message: 'This invitation is no longer pending',
+        code: 'INVITATION_NOT_PENDING',
+      });
     }
     const me = group.players.find((player) => player.id === userId);
     if (!me || me.isRequester) {
-      throw new ForbiddenException('You are not invited to this group');
+      throw new ForbiddenException({
+        message: 'You are not invited to this group',
+        code: 'NOT_INVITED_TO_GROUP',
+      });
     }
     this.clearTimer(`invite:${groupId}`);
 
@@ -181,7 +204,10 @@ export class QueueService implements OnModuleInit {
           [QueueGroupStatus.INVITING],
         ))
       ) {
-        throw new ConflictException('This invitation is no longer pending');
+        throw new ConflictException({
+          message: 'This invitation is no longer pending',
+          code: 'INVITATION_NOT_PENDING',
+        });
       }
       await this.queueRepository.syncTableState(group.tableId);
       this.queueGateway.emitToUsers(
@@ -203,7 +229,10 @@ export class QueueService implements OnModuleInit {
     }
 
     if (!(await this.queueRepository.acceptInvite(groupId, userId))) {
-      throw new ConflictException('This invitation is no longer pending');
+      throw new ConflictException({
+        message: 'This invitation is no longer pending',
+        code: 'INVITATION_NOT_PENDING',
+      });
     }
     await this.advance(group.tableId, groupId);
     return this.queueRepository.findGroupById(groupId);
@@ -214,10 +243,16 @@ export class QueueService implements OnModuleInit {
     const group = await this.getGroup(groupId);
     this.assertMember(group, userId);
     if (group.status !== QueueGroupStatus.CALLED) {
-      throw new ConflictException('This group has not been called');
+      throw new ConflictException({
+        message: 'This group has not been called',
+        code: 'GROUP_NOT_CALLED',
+      });
     }
     if (!(await this.placeOnTable(groupId))) {
-      throw new ConflictException('No free spot on this table');
+      throw new ConflictException({
+        message: 'No free spot on this table',
+        code: 'NO_FREE_SPOT',
+      });
     }
     await this.publishQueue(group.tableId);
     return (await this.queueRepository.findGroupById(groupId)) ?? group;
@@ -229,9 +264,10 @@ export class QueueService implements OnModuleInit {
     this.assertMember(group, userId);
     if (group.status === QueueGroupStatus.ON_TABLE) {
       if (await this.queueRepository.findCurrentMatchId(group.tableId)) {
-        throw new ConflictException(
-          'A match is in progress: release the table instead',
-        );
+        throw new ConflictException({
+          message: 'A match is in progress: release the table instead',
+          code: 'MATCH_IN_PROGRESS_RELEASE_TABLE',
+        });
       }
     }
     const finalStatus =
@@ -246,7 +282,10 @@ export class QueueService implements OnModuleInit {
         QueueGroupStatus.ON_TABLE,
       ]))
     ) {
-      throw new ConflictException('This group is already resolved');
+      throw new ConflictException({
+        message: 'This group is already resolved',
+        code: 'GROUP_ALREADY_RESOLVED',
+      });
     }
     this.clearTimer(`invite:${groupId}`);
     this.clearTimer(`call:${groupId}`);
@@ -278,16 +317,23 @@ export class QueueService implements OnModuleInit {
   ): Promise<TableEntity> {
     const table = await this.queueRepository.getTable(tableId);
     if (!table) {
-      throw new NotFoundException('Table not found');
+      throw new NotFoundException({
+        message: 'Table not found',
+        code: 'TABLE_NOT_FOUND',
+      });
     }
     const matchId = await this.queueRepository.findCurrentMatchId(tableId);
     if (!matchId) {
-      throw new ConflictException('No match in progress on this table');
+      throw new ConflictException({
+        message: 'No match in progress on this table',
+        code: 'NO_MATCH_IN_PROGRESS',
+      });
     }
     if (table.endRequestedAt) {
-      throw new ConflictException(
-        'The table is already released: enter the score',
-      );
+      throw new ConflictException({
+        message: 'The table is already released: enter the score',
+        code: 'TABLE_ALREADY_RELEASED',
+      });
     }
     const voterIds = await this.queueRepository.toggleReleaseVote(
       tableId,
@@ -380,6 +426,66 @@ export class QueueService implements OnModuleInit {
     await this.advance(tableId);
   }
 
+  /** Libération forcée par un administrateur : le match en cours est annulé sans score (ou le groupe seul installé sur la table sort), les joueurs en sont informés et la file d'attente avance. Refusée si une rencontre de tournoi occupe la table (il faut en saisir le score) ou si la table est déjà libre. */
+  async adminReleaseTable(tableId: string): Promise<TableEntity> {
+    const table = await this.queueRepository.getTable(tableId);
+    if (!table) {
+      throw new NotFoundException({
+        message: 'Table not found',
+        code: 'TABLE_NOT_FOUND',
+      });
+    }
+    if (table.claimedByTournament) {
+      throw new ConflictException({
+        message: 'This table hosts a tournament match: enter its score first',
+        code: 'TABLE_TOURNAMENT_ACTIVE',
+      });
+    }
+    const matchId = await this.queueRepository.findCurrentMatchId(tableId);
+    if (matchId) {
+      await this.forceCancelMatch(tableId, matchId, 'admin');
+      return this.tablesService.publish(tableId);
+    }
+
+    const groups = await this.queueRepository.listOnTable(tableId);
+    if (groups.length === 0) {
+      // Rien ne joue : on ne refuse que si la table est réellement libre ; sinon c'est un état bloqué (occupée sans groupe) qu'on remet d'équerre.
+      if (
+        (await this.tablesService.getById(tableId)).status !== TableStatus.BUSY
+      ) {
+        throw new ConflictException({
+          message: 'This table is already free',
+          code: 'TABLE_ALREADY_FREE',
+        });
+      }
+      await this.queueRepository.syncTableState(tableId);
+      await this.advance(tableId);
+      return this.tablesService.publish(tableId);
+    }
+
+    // Un seul groupe installé, en attente d'un adversaire : il quitte la table.
+    this.clearTimer(`score:${tableId}`);
+    for (const group of groups) {
+      await this.queueRepository.finishGroup(group.id, QueueGroupStatus.DONE, [
+        QueueGroupStatus.ON_TABLE,
+      ]);
+    }
+    await this.queueRepository.syncTableState(tableId);
+    const recipients = groups.flatMap((group) => group.userIds);
+    this.queueGateway.emitToUsers(recipients, 'queue:expired', {
+      tableId,
+      reason: 'admin',
+    });
+    const published = await this.tablesService.getById(tableId);
+    await this.notificationsService.createForUsers(
+      recipients,
+      NotificationType.QUEUE_EXPIRED,
+      { tableId, tableName: published.name, reason: 'admin' },
+    );
+    await this.advance(tableId);
+    return this.tablesService.publish(tableId);
+  }
+
   /** Vide une table qu'un tournoi vient de réquisitionner (file, groupes sur la table, match en cours) et retourne les joueurs qui étaient sur la table. */
   async clearForTable(tableId: string): Promise<string[]> {
     const cancelled = await this.queueRepository.cancelAllForTable(tableId);
@@ -413,24 +519,37 @@ export class QueueService implements OnModuleInit {
     teammateId: string | undefined,
   ): Promise<void> {
     if (!teammateId) {
-      throw new BadRequestException('teammateId is required for 2v2');
+      throw new BadRequestException({
+        message: 'teammateId is required for 2v2',
+        code: 'TEAMMATE_REQUIRED',
+      });
     }
     if (teammateId === userId) {
-      throw new BadRequestException('Invalid teammate');
+      throw new BadRequestException({
+        message: 'Invalid teammate',
+        code: 'TEAMMATE_INVALID',
+      });
     }
     if (!(await this.usersService.findUserById(teammateId))) {
-      throw new NotFoundException('Teammate not found');
+      throw new NotFoundException({
+        message: 'Teammate not found',
+        code: 'TEAMMATE_NOT_FOUND',
+      });
     }
     if (
       (await this.usersService.getFriendshipStatus(userId, teammateId)) !==
       'friends'
     ) {
-      throw new ForbiddenException('Your teammate must be one of your friends');
+      throw new ForbiddenException({
+        message: 'Your teammate must be one of your friends',
+        code: 'TEAMMATE_MUST_BE_FRIEND',
+      });
     }
     if (await this.queueRepository.findActiveGroupForUser(teammateId)) {
-      throw new ConflictException(
-        'Your friend is already on a table or in a queue',
-      );
+      throw new ConflictException({
+        message: 'Your friend is already on a table or in a queue',
+        code: 'FRIEND_ALREADY_ON_TABLE_OR_QUEUE',
+      });
     }
   }
 
@@ -617,7 +736,7 @@ export class QueueService implements OnModuleInit {
   private async forceCancelMatch(
     tableId: string,
     matchId: string,
-    reason: 'timeout' | 'externalRelease',
+    reason: 'timeout' | 'externalRelease' | 'admin',
   ): Promise<void> {
     this.clearTimer(`score:${tableId}`);
     const groups = await this.queueRepository.listOnTable(tableId);
@@ -647,7 +766,10 @@ export class QueueService implements OnModuleInit {
   private async getGroup(groupId: string): Promise<QueueGroupEntity> {
     const group = await this.queueRepository.findGroupById(groupId);
     if (!group) {
-      throw new NotFoundException('Queue group not found');
+      throw new NotFoundException({
+        message: 'Queue group not found',
+        code: 'GROUP_NOT_FOUND',
+      });
     }
     return group;
   }
@@ -655,7 +777,10 @@ export class QueueService implements OnModuleInit {
   /** Lève une ForbiddenException si l'utilisateur ne fait pas partie du groupe. */
   private assertMember(group: QueueGroupEntity, userId: string): void {
     if (!group.players.some((player) => player.id === userId)) {
-      throw new ForbiddenException('Not your group');
+      throw new ForbiddenException({
+        message: 'Not your group',
+        code: 'NOT_YOUR_GROUP',
+      });
     }
   }
 

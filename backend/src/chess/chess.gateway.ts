@@ -6,7 +6,7 @@ import {
     WebSocketGateway,
     WebSocketServer,
 } from '@nestjs/websockets';
-import { Logger } from '@nestjs/common';
+import { HttpException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { DefaultEventsMap, Server, Socket } from 'socket.io';
 import { UsersService } from '../users/services/users.services';
@@ -82,8 +82,13 @@ export class ChessGateway implements OnGatewayConnection {
             );
             this.server.to([game.whitePlayerId, game.blackPlayerId]).emit('chess:state', game);
         } catch (error) {
-            const message = error instanceof Error ? error.message : 'Coup impossible';
-            client.emit('chess:error', { message });
+            const message = error instanceof Error ? error.message : 'Illegal move';
+            // Code stable : le client traduit le message dans la langue de l'utilisateur.
+            const response = error instanceof HttpException ? error.getResponse() : null;
+            const code = typeof response === 'object' && response !== null && 'code' in response
+                ? String(response.code)
+                : 'ILLEGAL_MOVE';
+            client.emit('chess:error', { message, code });
         }
     }
 }

@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from "react";
+import { useState, type ReactElement, type ReactNode } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ type ConfirmDialogProps = {
   children: ReactElement;
   title: string;
   description: string;
+  /** Contenu libre affiché sous la description (ex. récapitulatif à vérifier). */
+  body?: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   variant?: "default" | "destructive";
@@ -19,6 +21,7 @@ export function ConfirmDialog({
   children,
   title,
   description,
+  body,
   confirmLabel,
   cancelLabel,
   variant = "destructive",
@@ -64,6 +67,7 @@ export function ConfirmDialog({
           <Dialog.Description className="mt-2 font-sans text-sm text-muted-foreground">
             {description}
           </Dialog.Description>
+          {body}
           <div className="mt-5 flex justify-end gap-2">
             <Dialog.Close
               disabled={busy}

@@ -8,15 +8,16 @@ export class MessageRepository {
   /** Injecte les dépendances : PrismaService. */
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Crée un message et met à jour la date de la conversation, dans une même transaction. */
+  /** Crée un message (éventuellement une invitation à une partie d'échecs) et met à jour la date de la conversation, dans une même transaction. */
   async create(
     conversationId: string,
     senderId: string,
     content: string,
+    chessGameId?: string,
   ): Promise<MessageEntity> {
     const message = await this.prisma.$transaction(async (transaction) => {
       const createdMessage = await transaction.message.create({
-        data: { conversationId, senderId, content },
+        data: { conversationId, senderId, content, chessGameId },
       });
 
       await transaction.conversation.update({
@@ -67,6 +68,7 @@ export class MessageRepository {
       senderId: message.senderId,
       content: message.content,
       createdAt: message.createdAt,
+      chessGameId: message.chessGameId,
     });
   }
 }

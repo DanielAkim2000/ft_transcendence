@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -32,13 +33,13 @@ import type { Request, Response } from 'express';
 
 type SwitchResult =
   | {
-    twoFactorEnabled: false;
-    user: UserEntity;
-    accessToken: string;
-  }
+      twoFactorEnabled: false;
+      user: UserEntity;
+      accessToken: string;
+    }
   | {
-    twoFactorEnabled: true;
-  };
+      twoFactorEnabled: true;
+    };
 
 @Controller('auth')
 export class AuthController {
@@ -46,7 +47,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
-  ) { }
+  ) {}
 
   /** POST /auth/register : crée un compte (email, nom, mot de passe), pose le cookie de refresh token et retourne l'utilisateur avec son access token. */
   @Post('register')
@@ -91,7 +92,7 @@ export class AuthController {
   /** GET /auth/42/login : point d'entrée qui redirige vers l'OAuth 42 (géré par le guard Passport). */
   @Get('42/login')
   @UseGuards(AuthGuard(FOURTY_TWO_STRATEGY))
-  loginFrom42Profile() { }
+  loginFrom42Profile() {}
 
   /** GET /auth/42/callback : retour de l'OAuth 42 ; pose le cookie de refresh (ou de pré-authentification si 2FA) puis redirige vers le frontend. */
   @Get('42/callback')
@@ -102,10 +103,29 @@ export class AuthController {
   ): Promise<void> {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     if (!frontendUrl) {
-      throw new UnauthorizedException('FRONTEND_URL is not set');
+      throw new UnauthorizedException({
+        message: 'FRONTEND_URL is not set',
+        code: 'SERVER_CONFIG_ERROR',
+      });
     }
 
     const callbackUrl = new URL('/auth/callback', frontendUrl);
+
+    try {
+      await this.authService.assertNotBanned(req.user.id);
+    } catch (error) {
+      if (!(error instanceof ForbiddenException)) throw error;
+      const { reason, endTime } = error.getResponse() as {
+        reason: string;
+        endTime: Date | null;
+      };
+      const loginUrl = new URL('/login', frontendUrl);
+      loginUrl.searchParams.set('banned', '1');
+      loginUrl.searchParams.set('reason', reason);
+      if (endTime) loginUrl.searchParams.set('until', endTime.toISOString());
+      res.redirect(loginUrl.toString());
+      return;
+    }
 
     if (req.user.twoFactorEnabled === false) {
       const tokens = await this.authService.createTokens(req.user);
@@ -130,7 +150,10 @@ export class AuthController {
     const oldRefreshToken = (req.cookies as Record<string, unknown> | undefined)
       ?.refreshToken;
     if (!oldRefreshToken || typeof oldRefreshToken !== 'string') {
-      throw new UnauthorizedException('Refresh token cookie is missing');
+      throw new UnauthorizedException({
+        message: 'Refresh token cookie is missing',
+        code: 'SESSION_EXPIRED',
+      });
     }
     const tokens = await this.authService.rotateRefreshToken(
       req.user,
@@ -152,7 +175,10 @@ export class AuthController {
     const refreshToken = (req.cookies as Record<string, unknown> | undefined)
       ?.refreshToken;
     if (!refreshToken || typeof refreshToken !== 'string') {
-      throw new UnauthorizedException('Refresh token cookie is missing');
+      throw new UnauthorizedException({
+        message: 'Refresh token cookie is missing',
+        code: 'SESSION_EXPIRED',
+      });
     }
     await this.authService.revokeRefreshToken(req.user.id, refreshToken);
     res.clearCookie('refreshToken', {
@@ -314,9 +340,10 @@ export class AuthController {
     );
     if (!expirationTime) {
       await this.authService.revokeRefreshToken(user.id, refreshToken);
-      throw new UnauthorizedException(
-        'Refresh token expiration time is not set',
-      );
+      throw new UnauthorizedException({
+        message: 'Refresh token expiration time is not set',
+        code: 'SERVER_CONFIG_ERROR',
+      });
     }
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -336,9 +363,10 @@ export class AuthController {
       'JWT_PRE_AUTH_TOKEN_EXPIRATION_TIME',
     );
     if (!expirationTime) {
-      throw new UnauthorizedException(
-        'Pre-auth token expiration time is not set',
-      );
+      throw new UnauthorizedException({
+        message: 'Pre-auth token expiration time is not set',
+        code: 'SERVER_CONFIG_ERROR',
+      });
     }
     res.cookie('preAuthToken', preAuthToken, {
       httpOnly: true,

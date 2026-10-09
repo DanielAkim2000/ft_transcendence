@@ -1,4 +1,9 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import {
   ExtractJwt,
@@ -37,8 +42,13 @@ export class AccessTokenStrategy extends PassportStrategy(
     try {
       return await this.authService.validateUserFromToken(payload.userId);
     } catch (error) {
+      // Compte banni : 403 avec le motif, pas un 401 générique.
+      if (error instanceof ForbiddenException) throw error;
       this.logger.error('Failed to validate access token', error);
-      throw new UnauthorizedException('Failed to validate access token');
+      throw new UnauthorizedException({
+        message: 'Failed to validate access token',
+        code: 'SESSION_EXPIRED',
+      });
     }
   }
 }

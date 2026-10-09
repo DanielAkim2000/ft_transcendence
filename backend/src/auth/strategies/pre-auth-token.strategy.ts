@@ -46,7 +46,10 @@ export class PreAuthTokenStrategy extends PassportStrategy(
       return await this.authService.validateUserFromToken(payload.userId);
     } catch (error) {
       this.logger.error('Failed to validate pre auth token', error);
-      throw new UnauthorizedException('Failed to validate pre auth token');
+      throw new UnauthorizedException({
+        message: 'Failed to validate pre auth token',
+        code: 'SESSION_EXPIRED',
+      });
     }
   }
 }

@@ -1,3 +1,4 @@
+import { messagePreview } from "@/features/chat/messagePreview";
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
@@ -65,6 +66,7 @@ function RecentConversation({
 }) {
   const peerId =
     conversation.userAId === meId ? conversation.userBId : conversation.userAId;
+  const { t } = useTranslation();
   const { data } = useGetUserQuery(peerId);
   const user = data?.user;
   const unread = conversation.unreadCount > 0;
@@ -89,7 +91,7 @@ function RecentConversation({
               unread ? "font-semibold text-foreground" : "text-muted-foreground",
             )}
           >
-            {conversation.lastMessage?.content ?? ""}
+            {conversation.lastMessage ? messagePreview(conversation.lastMessage, t) : ""}
           </p>
         </div>
         {unread ? (

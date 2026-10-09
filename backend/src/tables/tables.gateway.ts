@@ -57,6 +57,11 @@ export class TablesGateway implements OnGatewayConnection {
     }
   }
 
+  /** Prévient tous les clients connectés qu'une table a été supprimée (événement table:removed). */
+  emitTableRemoved(tableId: string) {
+    this.server.emit('table:removed', { id: tableId });
+  }
+
   /** Diffuse l'état à jour d'une table à tous les clients connectés (événement table:update). */
   emitTableUpdate(table: TableEntity) {
     this.server.emit('table:update', table);

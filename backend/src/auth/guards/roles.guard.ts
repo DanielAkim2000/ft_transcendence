@@ -31,11 +31,17 @@ export class RolesGuard implements CanActivate {
       .getRequest<Request & { user?: UserEntity }>();
     const user = request.user;
     if (!user) {
-      throw new UnauthorizedException('Access token invalide');
+      throw new UnauthorizedException({
+        message: 'Invalid access token',
+        code: 'SESSION_EXPIRED',
+      });
     }
 
     if (!requiredRoles.includes(user.role)) {
-      throw new ForbiddenException('Droits insuffisants');
+      throw new ForbiddenException({
+        message: 'Insufficient rights',
+        code: 'INSUFFICIENT_RIGHTS',
+      });
     }
 
     return true;

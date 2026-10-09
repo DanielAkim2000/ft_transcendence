@@ -10,6 +10,8 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
+import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
+import { Role } from '../users/entities/users.entity';
 import { UserEntity } from '../users/entities/user.entity';
 import { QueueService } from './services/queue.service';
 import { JoinQueueDto } from './dtos/join-queue.dto';
@@ -61,6 +63,13 @@ export class QueueController {
   ): Promise<{ ok: true }> {
     await this.queueService.leave(req.user.id, groupId);
     return { ok: true };
+  }
+
+  /** POST /queue/:tableId/admin-release (admin) : libère la table de force (match annulé, joueurs sortis, file qui avance). */
+  @Post(':tableId/admin-release')
+  @AuthRoles(Role.ADMIN)
+  adminRelease(@Param('tableId') tableId: string) {
+    return this.queueService.adminReleaseTable(tableId);
   }
 
   /** GET /queue/:tableId : liste les groupes en attente ou appelés pour une table. */

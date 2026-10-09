@@ -23,7 +23,13 @@ export class AccessTokenGuard extends AuthGuard(ACCESS_TOKEN_STRATEGY) {
     user: UserEntity | false | null,
   ): TUser {
     if (err || !user) {
-      throw err ?? new UnauthorizedException('Access token invalide');
+      throw (
+        err ??
+        new UnauthorizedException({
+          message: 'Invalid access token',
+          code: 'SESSION_EXPIRED',
+        })
+      );
     }
     return user as TUser;
   }

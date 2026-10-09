@@ -62,6 +62,55 @@ export class BadgesRepository {
     });
   }
 
+  /** Ajuste le décompte de victoires d'un joueur après la correction d'un résultat (+1 ou −1 victoire, avec l'XP de victoire correspondante). */
+  async shiftWin(userId: string, delta: 1 | -1): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        wins: { increment: delta },
+        xp: { increment: delta * XP_PER_MATCH_WIN_BONUS },
+      },
+    });
+  }
+
+  /** Recalcule la série de victoires en cours et la meilleure série d'un joueur à partir de ses matchs terminés (dans l'ordre où ils ont été joués). */
+  async recomputeStreaks(userId: string): Promise<void> {
+    const matches = await this.prisma.match.findMany({
+      where: {
+        status: 'COMPLETED',
+        OR: [
+          { teamAPlayer1Id: userId },
+          { teamAPlayer2Id: userId },
+          { teamBPlayer1Id: userId },
+          { teamBPlayer2Id: userId },
+        ],
+      },
+      orderBy: [{ submittedAt: 'asc' }, { createdAt: 'asc' }],
+      select: {
+        scoreA: true,
+        scoreB: true,
+        teamAPlayer1Id: true,
+        teamAPlayer2Id: true,
+      },
+    });
+    let current = 0;
+    let best = 0;
+    for (const match of matches) {
+      if (match.scoreA === null || match.scoreB === null) continue;
+      const inTeamA =
+        match.teamAPlayer1Id === userId || match.teamAPlayer2Id === userId;
+      const won = inTeamA
+        ? match.scoreA > match.scoreB
+        : match.scoreB > match.scoreA;
+      current = won ? current + 1 : 0;
+      best = Math.max(best, current);
+    }
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { currentWinStreak: current, bestWinStreak: best },
+    });
+  }
+
   /** Ajoute un montant d'XP bonus à l'utilisateur. */
   async addBonusXp(userId: string, amount: number): Promise<void> {
     await this.prisma.user.update({

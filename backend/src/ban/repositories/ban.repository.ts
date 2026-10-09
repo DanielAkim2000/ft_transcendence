@@ -1,56 +1,61 @@
-import { PrismaService } from "../../prisma/prisma.service";
-import { Injectable } from "@nestjs/common"
-import { CreateBanDto } from "../dto/create-ban.dto";
-import { Ban } from "../../generated/prisma/client";
-import { NotFoundException } from "@nestjs/common"
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
+import { Ban } from '../../generated/prisma/client';
+import { CreateBanDto } from '../dto/create-ban.dto';
+
+const HOUR_MS = 60 * 60 * 1000;
 
 @Injectable()
 export class BanRepository {
+  /** Injecte les dépendances : PrismaService. */
   constructor(private readonly prisma: PrismaService) {}
 
-  async findBanStatus(userId: string) : Promise<Ban | null> {
-    const banStatus = this.prisma.ban.findFirst({
-      where: { userId: userId, OR: [{ endTime: null }, { endTime: { gt: new Date() } }]},
+  /** Retourne le ban en cours de l'utilisateur (permanent ou pas encore terminé), le plus récent d'abord, ou null. */
+  findActiveBan(userId: string): Promise<Ban | null> {
+    return this.prisma.ban.findFirst({
+      where: {
+        userId,
+        OR: [{ endTime: null }, { endTime: { gt: new Date() } }],
+      },
       orderBy: { startTime: 'desc' },
     });
-    return banStatus;
   }
 
-  async findBans(userId: string) : Promise<Ban[]> {
-    const bans = await this.prisma.ban.findMany({
-      where: {userId: userId},
-      orderBy: { startTime: "desc" }
+  /** Historique complet des bans de l'utilisateur, du plus récent au plus ancien. */
+  findBans(userId: string): Promise<Ban[]> {
+    return this.prisma.ban.findMany({
+      where: { userId },
+      orderBy: { startTime: 'desc' },
     });
-    return bans;
   }
 
-  async create(
-    userId: string,
-    dto: CreateBanDto,
-  ) : Promise<void> {
-    await this.prisma.$transaction([
+  /** Crée le ban (durée 0 = permanent) et révoque toutes les sessions de l'utilisateur (refresh tokens), dans la même transaction. */
+  async create(userId: string, dto: CreateBanDto): Promise<Ban> {
+    const [ban] = await this.prisma.$transaction([
       this.prisma.ban.create({
         data: {
           userId,
-          endTime: dto.durationHours == 0 ? null
-            : new Date(Date.now().valueOf() + dto.durationHours * 3600000),
+          endTime:
+            dto.durationHours === 0
+              ? null
+              : new Date(Date.now() + dto.durationHours * HOUR_MS),
           reason: dto.reason,
-        }
+        },
       }),
-      this.prisma.refreshToken.deleteMany({
-        where: {userId: userId},
-      })
+      this.prisma.refreshToken.deleteMany({ where: { userId } }),
     ]);
+    return ban;
   }
 
-  async unbanUser(userId: string) : Promise<number> {
+  /** Termine immédiatement les bans en cours de l'utilisateur ; retourne le nombre de bans levés. */
+  async unbanUser(userId: string): Promise<number> {
     const result = await this.prisma.ban.updateMany({
       where: {
-        userId: userId,
+        userId,
         OR: [{ endTime: null }, { endTime: { gt: new Date() } }],
       },
-      data: { endTime: new Date()},
+      data: { endTime: new Date() },
     });
     return result.count;
   }
-};
+}

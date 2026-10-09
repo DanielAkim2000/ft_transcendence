@@ -1,4 +1,9 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy, type StrategyOptions } from 'passport-jwt';
 import type { Request } from 'express';
@@ -44,7 +49,10 @@ export class RefreshTokenStrategy extends PassportStrategy(
         req.cookies as Record<string, unknown> | undefined
       )?.refreshToken;
       if (!rawRefreshToken || typeof rawRefreshToken !== 'string') {
-        throw new UnauthorizedException('Refresh token not found');
+        throw new UnauthorizedException({
+          message: 'Refresh token not found',
+          code: 'SESSION_EXPIRED',
+        });
       }
 
       await this.authService.assertRefreshTokenIsValid(
@@ -54,8 +62,13 @@ export class RefreshTokenStrategy extends PassportStrategy(
 
       return await this.authService.validateUserFromToken(payload.userId);
     } catch (error) {
+      // Compte banni : 403 avec le motif, pas un 401 générique.
+      if (error instanceof ForbiddenException) throw error;
       this.logger.error('Failed to validate refresh token', error);
-      throw new UnauthorizedException('Failed to validate refresh token');
+      throw new UnauthorizedException({
+        message: 'Failed to validate refresh token',
+        code: 'SESSION_EXPIRED',
+      });
     }
   }
 }

@@ -147,7 +147,13 @@ export class UsersController {
       }),
       fileFilter: (_req, file, cb) => {
         if (!AVATAR_MIME_TYPES.has(file.mimetype)) {
-          cb(new BadRequestException('Invalid image type'), false);
+          cb(
+            new BadRequestException({
+              message: 'Invalid image type',
+              code: 'INVALID_IMAGE_TYPE',
+            }),
+            false,
+          );
           return;
         }
         cb(null, true);
@@ -160,7 +166,10 @@ export class UsersController {
     @UploadedFile() file: Express.Multer.File,
   ): Promise<UserEntity> {
     if (!file) {
-      throw new BadRequestException('Avatar file is required');
+      throw new BadRequestException({
+        message: 'Avatar file is required',
+        code: 'AVATAR_REQUIRED',
+      });
     }
     return this.usersService.updateAvatar(req.user, file.filename);
   }

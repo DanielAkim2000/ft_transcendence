@@ -106,3 +106,46 @@ export function resolveTie(twoLegged: boolean, legs: TieLeg[]): TieResolution {
     nextLegNumber: null,
   };
 }
+
+export interface LegCorrectionPlan {
+  /** Résolution de la rencontre avec le score actuel. */
+  before: TieResolution;
+  /** Résolution de la rencontre avec le score corrigé. */
+  after: TieResolution;
+  /** L'équipe qui gagne la manche change (le score corrigé inverse le résultat de la manche). */
+  legWinnerFlipped: boolean;
+  /** Le sort de la rencontre change : décidée ↔ à rejouer, ou autre vainqueur. */
+  tieOutcomeChanged: boolean;
+}
+
+/** Prévoit l'effet de la correction du score d'une manche terminée sur sa rencontre (sans rien modifier). */
+export function planLegCorrection(
+  twoLegged: boolean,
+  legs: TieLeg[],
+  legNumber: number,
+  scoreA: number,
+  scoreB: number,
+): LegCorrectionPlan {
+  const target = legs.find((leg) => leg.legNumber === legNumber);
+  const before = resolveTie(twoLegged, legs);
+  const after = resolveTie(
+    twoLegged,
+    legs.map((leg) =>
+      leg.legNumber === legNumber ? { ...leg, scoreA, scoreB } : leg,
+    ),
+  );
+  const oldSide =
+    target && target.scoreA !== null && target.scoreB !== null
+      ? target.scoreA > target.scoreB
+        ? 'A'
+        : 'B'
+      : null;
+  const newSide = scoreA > scoreB ? 'A' : 'B';
+  return {
+    before,
+    after,
+    legWinnerFlipped: oldSide !== null && oldSide !== newSide,
+    tieOutcomeChanged:
+      before.done !== after.done || before.winnerSide !== after.winnerSide,
+  };
+}

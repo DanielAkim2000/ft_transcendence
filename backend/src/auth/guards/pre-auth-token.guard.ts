@@ -23,7 +23,13 @@ export class PreAuthTokenGuard extends AuthGuard(PRE_AUTH_TOKEN_STRATEGY) {
     user: UserEntity | false | null,
   ): TUser {
     if (err || !user) {
-      throw err ?? new UnauthorizedException('Pre auth token invalide');
+      throw (
+        err ??
+        new UnauthorizedException({
+          message: 'Invalid pre-auth token',
+          code: 'SESSION_EXPIRED',
+        })
+      );
     }
     return user as TUser;
   }

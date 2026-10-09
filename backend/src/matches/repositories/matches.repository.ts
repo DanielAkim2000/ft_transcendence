@@ -298,6 +298,32 @@ export class MatchesRepository {
     return count === 1;
   }
 
+  /** Atomique : un administrateur saisit le score d'une manche de tournoi acceptée ; le match est terminé d'un coup (pas de validation par l'adversaire). */
+  async completeByAdmin(
+    id: string,
+    adminId: string,
+    scoreA: number,
+    scoreB: number,
+  ): Promise<boolean> {
+    const now = new Date();
+    const { count } = await this.prisma.match.updateMany({
+      where: {
+        id,
+        status: MatchStatus.ACCEPTED,
+        tournamentTieId: { not: null },
+      },
+      data: {
+        status: MatchStatus.COMPLETED,
+        scoreA,
+        scoreB,
+        submittedById: adminId,
+        validatedById: adminId,
+        submittedAt: now,
+      },
+    });
+    return count === 1;
+  }
+
   /** Atomique : litige, manuel ou après expiration du délai de validation. */
   async dispute(id: string, userId?: string): Promise<boolean> {
     const { count } = await this.prisma.match.updateMany({

@@ -62,6 +62,31 @@ export const tablesApi = api.injectEndpoints({
         }
       },
     }),
+    // Admin : gestion des tables (la liste est aussi mise à jour par websocket).
+    [TABLES_ENDPOINTS.CREATE_TABLE]: builder.mutation<BabyTable, string>({
+      query: (name) => ({ url: API_ROUTES.TABLES, method: "POST", body: { name } }),
+      invalidatesTags: [TAG_TYPES.TABLES],
+    }),
+    [TABLES_ENDPOINTS.RENAME_TABLE]: builder.mutation<
+      BabyTable,
+      { id: string; name: string }
+    >({
+      query: ({ id, name }) => ({
+        url: API_ROUTES.table(id),
+        method: "PATCH",
+        body: { name },
+      }),
+      invalidatesTags: [TAG_TYPES.TABLES],
+    }),
+    // Admin : libère la table de force (match annulé, joueurs sortis, file qui avance).
+    [TABLES_ENDPOINTS.ADMIN_RELEASE_TABLE]: builder.mutation<BabyTable, string>({
+      query: (id) => ({ url: API_ROUTES.queueAdminRelease(id), method: "POST" }),
+      invalidatesTags: [TAG_TYPES.TABLES, TAG_TYPES.QUEUE, TAG_TYPES.MATCHES],
+    }),
+    [TABLES_ENDPOINTS.DELETE_TABLE]: builder.mutation<void, string>({
+      query: (id) => ({ url: API_ROUTES.table(id), method: "DELETE" }),
+      invalidatesTags: [TAG_TYPES.TABLES],
+    }),
   }),
 });
 
@@ -83,4 +108,22 @@ export function applyTableToCache(dispatch: Dispatch, table: BabyTable) {
   );
 }
 
-export const { useListTablesQuery, useVoteReleaseTableMutation } = tablesApi;
+/** Retire une table du cache (supprimée par un admin, via websocket). */
+export function removeTableFromCache(dispatch: Dispatch, tableId: string) {
+  dispatch(
+    tablesApi.util.updateQueryData(
+      TABLES_ENDPOINTS.LIST_TABLES,
+      undefined,
+      (draft) => draft.filter((entry) => entry.id !== tableId),
+    ),
+  );
+}
+
+export const {
+  useListTablesQuery,
+  useVoteReleaseTableMutation,
+  useCreateTableMutation,
+  useRenameTableMutation,
+  useDeleteTableMutation,
+  useAdminReleaseTableMutation,
+} = tablesApi;

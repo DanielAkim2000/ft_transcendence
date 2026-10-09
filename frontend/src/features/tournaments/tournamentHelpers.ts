@@ -11,3 +11,17 @@ export function translateRoundLabel(label: string, t: (key: string, opts?: Recor
   }
   return label;
 }
+
+/** Nom d'une équipe de tournoi (« Joueur1 + Joueur2 » en double), ou le libellé « à déterminer » si elle n'est pas encore connue. */
+export function entryLabel(
+  entry: {
+    player1: { displayname: string };
+    player2: { displayname: string } | null;
+  } | null,
+  t: (key: string) => string,
+): string {
+  if (!entry) return t("tournaments.tbd");
+  return entry.player2
+    ? `${entry.player1.displayname} + ${entry.player2.displayname}`
+    : entry.player1.displayname;
+}

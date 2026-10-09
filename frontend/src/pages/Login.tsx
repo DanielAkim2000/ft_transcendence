@@ -33,6 +33,7 @@ import {
 } from "@/features/auth/two-factor.schema";
 import { clearCredentials } from "@/features/auth/authSlice";
 import { AuthShell } from "@/layouts/AuthShell";
+import { BanNotice } from "@/features/ban/BanNotice";
 import { ROUTES } from "@/constants/routes";
 import { API_ROUTES } from "@/constants/apiRoutes";
 import { getErrorMessage } from "@/lib/get-error-message";
@@ -42,7 +43,7 @@ function LoginCredentialsForm() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [login, { isLoading }] = useLoginMutation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [serverError, setServerError] = useState<string | null>(null);
 
   // i18n.language force la recomputation quand la langue change (messages traduits).
@@ -65,15 +66,9 @@ function LoginCredentialsForm() {
           navigate(ROUTES.HOME, { replace: true });
         }
       } catch (error) {
-        const data = (error as {status?: number; data?: { code?: string; reason?: string; endTime?: Date}})
-        if (data.status === 403 && data.data?.code === "BAN") {
-          console.log("OK");
-          setSearchParams({
-            banned: "1",
-            reason: data.data?.reason,
-            ...(data.data?.endTime && { until: data.data?.endTime }),
-          });
-        }
+        // Un ban est expliqué par le bandeau (api.ts redirige ici avec le motif), pas par un message d'erreur.
+        const data = (error as { status?: number; data?: { code?: string } });
+        if (data.status === 403 && data.data?.code === "BAN") return;
         setServerError(getErrorMessage(error, t("auth.login.failed")));
       }
     },
@@ -95,6 +90,12 @@ function LoginCredentialsForm() {
       </CardHeader>
 
       <CardContent>
+        {searchParams.get("banned") === "1" ? (
+          <BanNotice
+            reason={searchParams.get("reason")}
+            until={searchParams.get("until")}
+          />
+        ) : null}
         <form
           id="login-form"
           onSubmit={(e) => {

@@ -107,6 +107,11 @@ enum NotificationType {
   TOURNAMENT_ELIMINATED
   TOURNAMENT_COMPLETED
   BADGE_EARNED
+  CHESS_INVITE
+  CHESS_INVITE_ACCEPTED
+  CHESS_INVITE_DECLINED
+  TOURNAMENT_SCORE_CORRECTED
+  TOURNAMENT_TIE_RESET
 }
 
 enum ThemePreference {
@@ -298,10 +303,14 @@ model Message {
   content        String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  // Non-nul = message d'invitation à une partie d'échecs : le front l'affiche comme une carte d'invitation à jour.
+  chessGameId    String?
+  chessGame      ChessGame?   @relation(fields: [chessGameId], references: [id], onDelete: SetNull)
   createdAt      DateTime     @default(now())
 
   @@index([conversationId, createdAt])
   @@index([senderId])
+  @@index([chessGameId])
 }
 
 model Conversation {
@@ -616,6 +625,7 @@ model ChessGame {
   @@index([blackPlayerId, status])
   @@index([status, updatedAt])
   @@index([endedAt])
+  inviteMessages Message[]
 }
 
 model ChessMove {

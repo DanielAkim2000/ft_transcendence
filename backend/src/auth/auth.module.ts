@@ -30,4 +30,4 @@ import { MailModule } from '../mail/mail.module';
   controllers: [AuthController],
   exports: [AuthService, AccessTokenGuard, RolesGuard],
 })
-export class AuthModule { }
+export class AuthModule {}

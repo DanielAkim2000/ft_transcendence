@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "NotificationType" ADD VALUE 'TOURNAMENT_TIE_RESET';

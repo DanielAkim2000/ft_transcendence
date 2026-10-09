@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Dialog } from "@base-ui/react/dialog";
 import { useMeQuery } from "@/features/auth/authApi";
+import { AdminReleaseTableButton } from "@/features/tables/AdminReleaseTableButton";
+import { ScoreConfirmDialog } from "@/components/score-confirm-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -154,12 +156,14 @@ function ScoreForm({ table }: { table: BabyTable }) {
             onChange={(e) => setScoreB(e.target.value)}
           />
         </div>
-        <Button
-          type="button"
-          size="sm"
-          disabled={isLoading || !valid}
-          onClick={() =>
-            void run(
+        <ScoreConfirmDialog
+          kind="table"
+          teamA={label(groupA)}
+          teamB={label(groupB)}
+          scoreA={a}
+          scoreB={b}
+          onConfirm={() =>
+            run(
               () =>
                 submitScore({
                   matchId: table.currentMatchId ?? "",
@@ -170,8 +174,10 @@ function ScoreForm({ table }: { table: BabyTable }) {
             )
           }
         >
-          {t("matches.submitScore")}
-        </Button>
+          <Button type="button" size="sm" disabled={isLoading || !valid}>
+            {t("matches.submitScore")}
+          </Button>
+        </ScoreConfirmDialog>
       </div>
       <p className={cn("text-[11px]", filled && !valid ? "text-destructive" : "text-muted-foreground")}>
         {filled && !valid ? t("tables.scoreInvalid") : t("tables.scoreHint")}
@@ -545,6 +551,7 @@ function TableCard({
   myGroup: QueueGroup | null;
 }) {
   const { t } = useTranslation();
+  const { data: me } = useMeQuery();
   const busy = table.status === "BUSY";
   const tie = table.currentTournamentTie;
   const inMatch = table.currentMatchId !== null;
@@ -636,6 +643,11 @@ function TableCard({
 
       <TableActions table={table} meId={meId} myGroup={myGroup} />
       <QueueSection table={table} now={now} meId={meId} myGroup={myGroup} />
+      {me?.role === "ADMIN" ? (
+        <div className="flex justify-end">
+          <AdminReleaseTableButton table={table} />
+        </div>
+      ) : null}
     </section>
   );
 }

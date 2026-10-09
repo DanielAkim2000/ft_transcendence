@@ -45,7 +45,10 @@ export class MailService {
       });
     } catch (error) {
       this.logger.error(`Envoi de l'email à ${to} échoué`, error as Error);
-      throw new ServiceUnavailableException('Unable to send the email');
+      throw new ServiceUnavailableException({
+        message: 'Unable to send the email',
+        code: 'EMAIL_SEND_FAILED',
+      });
     }
   }
 

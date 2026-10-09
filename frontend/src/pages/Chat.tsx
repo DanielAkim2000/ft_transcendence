@@ -15,6 +15,8 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { toast } from "@/components/ui/toast";
 import { ChallengeDialog } from "@/features/matches/ChallengeDialog";
 import { useChessInvite } from "@/features/chess/useChessInvite";
+import { ChessInviteCard } from "@/features/chess/ChessInviteCard";
+import { messagePreview } from "@/features/chat/messagePreview";
 import { ROUTES } from "@/constants/routes";
 import { useMeQuery } from "@/features/auth/authApi";
 import { useGetUserQuery } from "@/features/users/usersApi";
@@ -128,7 +130,7 @@ function ConversationRow({
             )}
           >
             {last
-              ? `${last.senderId === meId ? `${t("chat.you")}: ` : ""}${last.content}`
+              ? `${last.senderId === meId ? `${t("chat.you")}: ` : ""}${messagePreview(last, t)}`
               : t("chat.noMessages")}
           </p>
         </div>
@@ -169,7 +171,7 @@ function Thread({
   const [markRead] = useMarkConversationReadMutation();
   const [blockUser, { isLoading: blocking }] = useBlockUserMutation();
   const [unblockUser, { isLoading: unblocking }] = useUnblockUserMutation();
-  const { inviteToChess } = useChessInvite();
+  const { inviteToChess, inviting } = useChessInvite();
   const [draft, setDraft] = useState("");
   const [peerTyping, setPeerTyping] = useState(false);
   const peerTypingExpiryRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -352,7 +354,8 @@ function Thread({
               size="sm"
               variant="outline"
               aria-label={t("chat.inviteChess")}
-              onClick={() => inviteToChess(peerId)}
+              disabled={inviting}
+              onClick={() => void inviteToChess(peerId)}
             >
               <CrownIcon />
               <span className="hidden sm:inline">{t("chat.inviteChess")}</span>
@@ -418,16 +421,24 @@ function Thread({
                 {mine ? t("chat.you") : (peer?.user.displayname ?? "…")} ·{" "}
                 {formatTime(message.createdAt)}
               </span>
-              <p
-                className={cn(
-                  "border px-3 py-2 text-sm break-words whitespace-pre-wrap",
-                  mine
-                    ? "border-primary/60 bg-primary/10"
-                    : "border-border bg-card",
-                )}
-              >
-                {message.content}
-              </p>
+              {message.chessGameId ? (
+                <ChessInviteCard
+                  gameId={message.chessGameId}
+                  meId={meId}
+                  peerName={peer?.user.displayname ?? "…"}
+                />
+              ) : (
+                <p
+                  className={cn(
+                    "border px-3 py-2 text-sm break-words whitespace-pre-wrap",
+                    mine
+                      ? "border-primary/60 bg-primary/10"
+                      : "border-border bg-card",
+                  )}
+                >
+                  {message.content}
+                </p>
+              )}
               {mine ? (
                 <span
                   className="flex items-center gap-1 text-[10px] text-muted-foreground"

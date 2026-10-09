@@ -95,6 +95,65 @@ export class TablesRepository {
     return table ? this.toEntity(table) : null;
   }
 
+  /** Retrouve l'id d'une table par son nom exact, ou null. */
+  async findIdByName(name: string): Promise<string | null> {
+    const table = await this.prisma.table.findUnique({
+      where: { name },
+      select: { id: true },
+    });
+    return table?.id ?? null;
+  }
+
+  /** Crée une table libre. */
+  async create(name: string): Promise<TableEntity> {
+    const table = await this.prisma.table.create({
+      data: { name },
+      include: withState,
+    });
+    return this.toEntity(table);
+  }
+
+  /** Renomme une table. */
+  async rename(id: string, name: string): Promise<TableEntity> {
+    const table = await this.prisma.table.update({
+      where: { id },
+      data: { name },
+      include: withState,
+    });
+    return this.toEntity(table);
+  }
+
+  /** Vrai si la table est utilisée : occupée, réservée par un tournoi ou avec un groupe encore actif (en file, appelé ou installé). */
+  async isInUse(id: string): Promise<boolean> {
+    const table = await this.prisma.table.findUnique({
+      where: { id },
+      select: {
+        status: true,
+        currentTournamentTieId: true,
+        _count: {
+          select: {
+            queueGroups: {
+              where: {
+                status: { in: ['INVITING', 'WAITING', 'CALLED', 'ON_TABLE'] },
+              },
+            },
+          },
+        },
+      },
+    });
+    return (
+      !!table &&
+      (String(table.status) !== String(TableStatus.FREE) ||
+        table.currentTournamentTieId !== null ||
+        table._count.queueGroups > 0)
+    );
+  }
+
+  /** Supprime une table (ses groupes terminés et votes partent avec elle, ses manches de tournoi restent sans table). */
+  async delete(id: string): Promise<void> {
+    await this.prisma.table.delete({ where: { id } });
+  }
+
   /** Atomique : réserve une table libre et non déjà réclamée pour une rencontre de tournoi. */
   async claimForTournament(id: string, tieId: string): Promise<boolean> {
     const { count } = await this.prisma.table.updateMany({

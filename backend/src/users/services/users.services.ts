@@ -59,7 +59,10 @@ export class UsersService {
   async getProfile(id: string): Promise<UserEntity> {
     const user = await this.userRepository.findUserById(id);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException({
+        message: 'User not found',
+        code: 'USER_NOT_FOUND',
+      });
     }
     return user;
   }
@@ -135,7 +138,10 @@ export class UsersService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        throw new ConflictException('Email already in use');
+        throw new ConflictException({
+          message: 'Email already in use',
+          code: 'EMAIL_ALREADY_USED',
+        });
       }
       throw error;
     }
@@ -185,7 +191,10 @@ export class UsersService {
     addresseeId: string,
   ): Promise<UserEntity> {
     if (requester.id === addresseeId) {
-      throw new BadRequestException('Cannot add yourself as a friend');
+      throw new BadRequestException({
+        message: 'Cannot add yourself as a friend',
+        code: 'CANNOT_FRIEND_SELF',
+      });
     }
     const addressee = await this.getProfile(addresseeId);
     const existing = await this.userRepository.findFriendshipBetween(
@@ -205,10 +214,16 @@ export class UsersService {
       return addressee;
     }
     if (existing.status === 'ACCEPTED') {
-      throw new ConflictException('Already friends');
+      throw new ConflictException({
+        message: 'Already friends',
+        code: 'ALREADY_FRIENDS',
+      });
     }
     if (existing.requesterId === requester.id) {
-      throw new ConflictException('Friend request already sent');
+      throw new ConflictException({
+        message: 'Friend request already sent',
+        code: 'FRIEND_REQUEST_ALREADY_SENT',
+      });
     }
     await this.userRepository.acceptFriendship(existing.id);
     this.presenceGateway.emitToUser(addresseeId, 'friend:update', {
@@ -231,7 +246,10 @@ export class UsersService {
       existing.status !== 'PENDING' ||
       existing.addresseeId !== currentUser.id
     ) {
-      throw new NotFoundException('Friend request not found');
+      throw new NotFoundException({
+        message: 'Friend request not found',
+        code: 'FRIEND_REQUEST_NOT_FOUND',
+      });
     }
     await this.userRepository.acceptFriendship(existing.id);
     this.presenceGateway.emitToUser(requesterId, 'friend:update', {
@@ -250,7 +268,10 @@ export class UsersService {
       otherUserId,
     );
     if (!existing) {
-      throw new NotFoundException('Friendship not found');
+      throw new NotFoundException({
+        message: 'Friendship not found',
+        code: 'FRIENDSHIP_NOT_FOUND',
+      });
     }
     await this.userRepository.deleteFriendship(existing.id);
     this.presenceGateway.emitToUser(otherUserId, 'friend:update', {

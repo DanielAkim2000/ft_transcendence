@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useLogoutMutation, useMeQuery } from "@/features/auth/authApi";
 import { useListConversationsQuery } from "@/features/chat/chatApi";
-import { useGetUserQuery, useListPendingFriendsQuery } from "@/features/users/usersApi";
+import { useListPendingFriendsQuery } from "@/features/users/usersApi";
 import { useGetMyQueueGroupQuery } from "@/features/queue/queueApi";
 import { useCountMatchActionsQuery } from "@/features/matches/matchesApi";
 import { useCountTournamentActionsQuery } from "@/features/tournaments/tournamentsApi";
@@ -104,9 +104,11 @@ export function AppSidebar() {
       ],
     },
     ...(userInfo?.role === "ADMIN" ? [{
-      label: "Admin",
+      label: t("nav.groupAdmin"),
       items: [
-        { title: "Ban", url: ROUTES.BAN, icon: ShieldIcon },
+        { title: t("nav.adminUsers"), url: ROUTES.ADMIN_USERS, icon: UsersIcon },
+        { title: t("nav.adminTables"), url: ROUTES.ADMIN_TABLES, icon: LayoutGridIcon },
+        { title: t("nav.adminBan"), url: ROUTES.ADMIN_BAN, icon: ShieldIcon },
       ],
     }] : []),
   ] as const;

@@ -127,6 +127,15 @@ export class PresenceGateway
     this.server.to(userId).emit(event, payload);
   }
 
+  /** Prévient un utilisateur qu'il vient d'être banni (auth:banned, avec motif et date de fin) puis ferme toutes ses sessions WebSocket : il passe hors ligne. */
+  kickBannedUser(
+    userId: string,
+    payload: { reason: string; endTime: Date | null },
+  ): void {
+    this.server.to(userId).emit('auth:banned', payload);
+    this.server.in(userId).disconnectSockets(true);
+  }
+
   /** Enregistre le statut en ligne/hors ligne en base puis prévient les amis. */
   private async setUserPresence(
     userId: string,

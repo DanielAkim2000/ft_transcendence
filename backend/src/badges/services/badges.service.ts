@@ -52,6 +52,25 @@ export class BadgesService {
     }
   }
 
+  /** Corrige les statistiques quand le résultat d'une partie est inversé après coup : les anciens gagnants perdent une victoire, les anciens perdants en gagnent une (séries recalculées). Les badges déjà obtenus ne sont pas retirés. */
+  async swapGameResult(input: {
+    previousWinnerIds: string[];
+    previousLoserIds: string[];
+  }): Promise<void> {
+    for (const id of input.previousWinnerIds) {
+      await this.badgesRepository.shiftWin(id, -1);
+    }
+    for (const id of input.previousLoserIds) {
+      await this.badgesRepository.shiftWin(id, 1);
+    }
+    for (const id of [...input.previousWinnerIds, ...input.previousLoserIds]) {
+      await this.badgesRepository.recomputeStreaks(id);
+    }
+    for (const id of input.previousLoserIds) {
+      await this.checkMilestones(id);
+    }
+  }
+
   /** Enregistre un match nul pour chaque joueur (XP de participation, série de victoires remise à zéro) puis vérifie les badges de jalons. */
   async recordDraw(userIds: string[]): Promise<void> {
     for (const id of userIds) {
@@ -81,7 +100,10 @@ export class BadgesService {
   async getProfile(userId: string): Promise<PlayerBadgesProfile> {
     const profile = await this.badgesRepository.getProfile(userId);
     if (!profile) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException({
+        message: 'User not found',
+        code: 'USER_NOT_FOUND',
+      });
     }
     return profile;
   }

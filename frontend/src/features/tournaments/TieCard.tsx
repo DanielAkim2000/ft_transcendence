@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/toast";
 import {
-  useSubmitScoreMutation,
+  useSubmitTournamentScoreMutation,
   useValidateScoreMutation,
 } from "@/features/matches/matchesApi";
 import { getErrorMessage } from "@/lib/get-error-message";
@@ -14,6 +14,8 @@ import { getInitials, resolveAvatarUrl } from "@/lib/user";
 import { cn } from "@/lib/utils";
 import type { TournamentEntry, TournamentTie } from "./tournamentsApi";
 import { translateRoundLabel } from "./tournamentHelpers";
+import { LegCorrection } from "./LegCorrection";
+import { ScoreConfirmDialog } from "@/components/score-confirm-dialog";
 
 const TARGET_SCORE = 10;
 
@@ -63,11 +65,24 @@ function EntrySide({
   );
 }
 
-export function TieCard({ tie, meId }: { tie: TournamentTie; meId?: string }) {
+export function TieCard({
+  tie,
+  meId,
+  isAdmin = false,
+  canCorrect = false,
+}: {
+  tie: TournamentTie;
+  meId?: string;
+  /** Seuls les admins saisissent les scores d'un tournoi. */
+  isAdmin?: boolean;
+  /** Admin sur un tournoi en cours ou terminé : peut corriger les scores déjà saisis. */
+  canCorrect?: boolean;
+}) {
   const { t } = useTranslation();
   const [scoreA, setScoreA] = useState("");
   const [scoreB, setScoreB] = useState("");
-  const [submitScore, { isLoading: submitting }] = useSubmitScoreMutation();
+  const [submitScore, { isLoading: submitting }] =
+    useSubmitTournamentScoreMutation();
   const [validateScore, { isLoading: validating }] = useValidateScoreMutation();
 
   const myEntry =
@@ -117,14 +132,14 @@ export function TieCard({ tie, meId }: { tie: TournamentTie; meId?: string }) {
 
   const submit = () => {
     if (!tie.activeLegId || !scoreValid) return;
-    void run(
+    return run(
       () =>
         submitScore({
           matchId: tie.activeLegId!,
           scoreA: a,
           scoreB: b,
         }).unwrap(),
-      t("matches.scoreSentToast", { a, b }),
+      t("tournaments.scoreRecordedToast", { a, b }),
     );
   };
 
@@ -163,7 +178,16 @@ export function TieCard({ tie, meId }: { tie: TournamentTie; meId?: string }) {
 
       {tie.status === "IN_PROGRESS" &&
       tie.activeLegStatus === "ACCEPTED" &&
+      !isAdmin &&
       myEntry ? (
+        <p className="text-xs text-muted-foreground">
+          {t("tournaments.scoreByAdmin")}
+        </p>
+      ) : null}
+
+      {tie.status === "IN_PROGRESS" &&
+      tie.activeLegStatus === "ACCEPTED" &&
+      isAdmin ? (
         <div className="flex flex-col gap-2">
           <div className="flex items-end gap-2">
             <div className="flex flex-col gap-1">
@@ -192,14 +216,22 @@ export function TieCard({ tie, meId }: { tie: TournamentTie; meId?: string }) {
                 onChange={(e) => setScoreB(e.target.value)}
               />
             </div>
-            <Button
-              type="button"
-              size="sm"
-              disabled={submitting || !scoreValid}
-              onClick={submit}
+            <ScoreConfirmDialog
+              kind="tournament"
+              teamA={entryName(tie.entryA, t)}
+              teamB={entryName(tie.entryB, t)}
+              scoreA={a}
+              scoreB={b}
+              onConfirm={submit}
             >
-              {t("matches.submitScore")}
-            </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={submitting || !scoreValid}
+              >
+                {t("matches.submitScore")}
+              </Button>
+            </ScoreConfirmDialog>
           </div>
           <p
             className={cn(
@@ -211,7 +243,7 @@ export function TieCard({ tie, meId }: { tie: TournamentTie; meId?: string }) {
           >
             {scoreFilled && !scoreValid
               ? t("tables.scoreInvalid")
-              : t("tables.scoreHint")}
+              : t("tournaments.adminScoreHint")}
           </p>
         </div>
       ) : null}
@@ -282,6 +314,7 @@ export function TieCard({ tie, meId }: { tie: TournamentTie; meId?: string }) {
           })}
         </p>
       ) : null}
+      {canCorrect ? <LegCorrection tie={tie} /> : null}
     </li>
   );
 }

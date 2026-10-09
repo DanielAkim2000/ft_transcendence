@@ -8,6 +8,8 @@ export interface Message {
   conversationId: string;
   senderId: string;
   content: string;
+  /** Renseigné pour une invitation à une partie d'échecs (affichée comme une carte), null sinon. */
+  chessGameId: string | null;
   createdAt: string;
 }
 

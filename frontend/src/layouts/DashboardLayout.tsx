@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { AppSidebar } from "@/components/app-sidebar";
 import { LegalLinks } from "@/components/legal-links";
 import { PageFallback } from "@/components/page-fallback";
+import { ChessLauncher } from "@/features/chess/ChessLauncher";
 
 export const DashboardLayout = () => {
   return (
@@ -27,6 +28,7 @@ export const DashboardLayout = () => {
             </Suspense>
           </div>
           <LegalLinks className="border-t border-border px-4 py-3 md:px-6" />
+          <ChessLauncher />
         </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>

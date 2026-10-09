@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -17,6 +18,7 @@ import { Role, UserEntity } from '../users/entities/users.entity';
 import { TournamentsService } from './services/tournaments.service';
 import { CreateTournamentDto } from './dtos/create-tournament.dto';
 import { AddEntryDto } from './dtos/add-entry.dto';
+import { ReplacePlayerDto } from './dtos/replace-player.dto';
 
 @Controller('tournaments')
 @UseGuards(AccessTokenGuard)
@@ -70,6 +72,22 @@ export class TournamentsController {
   @AuthRoles(Role.ADMIN)
   removeEntry(@Param('id') id: string, @Param('entryId') entryId: string) {
     return this.tournamentsService.removeEntry(id, entryId);
+  }
+
+  /** PATCH /tournaments/:id/entries/:entryId/player (admin) : remplace un joueur de l'équipe (brouillon, en file ou en cours). */
+  @Patch(':id/entries/:entryId/player')
+  @AuthRoles(Role.ADMIN)
+  replacePlayer(
+    @Param('id') id: string,
+    @Param('entryId') entryId: string,
+    @Body() dto: ReplacePlayerDto,
+  ) {
+    return this.tournamentsService.replacePlayer(
+      id,
+      entryId,
+      dto.playerId,
+      dto.replacementId,
+    );
   }
 
   /** POST /tournaments/:id/launch (admin) : tire au sort le tableau et démarre le tournoi. */

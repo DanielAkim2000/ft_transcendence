@@ -87,6 +87,18 @@ export const MatchesBootstrap = ({ children }: { children: React.ReactNode }) =>
       });
     };
 
+    // Un admin a corrigé le score d'une manche de tournoi terminée.
+    const onCorrected = (match: Match) => {
+      applyMatchToCache(dispatch, match);
+      toast.add({
+        title: i18n.t("matches.correctedToast", {
+          a: match.scoreA,
+          b: match.scoreB,
+        }),
+        type: "info",
+      });
+    };
+
     const onDisputed = (match: Match) => {
       applyMatchToCache(dispatch, match);
       toast.add({ title: i18n.t("matches.disputedToast"), type: "error" });
@@ -96,12 +108,14 @@ export const MatchesBootstrap = ({ children }: { children: React.ReactNode }) =>
     socket.on("match:responded", onResponded);
     socket.on("match:scoreSubmitted", onScoreSubmitted);
     socket.on("match:completed", onCompleted);
+    socket.on("match:corrected", onCorrected);
     socket.on("match:disputed", onDisputed);
     return () => {
       socket.off("match:proposed", onProposed);
       socket.off("match:responded", onResponded);
       socket.off("match:scoreSubmitted", onScoreSubmitted);
       socket.off("match:completed", onCompleted);
+      socket.off("match:corrected", onCorrected);
       socket.off("match:disputed", onDisputed);
       disconnect();
     };

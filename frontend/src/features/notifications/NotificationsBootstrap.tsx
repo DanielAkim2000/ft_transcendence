@@ -21,8 +21,14 @@ export const NotificationsBootstrap = ({ children }: { children: React.ReactNode
       return;
     }
     const socket = connect(accessToken);
+    // Les invitations aux échecs (reçues, acceptées, refusées) passent par une notification : on en profite pour rafraîchir les parties (carte du chat, point du bouton flottant).
     const refresh = () =>
-      dispatch(notificationsApi.util.invalidateTags([TAG_TYPES.NOTIFICATIONS]));
+      dispatch(
+        notificationsApi.util.invalidateTags([
+          TAG_TYPES.NOTIFICATIONS,
+          TAG_TYPES.CHESS,
+        ]),
+      );
 
     socket.on("notifications:new", refresh);
     socket.on("notifications:read", refresh);

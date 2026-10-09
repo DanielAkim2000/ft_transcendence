@@ -1,46 +1,97 @@
-import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { BanRepository } from '../repositories/ban.repository';
 import { CreateBanDto } from '../dto/create-ban.dto';
 import { Ban } from '../../generated/prisma/client';
 import { UsersService } from '../../users/services/users.services';
+import { Role, UserEntity } from '../../users/entities/users.entity';
+import { MailService } from '../../mail/mail.service';
+import { PresenceGateway } from '../../presence/presence.gateway';
+import { banMails } from '../ban.messages';
+import type { MailLanguage } from '../../gdpr/gdpr.messages';
 
 @Injectable()
 export class BanService {
+  /** Injecte les dépendances : BanRepository, UsersService, MailService, PresenceGateway. */
   constructor(
     private readonly banRepository: BanRepository,
     private readonly usersService: UsersService,
+    private readonly mailService: MailService,
+    @Inject(forwardRef(() => PresenceGateway))
+    private readonly presenceGateway: PresenceGateway,
   ) {}
 
-  async findBanStatus(userId: string) : Promise<boolean> {
-    return await this.banRepository.findBanStatus(userId) !== null;
+  /** Langue des emails de l'utilisateur, avec repli sur l'anglais. */
+  private mailLanguage(user: UserEntity): MailLanguage {
+    return user.language === 'fr' || user.language === 'es'
+      ? user.language
+      : 'en';
   }
 
-  async findActiveBan(userId: string) : Promise<Ban | null> {
-    return await this.banRepository.findBanStatus(userId);
+  /** Retourne le ban en cours de l'utilisateur, ou null. */
+  findActiveBan(userId: string): Promise<Ban | null> {
+    return this.banRepository.findActiveBan(userId);
   }
 
-  findBans(userId: string) : Promise<Ban[]> {
+  /** Historique des bans de l'utilisateur, du plus récent au plus ancien. */
+  findBans(userId: string): Promise<Ban[]> {
     return this.banRepository.findBans(userId);
   }
 
-  async banUser(userId: string, dto: CreateBanDto) : Promise<void> {
+  /** Bannit un utilisateur : refuse un administrateur ou un utilisateur déjà banni, révoque ses sessions, le déconnecte en temps réel et l'informe par email. */
+  async banUser(userId: string, dto: CreateBanDto): Promise<Ban> {
     const user = await this.usersService.findUserById(userId);
-    if (user === null) {
-      throw new NotFoundException();
+    if (!user) {
+      throw new NotFoundException({
+        message: 'User not found',
+        code: 'USER_NOT_FOUND',
+      });
     }
-    if (user.role === "ADMIN") {
-      throw new ForbiddenException();
+    if (user.role === Role.ADMIN) {
+      throw new ForbiddenException({
+        message: 'An administrator cannot be banned',
+        code: 'ADMIN_CANNOT_BE_BANNED',
+      });
     }
-    const banStatus = await this.findBanStatus(userId);
-    if (banStatus) {
-      throw new ConflictException();
+    if (await this.findActiveBan(userId)) {
+      throw new ConflictException({
+        message: 'This user is already banned',
+        code: 'ALREADY_BANNED',
+      });
     }
-    return this.banRepository.create(userId, dto);
+    const ban = await this.banRepository.create(userId, dto);
+    this.presenceGateway.kickBannedUser(userId, {
+      reason: ban.reason,
+      endTime: ban.endTime,
+    });
+    const mail = banMails.banned(
+      this.mailLanguage(user),
+      user.displayname,
+      ban.reason,
+      ban.endTime,
+    );
+    await this.mailService.sendQuietly(user.email, mail.subject, mail.text);
+    return ban;
   }
 
-  async unbanUser(userId: string) : Promise<void> {
-    if (await this.banRepository.unbanUser(userId) === 0) {
-      throw new NotFoundException();
+  /** Lève le ban en cours ; lève une NotFoundException si l'utilisateur n'est pas banni. L'utilisateur en est informé par email. */
+  async unbanUser(userId: string): Promise<void> {
+    if ((await this.banRepository.unbanUser(userId)) === 0) {
+      throw new NotFoundException({
+        message: 'This user is not banned',
+        code: 'NOT_BANNED',
+      });
+    }
+    const user = await this.usersService.findUserById(userId);
+    if (user) {
+      const mail = banMails.unbanned(this.mailLanguage(user), user.displayname);
+      await this.mailService.sendQuietly(user.email, mail.subject, mail.text);
     }
   }
-};
+}

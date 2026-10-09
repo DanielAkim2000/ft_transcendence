@@ -48,6 +48,10 @@ export const CHAT_ENDPOINTS = {
 export const TABLES_ENDPOINTS = {
   LIST_TABLES: "listTables",
   VOTE_RELEASE_TABLE: "voteReleaseTable",
+  CREATE_TABLE: "createTable",
+  RENAME_TABLE: "renameTable",
+  DELETE_TABLE: "deleteTable",
+  ADMIN_RELEASE_TABLE: "adminReleaseTable",
 } as const;
 
 /** Noms des endpoints RTK Query — queueApi */
@@ -69,6 +73,8 @@ export const MATCHES_ENDPOINTS = {
   RESPOND_MATCH: "respondMatch",
   SUBMIT_SCORE: "submitScore",
   VALIDATE_SCORE: "validateScore",
+  SUBMIT_TOURNAMENT_SCORE: "submitTournamentScore",
+  CORRECT_TOURNAMENT_SCORE: "correctTournamentScore",
 } as const;
 
 /** Noms des endpoints RTK Query — tournamentsApi */
@@ -79,6 +85,7 @@ export const TOURNAMENTS_ENDPOINTS = {
   CREATE_TOURNAMENT: "createTournament",
   ADD_ENTRY: "addTournamentEntry",
   REMOVE_ENTRY: "removeTournamentEntry",
+  REPLACE_PLAYER: "replaceTournamentPlayer",
   LAUNCH_TOURNAMENT: "launchTournament",
   CANCEL_TOURNAMENT: "cancelTournament",
 } as const;
@@ -118,9 +125,16 @@ export const CHESS_ENDPOINTS = {
 
 /** Noms des endpoints RTK Query — banApi */
 export const BAN_ENDPOINTS = {
-  GET_BAN_STATUS: "getBanStatus",
   GET_ACTIVE_BAN: "getActiveBan",
   GET_BAN_HISTORY: "getBanHistory",
   BAN_USER: "banUser",
   UNBAN_USER: "unbanUser",
+} as const;
+
+/** Noms des endpoints RTK Query — adminApi */
+export const ADMIN_ENDPOINTS = {
+  LIST_USERS: "adminListUsers",
+  CREATE_USER: "adminCreateUser",
+  UPDATE_USER: "adminUpdateUser",
+  DELETE_USER: "adminDeleteUser",
 } as const;

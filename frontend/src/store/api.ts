@@ -8,6 +8,8 @@ import type {
 } from "@reduxjs/toolkit/query";
 import { setAccessToken, clearCredentials } from "@/features/auth/authSlice";
 import { API_ROUTES, AUTH_NO_REFRESH_PATHS } from "@/constants/apiRoutes";
+import { banLoginPath } from "@/features/ban/banHelpers";
+import { navigate } from "@/lib/navigation";
 
 const baseQuery = fetchBaseQuery({
   baseUrl: import.meta.env.VITE_API_URL,
@@ -27,6 +29,18 @@ const baseQueryWithReauth: BaseQueryFn<
   FetchBaseQueryError
 > = async (args, api, extraOptions) => {
   let result = await baseQuery(args, api, extraOptions);
+
+  // Compte banni (en pleine session ou à la connexion) : on coupe la session et on explique le ban sur la page de connexion.
+  if (result.error?.status === 403) {
+    const data = result.error.data as
+      | { code?: string; reason?: string; endTime?: string | null }
+      | undefined;
+    if (data?.code === "BAN") {
+      api.dispatch(clearCredentials());
+      navigate(banLoginPath(data.reason ?? "", data.endTime ?? null));
+      return result;
+    }
+  }
 
   if (result.error && result.error.status === 401) {
     const url = typeof args === "string" ? args : args.url;

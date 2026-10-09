@@ -23,7 +23,13 @@ export class RefreshTokenGuard extends AuthGuard(REFRESH_TOKEN_STRATEGY) {
     user: UserEntity | false | null,
   ): TUser {
     if (err || !user) {
-      throw err ?? new UnauthorizedException('Refresh token invalide');
+      throw (
+        err ??
+        new UnauthorizedException({
+          message: 'Invalid refresh token',
+          code: 'SESSION_EXPIRED',
+        })
+      );
     }
     return user as TUser;
   }

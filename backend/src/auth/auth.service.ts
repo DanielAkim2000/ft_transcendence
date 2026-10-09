@@ -8,7 +8,6 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { BanService } from '../ban/services/ban.service';
-import { Ban } from '../generated/prisma/client';
 import { UsersService } from '../users/services/users.services';
 import { UserEntity } from '../users/entities/users.entity';
 import { Profile42Dto } from './dtos/profile42.dto';
@@ -64,9 +63,10 @@ export class AuthService {
       'JWT_PRE_AUTH_TOKEN_EXPIRATION_TIME',
     );
     if (!secret || !expiresIn) {
-      throw new InternalServerErrorException(
-        'Pre-auth token configuration is missing',
-      );
+      throw new InternalServerErrorException({
+        message: 'Pre-auth token configuration is missing',
+        code: 'SERVER_CONFIG_ERROR',
+      });
     }
 
     return this.jwtService.signAsync<{ userId: string }>(
@@ -75,16 +75,24 @@ export class AuthService {
     );
   }
 
+  /** Lève une ForbiddenException (code BAN, motif et date de fin, null si permanent) si l'utilisateur est banni : le client peut ainsi expliquer le ban au lieu d'afficher une erreur générique. */
+  async assertNotBanned(userId: string): Promise<void> {
+    const ban = await this.banService.findActiveBan(userId);
+    if (ban) {
+      throw new ForbiddenException({
+        message: 'Your account is banned',
+        code: 'BAN',
+        reason: ban.reason,
+        endTime: ban.endTime,
+      });
+    }
+  }
+
   /** Signe l'access token et le refresh token de l'utilisateur et stocke le hash du refresh token en base. */
   async createTokens(
     user: UserEntity,
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    const ban = await this.banService.findActiveBan(user.id);
-    if (ban) {
-      throw new ForbiddenException(
-        "Banned: until: " + (ban.endTime ? ban.endTime : "Permanent") + ", reason: " + ban.reason
-      );
-    }
+    await this.assertNotBanned(user.id);
 
     const accessTokenExpirationTime = this.configService.get<msStringValue>(
       'JWT_ACCESS_TOKEN_EXPIRATION_TIME',
@@ -105,7 +113,10 @@ export class AuthService {
       !accessTokenSecret ||
       !refreshTokenSecret
     ) {
-      throw new InternalServerErrorException('JWT configuration is missing');
+      throw new InternalServerErrorException({
+        message: 'JWT configuration is missing',
+        code: 'SERVER_CONFIG_ERROR',
+      });
     }
 
     const accessToken = await this.jwtService.signAsync<{ userId: string }>(
@@ -156,16 +167,12 @@ export class AuthService {
   async validateUserFromToken(userId: string): Promise<UserEntity> {
     const user = await this.usersService.findUserById(userId);
     if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-    const ban = await this.banService.findActiveBan(user.id);
-    if (ban) {
-      throw new ForbiddenException({
-        code: "BAN",
-        reason: ban.reason,
-        endTime: ban.endTime,
+      throw new UnauthorizedException({
+        message: 'User not found',
+        code: 'USER_NOT_FOUND',
       });
     }
+    await this.assertNotBanned(user.id);
     return user;
   }
 
@@ -173,7 +180,10 @@ export class AuthService {
   async validateUserFromLogin(loginDto: LoginDto): Promise<UserEntity> {
     const user = await this.usersService.findUserByEmail(loginDto.email);
     if (!user?.passwordHash) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException({
+        message: 'Invalid credentials',
+        code: 'INVALID_CREDENTIALS',
+      });
     }
 
     const isPasswordValid = await bcrypt.compare(
@@ -181,8 +191,13 @@ export class AuthService {
       user.passwordHash,
     );
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException({
+        message: 'Invalid credentials',
+        code: 'INVALID_CREDENTIALS',
+      });
     }
+    // Après le mot de passe seulement : on ne révèle pas le ban à qui ne connaît pas les identifiants.
+    await this.assertNotBanned(user.id);
 
     return user;
   }
@@ -198,9 +213,10 @@ export class AuthService {
     code: string,
   ): Promise<void> {
     if (!secret) {
-      throw new UnauthorizedException(
-        'Two-factor authentication is not set up',
-      );
+      throw new UnauthorizedException({
+        message: 'Two-factor authentication is not set up',
+        code: 'TWO_FACTOR_NOT_SET_UP',
+      });
     }
 
     const result = await verify({
@@ -210,7 +226,10 @@ export class AuthService {
     });
 
     if (!result.valid) {
-      throw new UnauthorizedException('Invalid two-factor code');
+      throw new UnauthorizedException({
+        message: 'Invalid two-factor code',
+        code: 'INVALID_TWO_FACTOR_CODE',
+      });
     }
   }
 
@@ -219,9 +238,10 @@ export class AuthService {
     user: UserEntity,
   ): Promise<{ secret: string; otpauthUrl: string }> {
     if (user.twoFactorEnabled) {
-      throw new ConflictException(
-        'Two-factor authentication is already enabled',
-      );
+      throw new ConflictException({
+        message: 'Two-factor authentication is already enabled',
+        code: 'TWO_FACTOR_ALREADY_ENABLED',
+      });
     }
 
     const secret = generateSecret();
@@ -248,7 +268,10 @@ export class AuthService {
       } else if (dto.code) {
         await this.assertValidTotp(user.twoFactorSecret, dto.code);
       } else {
-        throw new BadRequestException('A code or a recovery code is required');
+        throw new BadRequestException({
+          message: 'A code or a recovery code is required',
+          code: 'CODE_OR_RECOVERY_REQUIRED',
+        });
       }
       user.twoFactorEnabled = false;
       user.twoFactorSecret = null;
@@ -259,12 +282,16 @@ export class AuthService {
     }
 
     if (!user.twoFactorPendingSecret) {
-      throw new BadRequestException(
-        'Generate a QR code before enabling two-factor authentication',
-      );
+      throw new BadRequestException({
+        message: 'Generate a QR code before enabling two-factor authentication',
+        code: 'GENERATE_QR_FIRST',
+      });
     }
     if (!dto.code) {
-      throw new BadRequestException('A code is required');
+      throw new BadRequestException({
+        message: 'A code is required',
+        code: 'CODE_REQUIRED',
+      });
     }
 
     await this.assertValidTotp(user.twoFactorPendingSecret, dto.code);
@@ -308,7 +335,10 @@ export class AuthService {
       this.hashRecoveryCode(code),
     );
     if (!consumed) {
-      throw new UnauthorizedException('Invalid recovery code');
+      throw new UnauthorizedException({
+        message: 'Invalid recovery code',
+        code: 'INVALID_RECOVERY_CODE',
+      });
     }
   }
 
@@ -336,7 +366,10 @@ export class AuthService {
     dto: RegenerateRecoveryCodesDto,
   ): Promise<string[]> {
     if (!user.twoFactorEnabled) {
-      throw new ConflictException('Two-factor authentication is not enabled');
+      throw new ConflictException({
+        message: 'Two-factor authentication is not enabled',
+        code: 'TWO_FACTOR_NOT_ENABLED',
+      });
     }
     if (dto.code) {
       await this.assertValidTotp(user.twoFactorSecret, dto.code);
@@ -344,9 +377,16 @@ export class AuthService {
       const valid =
         !!user.passwordHash &&
         (await bcrypt.compare(dto.password, user.passwordHash));
-      if (!valid) throw new UnauthorizedException('Invalid password');
+      if (!valid)
+        throw new UnauthorizedException({
+          message: 'Invalid password',
+          code: 'INVALID_PASSWORD',
+        });
     } else {
-      throw new BadRequestException('A code or the password is required');
+      throw new BadRequestException({
+        message: 'A code or the password is required',
+        code: 'CODE_OR_PASSWORD_REQUIRED',
+      });
     }
     return this.issueRecoveryCodes(user.id);
   }
@@ -361,7 +401,10 @@ export class AuthService {
       hashRefreshToken(refreshToken),
     );
     if (!deleted) {
-      throw new UnauthorizedException('Refresh token not found');
+      throw new UnauthorizedException({
+        message: 'Refresh token not found',
+        code: 'SESSION_EXPIRED',
+      });
     }
   }
 
@@ -375,11 +418,17 @@ export class AuthService {
       hashRefreshToken(refreshToken),
     );
     if (!stored) {
-      throw new UnauthorizedException('Refresh token not found');
+      throw new UnauthorizedException({
+        message: 'Refresh token not found',
+        code: 'SESSION_EXPIRED',
+      });
     }
     if (stored.expiresAt.getTime() <= Date.now()) {
       await this.usersService.revokeRefreshToken(userId, stored.tokenHash);
-      throw new UnauthorizedException('Refresh token expired');
+      throw new UnauthorizedException({
+        message: 'Refresh token expired',
+        code: 'SESSION_EXPIRED',
+      });
     }
   }
 
@@ -431,7 +480,10 @@ export class AuthService {
       newPassword,
     );
     if (!user) {
-      throw new BadRequestException('Invalid or expired reset link');
+      throw new BadRequestException({
+        message: 'Invalid or expired reset link',
+        code: 'RESET_LINK_INVALID',
+      });
     }
     const mail = authMails.passwordChanged(
       this.mailLanguage(user),

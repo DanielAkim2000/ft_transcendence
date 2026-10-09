@@ -45,6 +45,8 @@ export interface TournamentTie {
   legsNeeded: number;
   aggregateScoreA: number | null;
   aggregateScoreB: number | null;
+  /** Manches terminées (corrigeables par un admin). */
+  completedLegs: { id: string; legNumber: number; scoreA: number; scoreB: number }[];
 }
 
 export interface Tournament {
@@ -114,6 +116,17 @@ export const tournamentsApi = api.injectEndpoints({
       }),
       invalidatesTags: [TAG_TYPES.TOURNAMENTS],
     }),
+    [TOURNAMENTS_ENDPOINTS.REPLACE_PLAYER]: builder.mutation<
+      Tournament,
+      { id: string; entryId: string; playerId: string; replacementId: string }
+    >({
+      query: ({ id, entryId, ...body }) => ({
+        url: API_ROUTES.tournamentEntryPlayer(id, entryId),
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: [TAG_TYPES.TOURNAMENTS, TAG_TYPES.MATCHES],
+    }),
     [TOURNAMENTS_ENDPOINTS.LAUNCH_TOURNAMENT]: builder.mutation<Tournament, string>({
       query: (id) => ({ url: API_ROUTES.tournamentLaunch(id), method: "POST" }),
       invalidatesTags: [TAG_TYPES.TOURNAMENTS, TAG_TYPES.TABLES, TAG_TYPES.QUEUE],
@@ -139,7 +152,14 @@ export function applyTournamentToCache(dispatch: Dispatch, tournament: Tournamen
   dispatch(
     tournamentsApi.util.invalidateTags([{ type: TAG_TYPES.TOURNAMENTS, id: "LIST" }]),
   );
-  dispatch(tournamentsApi.util.invalidateTags([TAG_TYPES.TABLES, TAG_TYPES.QUEUE]));
+  // Une correction de score peut aussi changer les notes : le classement est rechargé.
+  dispatch(
+    tournamentsApi.util.invalidateTags([
+      TAG_TYPES.TABLES,
+      TAG_TYPES.QUEUE,
+      TAG_TYPES.RANKING,
+    ]),
+  );
 }
 
 export const {
@@ -149,6 +169,7 @@ export const {
   useCreateTournamentMutation,
   useAddTournamentEntryMutation,
   useRemoveTournamentEntryMutation,
+  useReplaceTournamentPlayerMutation,
   useLaunchTournamentMutation,
   useCancelTournamentMutation,
 } = tournamentsApi;

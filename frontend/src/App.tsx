@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Route, Routes } from "react-router";
 import { ProtectedLayout } from "@/layouts/ProtectedLayout";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { RequireAdmin } from "@/layouts/RequireAdmin";
 import { ROUTES } from "@/constants/routes";
 import { lazyPage } from "@/lib/lazy-page";
 import { PageFallback } from "@/components/page-fallback";
@@ -33,7 +34,9 @@ const ConfirmDeletion = lazyPage(() => import("@/pages/ConfirmDeletion"), "Confi
 const Legal = lazyPage(() => import("@/pages/Legal"), "Legal");
 const Chess = lazyPage(() => import("@/pages/Chess"), "Chess");
 const NotFound = lazyPage(() => import("@/pages/NotFound"), "NotFound");
-const BanPanel= lazyPage(() => import("@/pages/BanPanel"), "BanPanel");
+const AdminUsers = lazyPage(() => import("@/pages/AdminUsers"), "AdminUsers");
+const AdminTables = lazyPage(() => import("@/pages/AdminTables"), "AdminTables");
+const BanPanel = lazyPage(() => import("@/pages/BanPanel"), "BanPanel");
 
 function App() {
   return (
@@ -68,7 +71,11 @@ function App() {
             <Route path={ROUTES.NOTIFICATIONS} element={<Notifications />} />
             <Route path={ROUTES.CHESS} element={<Chess />} />
 
-            <Route path={ROUTES.BAN} element={<BanPanel/>} />
+            <Route element={<RequireAdmin />}>
+              <Route path={ROUTES.ADMIN_USERS} element={<AdminUsers />} />
+              <Route path={ROUTES.ADMIN_TABLES} element={<AdminTables />} />
+              <Route path={ROUTES.ADMIN_BAN} element={<BanPanel />} />
+            </Route>
           </Route>
         </Route>
 

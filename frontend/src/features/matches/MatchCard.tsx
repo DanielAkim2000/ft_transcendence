@@ -18,6 +18,7 @@ import {
   type MatchPlayer,
 } from "./matchesApi";
 import { teamOf } from "./matchHelpers";
+import { ScoreConfirmDialog } from "@/components/score-confirm-dialog";
 
 const TARGET_SCORE = 10;
 
@@ -153,7 +154,7 @@ export function MatchCard({ match, meId }: { match: Match; meId: string }) {
 
   const submit = () => {
     if (!scoreValid) return;
-    void run(
+    return run(
       () => submitScore({ matchId: match.id, scoreA: a, scoreB: b }).unwrap(),
       t("matches.scoreSentToast", { a, b }),
     );
@@ -244,14 +245,22 @@ export function MatchCard({ match, meId }: { match: Match; meId: string }) {
                 onChange={(e) => setScoreB(e.target.value)}
               />
             </div>
-            <Button
-              type="button"
-              size="sm"
-              disabled={submitting || !scoreValid}
-              onClick={submit}
+            <ScoreConfirmDialog
+              kind="ladder"
+              teamA={match.teamA.map((player) => player.displayname).join(" + ")}
+              teamB={match.teamB.map((player) => player.displayname).join(" + ")}
+              scoreA={a}
+              scoreB={b}
+              onConfirm={submit}
             >
-              {t("matches.submitScore")}
-            </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={submitting || !scoreValid}
+              >
+                {t("matches.submitScore")}
+              </Button>
+            </ScoreConfirmDialog>
           </div>
           <p
             className={cn(

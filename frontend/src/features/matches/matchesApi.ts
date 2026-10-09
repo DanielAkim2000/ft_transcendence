@@ -97,6 +97,36 @@ export const matchesApi = api.injectEndpoints({
       // le formulaire reste affiché après la soumission.
       invalidatesTags: [TAG_TYPES.MATCHES, TAG_TYPES.TOURNAMENTS],
     }),
+    // Admin : seul moyen de saisir le score d'une manche de tournoi.
+    [MATCHES_ENDPOINTS.SUBMIT_TOURNAMENT_SCORE]: builder.mutation<
+      Match,
+      { matchId: string; scoreA: number; scoreB: number }
+    >({
+      query: ({ matchId, ...body }) => ({
+        url: API_ROUTES.matchAdminScore(matchId),
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [TAG_TYPES.MATCHES, TAG_TYPES.RANKING, TAG_TYPES.TOURNAMENTS, TAG_TYPES.TABLES],
+    }),
+    // Admin : corrige le score d'une manche de tournoi déjà terminée (le tournoi est recalculé côté backend).
+    [MATCHES_ENDPOINTS.CORRECT_TOURNAMENT_SCORE]: builder.mutation<
+      Match,
+      { matchId: string; scoreA: number; scoreB: number }
+    >({
+      query: ({ matchId, ...body }) => ({
+        url: API_ROUTES.matchAdminScore(matchId),
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: [
+        TAG_TYPES.MATCHES,
+        TAG_TYPES.RANKING,
+        TAG_TYPES.TOURNAMENTS,
+        TAG_TYPES.TABLES,
+        TAG_TYPES.USERS,
+      ],
+    }),
     [MATCHES_ENDPOINTS.VALIDATE_SCORE]: builder.mutation<
       Match,
       { matchId: string; accept: boolean }
@@ -132,5 +162,7 @@ export const {
   useProposeMatchMutation,
   useRespondMatchMutation,
   useSubmitScoreMutation,
+  useSubmitTournamentScoreMutation,
+  useCorrectTournamentScoreMutation,
   useValidateScoreMutation,
 } = matchesApi;

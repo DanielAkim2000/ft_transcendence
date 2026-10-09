@@ -57,6 +57,13 @@ export class TournamentTieEntity {
   legsNeeded!: number;
   aggregateScoreA!: number | null;
   aggregateScoreB!: number | null;
+  /** Manches terminées (score corrigeable par un admin). */
+  completedLegs!: {
+    id: string;
+    legNumber: number;
+    scoreA: number;
+    scoreB: number;
+  }[];
 
   /** Copie dans l'instance les champs fournis. */
   constructor(tie: Partial<TournamentTieEntity>) {

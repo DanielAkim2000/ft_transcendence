@@ -27,7 +27,12 @@ export type NotificationType =
   | "TOURNAMENT_TIE_WON"
   | "TOURNAMENT_ELIMINATED"
   | "TOURNAMENT_COMPLETED"
-  | "BADGE_EARNED";
+  | "BADGE_EARNED"
+  | "CHESS_INVITE"
+  | "CHESS_INVITE_ACCEPTED"
+  | "CHESS_INVITE_DECLINED"
+  | "TOURNAMENT_SCORE_CORRECTED"
+  | "TOURNAMENT_TIE_RESET";
 
 export interface AppNotification {
   id: string;

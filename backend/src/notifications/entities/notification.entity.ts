@@ -24,6 +24,11 @@ export enum NotificationType {
   TOURNAMENT_ELIMINATED = 'TOURNAMENT_ELIMINATED',
   TOURNAMENT_COMPLETED = 'TOURNAMENT_COMPLETED',
   BADGE_EARNED = 'BADGE_EARNED',
+  CHESS_INVITE = 'CHESS_INVITE',
+  CHESS_INVITE_ACCEPTED = 'CHESS_INVITE_ACCEPTED',
+  CHESS_INVITE_DECLINED = 'CHESS_INVITE_DECLINED',
+  TOURNAMENT_SCORE_CORRECTED = 'TOURNAMENT_SCORE_CORRECTED',
+  TOURNAMENT_TIE_RESET = 'TOURNAMENT_TIE_RESET',
 }
 
 /**
@@ -68,7 +73,7 @@ export interface NotificationDataMap {
   [NotificationType.QUEUE_EXPIRED]: {
     tableId: string;
     tableName: string;
-    reason?: 'invite' | 'tournament';
+    reason?: 'invite' | 'tournament' | 'admin';
   };
   [NotificationType.TABLE_MATCH_STARTED]: {
     tableId: string;
@@ -88,7 +93,7 @@ export interface NotificationDataMap {
   [NotificationType.TABLE_MATCH_CANCELLED]: {
     tableId: string;
     tableName: string;
-    reason: 'timeout' | 'externalRelease';
+    reason: 'timeout' | 'externalRelease' | 'admin';
   };
   [NotificationType.TOURNAMENT_LAUNCHED]: {
     tournamentId: string;
@@ -119,6 +124,26 @@ export interface NotificationDataMap {
     tournamentName: string;
   };
   [NotificationType.BADGE_EARNED]: { code: string };
+  [NotificationType.TOURNAMENT_TIE_RESET]: {
+    tournamentId: string;
+    tournamentName: string;
+    round: number;
+  };
+  [NotificationType.TOURNAMENT_SCORE_CORRECTED]: {
+    tournamentId: string;
+    tournamentName: string;
+    ownScore: number;
+    opponentScore: number;
+  };
+  [NotificationType.CHESS_INVITE]: { gameId: string; fromName: string };
+  [NotificationType.CHESS_INVITE_ACCEPTED]: {
+    gameId: string;
+    opponentName: string;
+  };
+  [NotificationType.CHESS_INVITE_DECLINED]: {
+    gameId: string;
+    opponentName: string;
+  };
 }
 
 export class NotificationEntity {

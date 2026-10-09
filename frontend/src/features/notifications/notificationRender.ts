@@ -1,5 +1,6 @@
 import {
   LayoutGridIcon,
+  CrownIcon,
   MedalIcon,
   SwordsIcon,
   TrophyIcon,
@@ -14,6 +15,7 @@ type Translate = (key: string, options?: Record<string, unknown>) => string;
 /** Icône et lien éventuel selon la famille de la notification. */
 function categoryOf(type: AppNotification["type"]): { icon: LucideIcon; to?: string } {
   if (type === "FRIEND_REQUEST") return { icon: UsersIcon, to: ROUTES.FRIENDS };
+  if (type.startsWith("CHESS_")) return { icon: CrownIcon, to: ROUTES.CHESS };
   if (type.startsWith("MATCH_")) return { icon: SwordsIcon, to: ROUTES.CHALLENGES };
   if (type.startsWith("QUEUE_") || type.startsWith("TABLE_")) {
     return { icon: LayoutGridIcon, to: ROUTES.TABLES };
@@ -78,7 +80,9 @@ export function renderNotification(
           ? "notifications.items.queueExpiredInvite"
           : data.reason === "tournament"
             ? "notifications.items.queueExpiredTournament"
-            : "notifications.items.queueExpiredCall";
+            : data.reason === "admin"
+              ? "notifications.items.queueExpiredAdmin"
+              : "notifications.items.queueExpiredCall";
       return { text: t(key, data), to, icon };
     }
     case "TABLE_MATCH_STARTED":
@@ -101,7 +105,9 @@ export function renderNotification(
         text: t(
           data.reason === "externalRelease"
             ? "notifications.items.tableMatchCancelledExternal"
-            : "notifications.items.tableMatchCancelledTimeout",
+            : data.reason === "admin"
+              ? "notifications.items.tableMatchCancelledAdmin"
+              : "notifications.items.tableMatchCancelledTimeout",
           data,
         ),
         to,
@@ -137,12 +143,35 @@ export function renderNotification(
         to: typeof data.tournamentId === "string" ? ROUTES.tournament(data.tournamentId) : to,
         icon,
       };
+    case "TOURNAMENT_TIE_RESET":
+      return {
+        text: t("notifications.items.tournamentTieReset", data),
+        to: typeof data.tournamentId === "string" ? ROUTES.tournament(data.tournamentId) : to,
+        icon,
+      };
+    case "TOURNAMENT_SCORE_CORRECTED":
+      return {
+        text: t("notifications.items.tournamentScoreCorrected", data),
+        to: typeof data.tournamentId === "string" ? ROUTES.tournament(data.tournamentId) : to,
+        icon,
+      };
     case "TOURNAMENT_COMPLETED":
       return {
         text: t("notifications.items.tournamentCompleted", data),
         to: typeof data.tournamentId === "string" ? ROUTES.tournament(data.tournamentId) : to,
         icon,
       };
+    // Une invitation mène à la liste des défis (pour accepter) ; acceptée, directement à la partie.
+    case "CHESS_INVITE":
+      return { text: t("notifications.items.chessInvite", data), to, icon };
+    case "CHESS_INVITE_ACCEPTED":
+      return {
+        text: t("notifications.items.chessInviteAccepted", data),
+        to: typeof data.gameId === "string" ? `${ROUTES.CHESS}?gameId=${data.gameId}` : to,
+        icon,
+      };
+    case "CHESS_INVITE_DECLINED":
+      return { text: t("notifications.items.chessInviteDeclined", data), to, icon };
     case "BADGE_EARNED":
       return {
         text: t("notifications.items.badgeEarned", {

@@ -20,9 +20,13 @@ import { getErrorMessage } from "@/lib/get-error-message";
 import { getInitials, resolveAvatarUrl } from "@/lib/user";
 import { toast } from "@/components/ui/toast";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { translateErrorCode } from "@/lib/get-error-message";
 import { ChessBoard3D } from "@/features/chess/ChessBoard3D";
+import { ChessPlayerBar } from "@/features/chess/ChessPlayerBar";
 
 export const Chess = () => {
+    const { t, i18n } = useTranslation();
     const [searchParams] = useSearchParams();
     const [, setSearchParams] = useSearchParams();
     const requestedGameId = searchParams.get("gameId");
@@ -130,7 +134,7 @@ export const Chess = () => {
             setPromotion(null);
         };
         const onError = (payload: { message?: string }) => {
-            toast.add({ title: payload.message ?? "Coup impossible", type: "error" });
+            toast.add({ title: translateErrorCode((payload as { code?: string }).code) ?? t("chess.page.moveFailed"), type: "error" });
             setSelected(null);
             setSelectedPosition(null);
             setPositions([]);
@@ -143,7 +147,7 @@ export const Chess = () => {
             socket.off("chess:error", onError);
             disconnectChess();
         };
-    }, [accessToken, gameStatus, gameId]);
+    }, [accessToken, gameStatus, gameId, t]);
 
     function isSelected(rowIndex: number, colIndex: number): boolean {
         const result = positions.some(
@@ -211,48 +215,43 @@ export const Chess = () => {
     const playerColor = me && game
         ? game.whitePlayerId === me.id ? "WHITE" : "BLACK"
         : "WHITE";
-    const playerColorLabel = playerColor === "WHITE" ? "blanc" : "noir";
-    const turnLabel = turn === "WHITE" ? "blancs" : "noirs";
+    const opponentColor = playerColor === "WHITE" ? "BLACK" : "WHITE";
+    const myPlayer = playerColor === "WHITE" ? game?.whitePlayer : game?.blackPlayer;
+    const opponentPlayer = playerColor === "WHITE" ? game?.blackPlayer : game?.whitePlayer;
     const boardVisible = Boolean(game && (gameStatus === "ACTIVE" || gameStatus === "FINISHED"));
     const endMessage = endReason === "CHECKMATE"
-        ? winnerId === me?.id ? "Échec et mat : tu as gagné." : "Échec et mat : tu as perdu."
+        ? t(winnerId === me?.id ? "chess.page.end.mateWin" : "chess.page.end.mateLoss")
         : endReason === "STALEMATE"
-            ? "Partie nulle : pat."
+            ? t("chess.page.end.stalemate")
             : endReason === "THREEFOLD_REPETITION"
-                ? "Partie nulle : répétition de position."
+                ? t("chess.page.end.repetition")
                 : endReason === "INSUFFICIENT_MATERIAL"
-                    ? "Partie nulle : matériel insuffisant."
-                    : "Partie terminée.";
+                    ? t("chess.page.end.insufficient")
+                    : t("chess.page.end.finished");
 
-    function getHistoryResult(chessGame: ChessGame): string {
-        if (chessGame.result === "DRAW") return "Nulle";
-        if (chessGame.winnerId === me?.id) return "Victoire";
-        if (chessGame.result === "ABORTED") return "Abandonnée";
-        return "Défaite";
+    function getHistoryResult(chessGame: ChessGame): "draw" | "win" | "aborted" | "loss" {
+        if (chessGame.result === "DRAW") return "draw";
+        if (chessGame.winnerId === me?.id) return "win";
+        if (chessGame.result === "ABORTED") return "aborted";
+        return "loss";
     }
 
     function getHistoryReason(chessGame: ChessGame): string {
-        switch (chessGame.endReason) {
-            case "CHECKMATE": return "Échec et mat";
-            case "RESIGNATION": return "Abandon";
-            case "TIMEOUT": return "Temps écoulé";
-            case "STALEMATE": return "Pat";
-            case "AGREEMENT": return "Accord mutuel";
-            case "INSUFFICIENT_MATERIAL": return "Matériel insuffisant";
-            case "THREEFOLD_REPETITION": return "Répétition";
-            case "FIFTY_MOVE_RULE": return "Règle des 50 coups";
-            case "ABANDONED": return "Abandonnée";
-            case "ABORTED": return "Interrompue";
-            default: return "Partie terminée";
-        }
+        return t(`chess.page.reason.${chessGame.endReason ?? "FINISHED"}`);
+    }
+
+    /** L'autre joueur d'une partie (nom d'affichage), « ? » s'il est inconnu. */
+    function opponentName(chessGame: ChessGame): string {
+        const other = chessGame.whitePlayerId === me?.id ? chessGame.blackPlayer : chessGame.whitePlayer;
+        return other?.displayname ?? "?";
     }
 
     async function handleCreateGame(opponentId: string) {
         try {
-            const game = await createGame({ opponentId, color: "RANDOM" }).unwrap();
-            toast.add({ title: `Défi chess envoyé (${game.id})`, type: "success" });
+            await createGame({ opponentId, color: "RANDOM" }).unwrap();
+            toast.add({ title: t("chess.page.inviteSent"), type: "success" });
         } catch (error) {
-            toast.add({ title: getErrorMessage(error, "Impossible de créer la partie"), type: "error" });
+            toast.add({ title: getErrorMessage(error, t("chess.page.createFailed")), type: "error" });
         }
     }
 
@@ -260,18 +259,18 @@ export const Chess = () => {
         try {
             await acceptGame(targetGameId).unwrap();
             setSearchParams({ gameId: targetGameId });
-            toast.add({ title: "Partie chess acceptée", type: "success" });
+            toast.add({ title: t("chess.page.accepted"), type: "success" });
         } catch (error) {
-            toast.add({ title: getErrorMessage(error, "Impossible d'accepter la partie"), type: "error" });
+            toast.add({ title: getErrorMessage(error, t("chess.page.acceptFailed")), type: "error" });
         }
     }
 
     async function handleDeclineGame(targetGameId: string) {
         try {
             await declineGame(targetGameId).unwrap();
-            toast.add({ title: "Défi chess refusé", type: "info" });
+            toast.add({ title: t("chess.page.declined"), type: "info" });
         } catch (error) {
-            toast.add({ title: getErrorMessage(error, "Impossible de refuser la partie"), type: "error" });
+            toast.add({ title: getErrorMessage(error, t("chess.page.declineFailed")), type: "error" });
         }
     }
 
@@ -281,18 +280,18 @@ export const Chess = () => {
                 <>
                     <header className="flex flex-wrap items-baseline justify-between gap-2">
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Chess</h1>
-                            <p className="mt-1 text-sm text-muted-foreground">Défie un ami et prends ta place sur l’échiquier.</p>
+                            <h1 className="text-2xl font-bold tracking-tight">{t("chess.page.title")}</h1>
+                            <p className="mt-1 text-sm text-muted-foreground">{t("chess.page.subtitle")}</p>
                         </div>
-                        <span className="text-[11px] uppercase tracking-[0.2em] text-primary">● En ligne</span>
+                        <span className="text-[11px] uppercase tracking-[0.2em] text-primary">● {t("chess.page.live")}</span>
                     </header>
 
                     <section className="flex flex-col gap-3">
-                        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Mes amis</h2>
+                        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">{t("chess.page.friendsTitle")}</h2>
                         {friendsLoading ? (
-                            <p className="border border-border p-4 text-sm text-muted-foreground">Chargement des amis...</p>
+                            <p className="border border-border p-4 text-sm text-muted-foreground">{t("chess.page.friendsLoading")}</p>
                         ) : friends.length === 0 ? (
-                            <p className="border border-border p-4 text-sm text-muted-foreground">Tu n’as pas encore d’ami à défier.</p>
+                            <p className="border border-border p-4 text-sm text-muted-foreground">{t("chess.page.noFriends")}</p>
                         ) : (
                             <ul className="flex flex-col gap-2">
                                 {friends.map((friend) => (
@@ -304,11 +303,11 @@ export const Chess = () => {
                                             </Avatar>
                                             <div className="min-w-0">
                                                 <p className="truncate text-sm font-medium">{friend.displayname}</p>
-                                                <p className="text-xs text-muted-foreground">{friend.isOnline ? "En ligne" : "Hors ligne"}</p>
+                                                <p className="text-xs text-muted-foreground">{friend.isOnline ? t("chess.page.online") : t("chess.page.offline")}</p>
                                             </div>
                                         </div>
                                         <Button type="button" size="sm" variant="outline" disabled={isCreating} onClick={() => void handleCreateGame(friend.id)}>
-                                            {isCreating ? "Envoi..." : "Défier"}
+                                            {isCreating ? t("chess.page.sending") : t("chess.page.challenge")}
                                         </Button>
                                     </li>
                                 ))}
@@ -318,26 +317,26 @@ export const Chess = () => {
                     </section>
 
                     <section className="flex flex-col gap-3">
-                        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Défis chess</h2>
+                        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">{t("chess.page.challengesTitle")}</h2>
                         {pendingGames.length === 0 && activeGames.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">Aucun défi en attente.</p>
+                            <p className="text-sm text-muted-foreground">{t("chess.page.noChallenges")}</p>
                         ) : (
                             <ul className="flex flex-col gap-2">
                                 {pendingGames.map((pendingGame) => (
                                     <li key={pendingGame.id} className="flex flex-wrap items-center justify-between gap-3 border border-border px-3 py-2">
                                         <div>
                                             <p className="text-sm font-medium">
-                                                {pendingGame.challengerId === me?.id ? "Défi envoyé" : "Défi reçu"}
+                                                {pendingGame.challengerId === me?.id ? t("chess.page.challengeSent") : t("chess.page.challengeReceived")}
                                             </p>
-                                            <p className="font-mono text-xs text-muted-foreground">{pendingGame.id}</p>
+                                            <p className="text-xs text-muted-foreground">{t("chess.page.versus", { name: opponentName(pendingGame) })}</p>
                                         </div>
                                         {pendingGame.challengerId !== me?.id ? (
                                             <div className="flex gap-2">
                                                 <Button type="button" size="sm" onClick={() => void handleAcceptGame(pendingGame.id)} disabled={isAccepting || isDeclining}>
-                                                    Accepter
+                                                    {t("chess.page.accept")}
                                                 </Button>
                                                 <Button type="button" size="sm" variant="destructive" onClick={() => void handleDeclineGame(pendingGame.id)} disabled={isAccepting || isDeclining}>
-                                                    Refuser
+                                                    {t("chess.page.decline")}
                                                 </Button>
                                             </div>
                                         ) : null}
@@ -346,10 +345,10 @@ export const Chess = () => {
                                 {activeGames.map((activeGame) => (
                                     <li key={activeGame.id} className="flex items-center justify-between gap-3 border border-border px-3 py-2">
                                         <div>
-                                            <p className="text-sm font-medium">Partie en cours</p>
-                                            <p className="font-mono text-xs text-muted-foreground">{activeGame.id}</p>
+                                            <p className="text-sm font-medium">{t("chess.page.inProgress")}</p>
+                                            <p className="text-xs text-muted-foreground">{t("chess.page.versus", { name: opponentName(activeGame) })}</p>
                                         </div>
-                                        <Button type="button" size="sm" variant="outline" onClick={() => setSearchParams({ gameId: activeGame.id })}>Reprendre</Button>
+                                        <Button type="button" size="sm" variant="outline" onClick={() => setSearchParams({ gameId: activeGame.id })}>{t("chess.page.resume")}</Button>
                                     </li>
                                 ))}
                             </ul>
@@ -357,9 +356,9 @@ export const Chess = () => {
                     </section>
 
                     <section className="flex flex-col gap-3">
-                        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Historique</h2>
+                        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">{t("chess.page.historyTitle")}</h2>
                         {finishedGames.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">Aucune partie terminée.</p>
+                            <p className="text-sm text-muted-foreground">{t("chess.page.noHistory")}</p>
                         ) : (
                             <ul className="flex flex-col gap-2">
                                 {finishedGames.map((finishedGame) => {
@@ -367,19 +366,19 @@ export const Chess = () => {
                                         ? finishedGame.blackPlayer
                                         : finishedGame.whitePlayer;
                                     const result = getHistoryResult(finishedGame);
-                                    const resultClass = result === "Victoire"
+                                    const resultClass = result === "win"
                                         ? "text-primary"
-                                        : result === "Défaite"
+                                        : result === "loss"
                                             ? "text-destructive"
                                             : "text-muted-foreground";
 
                                     return (
                                         <li key={finishedGame.id} className="flex items-center justify-between gap-3 border border-border px-3 py-2">
                                             <div className="min-w-0">
-                                                <p className={`text-xs font-bold uppercase tracking-wider ${resultClass}`}>{result}</p>
-                                                <p className="truncate text-sm font-medium">contre {opponent?.displayname ?? (finishedGame.whitePlayerId === me?.id ? finishedGame.blackPlayerId : finishedGame.whitePlayerId)}</p>
+                                                <p className={`text-xs font-bold uppercase tracking-wider ${resultClass}`}>{t(`chess.page.result.${result}`)}</p>
+                                                <p className="truncate text-sm font-medium">{t("chess.page.versus", { name: opponent?.displayname ?? opponentName(finishedGame) })}</p>
                                                 <p className="truncate text-xs text-muted-foreground">
-                                                    {getHistoryReason(finishedGame)} · {new Date(finishedGame.endedAt ?? finishedGame.updatedAt).toLocaleDateString()}
+                                                    {getHistoryReason(finishedGame)} · {new Date(finishedGame.endedAt ?? finishedGame.updatedAt).toLocaleDateString(i18n.language)}
                                                 </p>
                                             </div>
                                             <span className="font-mono text-xs text-muted-foreground">{finishedGame.id}</span>
@@ -393,12 +392,13 @@ export const Chess = () => {
             ) : null}
             {boardVisible ? (
                 <>
-                    <div className="flex flex-wrap items-center justify-between gap-3 border border-border px-3 py-2">
-                        <p className="text-sm font-medium">Tu joues les {playerColorLabel}s</p>
-                        <p className={`text-xs uppercase tracking-[0.16em] ${turn === playerColor ? "text-primary" : "text-muted-foreground"}`}>
-                            Tour des {turnLabel}
-                        </p>
-                    </div>
+                    <ChessPlayerBar
+                        player={opponentPlayer}
+                        color={opponentColor}
+                        isMe={false}
+                        toMove={turn === opponentColor}
+                        finished={gameStatus === "FINISHED"}
+                    />
                     {gameStatus === "FINISHED" ? (
                         <div className="border border-primary/40 bg-primary/10 px-3 py-3 text-center text-sm font-medium">
                             {endMessage}
@@ -409,12 +409,20 @@ export const Chess = () => {
                         positions={positions}
                         selectedPosition={selectedPosition}
                         onSquareClick={selectPiece}
+                        flipped={playerColor === "BLACK"}
+                    />
+                    <ChessPlayerBar
+                        player={myPlayer}
+                        color={playerColor}
+                        isMe
+                        toMove={turn === playerColor}
+                        finished={gameStatus === "FINISHED"}
                     />
                     {promotion ? (
-                        <div className="flex items-center justify-center gap-2 border border-border p-3" role="dialog" aria-label="Choisir une pièce pour la promotion">
+                        <div className="flex items-center justify-center gap-2 border border-border p-3" role="dialog" aria-label={t("chess.page.promotionLabel")}>
                             {(["q", "r", "b", "n"] as const).map((piece) => (
                                 <button key={piece} type="button" className="size-14 border border-border p-2 hover:bg-muted" onClick={() => choosePromotion(piece)}>
-                                    <img src={`/chess/${promotion.color === "white" ? "w" : "b"}${piece === "n" ? "N" : piece.toUpperCase()}.svg`} alt={piece === "q" ? "Dame" : piece === "r" ? "Tour" : piece === "b" ? "Fou" : "Cavalier"} className="h-full w-full" />
+                                    <img src={`/chess/${promotion.color === "white" ? "w" : "b"}${piece === "n" ? "N" : piece.toUpperCase()}.svg`} alt={t(`chess.page.pieces.${piece}`)} className="h-full w-full" />
                                 </button>
                             ))}
                         </div>

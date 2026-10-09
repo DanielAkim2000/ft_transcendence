@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -11,7 +12,8 @@ import {
 import type { Request } from 'express';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { PageQueryDto } from '../common/pagination/page-query.dto';
-import { UserEntity } from '../users/entities/user.entity';
+import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
+import { Role, UserEntity } from '../users/entities/user.entity';
 import { MatchesService } from './services/matches.service';
 import { HistoryQueryDto } from './dtos/history-query.dto';
 import { ProposeMatchDto } from './dtos/propose-match.dto';
@@ -96,6 +98,36 @@ export class MatchesController {
   ) {
     return this.matchesService.submitScore(
       req.user.id,
+      matchId,
+      dto.scoreA,
+      dto.scoreB,
+    );
+  }
+
+  /** POST /matches/:matchId/admin-score (admin) : saisit le score d'une manche de tournoi, qui est alors terminée (les joueurs ne peuvent pas saisir les scores de tournoi). */
+  @Post(':matchId/admin-score')
+  @AuthRoles(Role.ADMIN)
+  submitTournamentScore(
+    @Req() req: Request & { user: UserEntity },
+    @Param('matchId') matchId: string,
+    @Body() dto: SubmitScoreDto,
+  ) {
+    return this.matchesService.submitTournamentScoreAsAdmin(
+      req.user.id,
+      matchId,
+      dto.scoreA,
+      dto.scoreB,
+    );
+  }
+
+  /** PATCH /matches/:matchId/admin-score (admin) : corrige le score d'une manche de tournoi déjà terminée ; le tournoi est recalculé (ou la correction refusée si le tour suivant a commencé). */
+  @Patch(':matchId/admin-score')
+  @AuthRoles(Role.ADMIN)
+  correctTournamentScore(
+    @Param('matchId') matchId: string,
+    @Body() dto: SubmitScoreDto,
+  ) {
+    return this.matchesService.correctTournamentScoreAsAdmin(
       matchId,
       dto.scoreA,
       dto.scoreB,

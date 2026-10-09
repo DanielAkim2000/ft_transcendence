@@ -19,6 +19,7 @@ import {
 import {
   isPowerOfTwo,
   log2,
+  planLegCorrection,
   pointsForRound,
   resolveTie,
   shuffle,
@@ -65,7 +66,10 @@ export class TournamentsService {
   async getById(id: string): Promise<TournamentEntity> {
     const tournament = await this.tournamentsRepository.findById(id);
     if (!tournament) {
-      throw new NotFoundException('Tournament not found');
+      throw new NotFoundException({
+        message: 'Tournament not found',
+        code: 'TOURNAMENT_NOT_FOUND',
+      });
     }
     return tournament;
   }
@@ -98,7 +102,10 @@ export class TournamentsService {
   ): Promise<TournamentEntity> {
     const tournament = await this.getById(tournamentId);
     if (tournament.status !== TournamentStatus.DRAFT) {
-      throw new ConflictException('Tournament is no longer a draft');
+      throw new ConflictException({
+        message: 'Tournament is no longer a draft',
+        code: 'TOURNAMENT_NOT_DRAFT',
+      });
     }
     await this.validateEntries(tournament.format, [
       ...tournament.entries.map((entry) => ({
@@ -124,13 +131,91 @@ export class TournamentsService {
   ): Promise<TournamentEntity> {
     const tournament = await this.getById(tournamentId);
     if (tournament.status !== TournamentStatus.DRAFT) {
-      throw new ConflictException('Tournament is no longer a draft');
+      throw new ConflictException({
+        message: 'Tournament is no longer a draft',
+        code: 'TOURNAMENT_NOT_DRAFT',
+      });
     }
     if (
       !(await this.tournamentsRepository.removeEntry(tournamentId, entryId))
     ) {
-      throw new NotFoundException('Entry not found');
+      throw new NotFoundException({
+        message: 'Entry not found',
+        code: 'ENTRY_NOT_FOUND',
+      });
     }
+    const updated = await this.getById(tournamentId);
+    this.tournamentsGateway.broadcast('tournament:updated', updated);
+    return updated;
+  }
+
+  /** Remplace un joueur d'une équipe (brouillon, en file ou en cours) : par exemple quand un joueur ne peut plus jouer. Le remplaçant doit exister et ne pas déjà participer ; les manches en cours passent à son nom, les manches terminées restent inchangées. Diffuse la mise à jour. */
+  async replacePlayer(
+    tournamentId: string,
+    entryId: string,
+    playerId: string,
+    replacementId: string,
+  ): Promise<TournamentEntity> {
+    const tournament = await this.getById(tournamentId);
+    if (
+      tournament.status === TournamentStatus.COMPLETED ||
+      tournament.status === TournamentStatus.CANCELLED
+    ) {
+      throw new ConflictException({
+        message: 'Tournament already finished',
+        code: 'TOURNAMENT_FINISHED',
+      });
+    }
+    const entry = tournament.entries.find(
+      (candidate) => candidate.id === entryId,
+    );
+    if (!entry) {
+      throw new NotFoundException({
+        message: 'Entry not found',
+        code: 'ENTRY_NOT_FOUND',
+      });
+    }
+    if (entry.player1.id !== playerId && entry.player2?.id !== playerId) {
+      throw new BadRequestException({
+        message: 'This player is not part of the entry',
+        code: 'PLAYER_NOT_IN_ENTRY',
+      });
+    }
+    if (replacementId === playerId) {
+      throw new BadRequestException({
+        message: 'The replacement must be a different player',
+        code: 'REPLACEMENT_SAME_PLAYER',
+      });
+    }
+    if (entry.eliminatedRound !== null) {
+      throw new ConflictException({
+        message: 'This team is already eliminated',
+        code: 'TEAM_ELIMINATED',
+      });
+    }
+    const alreadyIn = tournament.entries.some(
+      (candidate) =>
+        candidate.player1.id === replacementId ||
+        candidate.player2?.id === replacementId,
+    );
+    if (alreadyIn) {
+      throw new ConflictException({
+        message: 'This player already takes part in the tournament',
+        code: 'PLAYER_ALREADY_IN_TOURNAMENT',
+      });
+    }
+    if (!(await this.usersService.findUserById(replacementId))) {
+      throw new NotFoundException({
+        message: 'Replacement player not found',
+        code: 'REPLACEMENT_NOT_FOUND',
+      });
+    }
+    await this.tournamentsRepository.replaceEntryPlayer(
+      tournamentId,
+      entryId,
+      playerId,
+      replacementId,
+    );
     const updated = await this.getById(tournamentId);
     this.tournamentsGateway.broadcast('tournament:updated', updated);
     return updated;
@@ -145,16 +230,24 @@ export class TournamentsService {
   async launch(tournamentId: string): Promise<TournamentEntity> {
     const tournament = await this.getById(tournamentId);
     if (tournament.status === TournamentStatus.QUEUED) {
-      throw new ConflictException('Tournament is already waiting in the queue');
+      throw new ConflictException({
+        message: 'Tournament is already waiting in the queue',
+        code: 'TOURNAMENT_ALREADY_QUEUED',
+      });
     }
     if (tournament.status !== TournamentStatus.DRAFT) {
-      throw new ConflictException('Tournament already launched');
+      throw new ConflictException({
+        message: 'Tournament already launched',
+        code: 'TOURNAMENT_ALREADY_LAUNCHED',
+      });
     }
     const count = tournament.entries.length;
     if (!isPowerOfTwo(count) || count < MIN_ENTRIES) {
-      throw new BadRequestException(
-        `Tournament needs a power-of-two number of entries (4, 8, 16, 32…), got ${count}`,
-      );
+      throw new BadRequestException({
+        message: `Tournament needs a power-of-two number of entries (4, 8, 16, 32…), got ${count}`,
+        code: 'TOURNAMENT_ENTRY_COUNT_INVALID',
+        params: { count },
+      });
     }
     if ((await this.tournamentsRepository.countInProgress()) > 0) {
       await this.tournamentsRepository.markQueued(tournamentId);
@@ -248,7 +341,10 @@ export class TournamentsService {
       tournament.status !== TournamentStatus.QUEUED &&
       tournament.status !== TournamentStatus.IN_PROGRESS
     ) {
-      throw new ConflictException('Tournament already finished');
+      throw new ConflictException({
+        message: 'Tournament already finished',
+        code: 'TOURNAMENT_FINISHED',
+      });
     }
     const wasRunning = tournament.status === TournamentStatus.IN_PROGRESS;
     await this.tournamentsRepository.cancel(tournamentId);
@@ -336,16 +432,30 @@ export class TournamentsService {
       return;
     }
 
-    const winnerEntry = resolution.winnerSide === 'A' ? tie.entryA : tie.entryB;
-    const loserEntry = resolution.winnerSide === 'A' ? tie.entryB : tie.entryA;
+    await this.finishTie(tie, resolution.winnerSide, matchId);
+  }
+
+  /** Clôt une rencontre décidée : vainqueur et points, bonus de note, badges, avancée dans le tableau (ou fin du tournoi si c'est la finale), notifications, puis distribution des tables. `decisiveMatchId` est la manche qui porte l'historique des points gagnés. */
+  private async finishTie(
+    tie: NonNullable<Awaited<ReturnType<TournamentsRepository['findTieById']>>>,
+    winnerSide: 'A' | 'B' | null,
+    decisiveMatchId: string,
+  ): Promise<void> {
+    if (!tie.entryA || !tie.entryB) return;
+    const winnerEntry = winnerSide === 'A' ? tie.entryA : tie.entryB;
+    const loserEntry = winnerSide === 'A' ? tie.entryB : tie.entryA;
     const points = pointsForRound(tie.round);
-    await this.tournamentsRepository.markTieDone(tieId, winnerEntry.id, points);
+    await this.tournamentsRepository.markTieDone(
+      tie.id,
+      winnerEntry.id,
+      points,
+    );
     const winnerIds = [winnerEntry.player1Id, winnerEntry.player2Id].filter(
       (id): id is string => !!id,
     );
     await this.tournamentsRepository.awardRatingBonus(winnerIds, points);
     await this.tournamentsRepository.setLegRatingDeltas(
-      matchId,
+      decisiveMatchId,
       winnerIds,
       points,
     );
@@ -438,6 +548,241 @@ export class TournamentsService {
     this.tournamentsGateway.broadcast('tournament:updated', updated);
 
     await this.scheduleAllRunning();
+  }
+
+  /**
+   * Corrige le score d'une manche de tournoi déjà terminée (erreur de saisie, équipes inversées…).
+   * Les garde-fous passent d'abord, rien n'est modifié sinon : tournoi en cours ou terminé,
+   * pas de changement de vainqueur dans un tournoi terminé, le tour suivant ne doit pas avoir
+   * commencé, et une rencontre qui devient décidée ne doit pas avoir une autre manche en cours.
+   * Puis : nouveau score, statistiques des joueurs si le résultat de la manche s'inverse, et si
+   * le sort de la rencontre change, l'ancienne décision est annulée (points, tableau) avant
+   * d'appliquer la nouvelle (autre vainqueur, ou belle à rejouer).
+   */
+  async correctLegScore(
+    matchId: string,
+    scoreA: number,
+    scoreB: number,
+  ): Promise<{ tournamentId: string; tournamentName: string }> {
+    const meta = await this.findLegMeta(matchId);
+    if (!meta) {
+      throw new BadRequestException({
+        message: 'Only tournament matches are scored by an admin',
+        code: 'ONLY_TOURNAMENT_MATCHES_ADMIN_SCORE',
+      });
+    }
+    const tie = await this.tournamentsRepository.findTieById(meta.tieId);
+    const target = tie?.legs.find((leg) => leg.id === matchId);
+    if (
+      !tie ||
+      !tie.entryA ||
+      !tie.entryB ||
+      !target ||
+      target.status !== 'COMPLETED' ||
+      target.scoreA === null ||
+      target.scoreB === null
+    ) {
+      throw new ConflictException({
+        message: 'This match has no finished score to correct',
+        code: 'MATCH_NOT_CORRECTABLE',
+      });
+    }
+    const { tournament } = tie;
+    if (
+      tournament.status !== 'IN_PROGRESS' &&
+      tournament.status !== 'COMPLETED'
+    ) {
+      throw new ConflictException({
+        message: 'This tournament is not in progress',
+        code: 'TOURNAMENT_NOT_CORRECTABLE',
+      });
+    }
+    if (target.scoreA === scoreA && target.scoreB === scoreB) {
+      throw new ConflictException({
+        message: 'The score is unchanged',
+        code: 'SCORE_UNCHANGED',
+      });
+    }
+
+    const toTieLegs = (): TieLeg[] =>
+      tie.legs.map((leg) => ({
+        legNumber: leg.legNumber ?? 1,
+        status: leg.status,
+        scoreA: leg.scoreA,
+        scoreB: leg.scoreB,
+      }));
+    const plan = planLegCorrection(
+      tournament.twoLegged,
+      toTieLegs(),
+      target.legNumber ?? 1,
+      scoreA,
+      scoreB,
+    );
+
+    // --- Garde-fous (aucune écriture avant qu'ils passent tous).
+    let nextTie: Awaited<
+      ReturnType<TournamentsRepository['findTieByRoundSlot']>
+    > = null;
+    if (plan.tieOutcomeChanged) {
+      if (tournament.status === 'COMPLETED') {
+        throw new ConflictException({
+          message:
+            'The tournament is finished: a correction cannot change who wins a tie',
+          code: 'CANNOT_CHANGE_FINISHED_TOURNAMENT_OUTCOME',
+        });
+      }
+      if (plan.before.done) {
+        nextTie = await this.tournamentsRepository.findTieByRoundSlot(
+          tournament.id,
+          tie.round + 1,
+          Math.floor(tie.slot / 2),
+        );
+        // Le match du tour suivant est créé dès que les deux équipes sont connues : tant qu'aucun score n'y a été saisi, rien n'a été joué et on peut l'annuler.
+        if (
+          nextTie &&
+          (nextTie.status === 'DONE' ||
+            nextTie.legs.some((leg) => leg.scoreA !== null))
+        ) {
+          throw new ConflictException({
+            message:
+              'The next round has already been played: this score can no longer change the result',
+            code: 'NEXT_ROUND_ALREADY_PLAYED',
+          });
+        }
+      }
+      if (
+        plan.after.done &&
+        tie.legs.some(
+          (leg) =>
+            leg.id !== matchId &&
+            (leg.status === 'ACCEPTED' || leg.status === 'PENDING_VALIDATION'),
+        )
+      ) {
+        throw new ConflictException({
+          message:
+            'Another match of this tie is in progress: finish it before correcting',
+          code: 'TIE_HAS_ACTIVE_LEG',
+        });
+      }
+    }
+
+    // --- Application.
+    const outcome = await this.tournamentsRepository.getLegOutcome(matchId);
+    if (
+      !(await this.tournamentsRepository.updateLegScore(
+        matchId,
+        scoreA,
+        scoreB,
+      ))
+    ) {
+      throw new ConflictException({
+        message: 'This match has no finished score to correct',
+        code: 'MATCH_NOT_CORRECTABLE',
+      });
+    }
+
+    if (plan.legWinnerFlipped && outcome) {
+      const teamA = [outcome.teamAPlayer1Id, outcome.teamAPlayer2Id].filter(
+        (id): id is string => !!id,
+      );
+      const teamB = [outcome.teamBPlayer1Id, outcome.teamBPlayer2Id].filter(
+        (id): id is string => !!id,
+      );
+      const aWonBefore = (outcome.scoreA ?? 0) > (outcome.scoreB ?? 0);
+      await this.badgesService.swapGameResult({
+        previousWinnerIds: aWonBefore ? teamA : teamB,
+        previousLoserIds: aWonBefore ? teamB : teamA,
+      });
+    }
+
+    if (plan.tieOutcomeChanged) {
+      const playersOf = (entry: {
+        player1Id: string;
+        player2Id: string | null;
+      }) =>
+        [entry.player1Id, entry.player2Id].filter((id): id is string => !!id);
+      if (plan.before.done && plan.before.winnerSide) {
+        // On annule l'ancienne décision : points de note, historique des points, place dans le tableau.
+        const oldWinner =
+          plan.before.winnerSide === 'A' ? tie.entryA : tie.entryB;
+        await this.tournamentsRepository.awardRatingBonus(
+          playersOf(oldWinner),
+          -pointsForRound(tie.round),
+        );
+        const withDeltas = tie.legs.find((leg) => leg.ratingDeltas !== null);
+        if (withDeltas) {
+          await this.tournamentsRepository.clearLegRatingDeltas(withDeltas.id);
+        }
+        await this.tournamentsRepository.reopenTie(tie.id);
+        await this.cancelUnplayedLegs(nextTie, {
+          id: tournament.id,
+          name: tournament.name,
+        });
+        await this.tournamentsRepository.clearAdvancedEntry(
+          tournament.id,
+          tie.round + 1,
+          Math.floor(tie.slot / 2),
+          tie.slot % 2 === 0 ? 'A' : 'B',
+        );
+      }
+      if (plan.after.done) {
+        const refreshed = await this.tournamentsRepository.findTieById(tie.id);
+        const decisive = [...tie.legs]
+          .filter((leg) => leg.status === 'COMPLETED')
+          .sort((a, b) => (a.legNumber ?? 1) - (b.legNumber ?? 1))
+          .pop();
+        if (refreshed) {
+          await this.finishTie(
+            refreshed,
+            plan.after.winnerSide,
+            decisive?.id ?? matchId,
+          );
+        }
+      } else {
+        // La rencontre n'est plus décidée (ex. égalité au cumul) : la belle sera jouée.
+        await this.tournamentsRepository.markTieReady(tie.id);
+        await this.scheduleAllRunning();
+      }
+    }
+
+    const updated = await this.getById(tournament.id);
+    this.tournamentsGateway.broadcast('tournament:updated', updated);
+    return { tournamentId: tournament.id, tournamentName: updated.name };
+  }
+
+  /** Annule les matchs du tour suivant qui ont été créés mais jamais joués (table libérée, match supprimé) parce que l'équipe qui y avait avancé change ; prévient les joueurs de la rencontre. */
+  private async cancelUnplayedLegs(
+    nextTie: Awaited<ReturnType<TournamentsRepository['findTieByRoundSlot']>>,
+    tournament: { id: string; name: string },
+  ): Promise<void> {
+    if (!nextTie) return;
+    const unplayed = nextTie.legs.filter(
+      (leg) => leg.scoreA === null && leg.status === 'ACCEPTED',
+    );
+    if (unplayed.length === 0) return;
+    for (const leg of unplayed) {
+      if (leg.tableId) {
+        await this.tablesService.releaseTournamentClaim(
+          leg.tableId,
+          nextTie.id,
+        );
+      }
+      await this.tournamentsRepository.deleteUnplayedLeg(leg.id);
+    }
+    const playerIds = [nextTie.entryA, nextTie.entryB].flatMap((entry) =>
+      entry
+        ? [entry.player1Id, entry.player2Id].filter((id): id is string => !!id)
+        : [],
+    );
+    await this.notificationsService.createForUsers(
+      playerIds,
+      NotificationType.TOURNAMENT_TIE_RESET,
+      {
+        tournamentId: tournament.id,
+        tournamentName: tournament.name,
+        round: nextTie.round,
+      },
+    );
   }
 
   /** Appelé par MatchesService quand une manche de tournoi part en litige (ou expire) : on la rejoue. */
@@ -534,31 +879,38 @@ export class TournamentsService {
     const seen = new Set<string>();
     for (const entry of entries) {
       if (format === MatchFormat.TWO_V_TWO && !entry.player2Id) {
-        throw new BadRequestException(
-          'player2Id is required for a 2v2 tournament',
-        );
+        throw new BadRequestException({
+          message: 'player2Id is required for a 2v2 tournament',
+          code: 'PLAYER2_REQUIRED',
+        });
       }
       if (format === MatchFormat.ONE_V_ONE && entry.player2Id) {
-        throw new BadRequestException(
-          'player2Id is not allowed for a 1v1 tournament',
-        );
+        throw new BadRequestException({
+          message: 'player2Id is not allowed for a 1v1 tournament',
+          code: 'PLAYER2_NOT_ALLOWED',
+        });
       }
       if (entry.player2Id && entry.player1Id === entry.player2Id) {
-        throw new BadRequestException(
-          'An entry cannot pair a player with themselves',
-        );
+        throw new BadRequestException({
+          message: 'An entry cannot pair a player with themselves',
+          code: 'ENTRY_SELF_PAIR',
+        });
       }
       for (const id of [entry.player1Id, entry.player2Id].filter(
         (v): v is string => !!v,
       )) {
         if (seen.has(id)) {
-          throw new ConflictException(
-            'A player cannot appear in more than one entry',
-          );
+          throw new ConflictException({
+            message: 'A player cannot appear in more than one entry',
+            code: 'PLAYER_IN_MULTIPLE_ENTRIES',
+          });
         }
         seen.add(id);
         if (!(await this.usersService.findUserById(id))) {
-          throw new NotFoundException(`Player ${id} not found`);
+          throw new NotFoundException({
+            message: `Player ${id} not found`,
+            code: 'PLAYER_NOT_FOUND',
+          });
         }
       }
     }

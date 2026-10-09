@@ -11,6 +11,7 @@ import {
   useRemoveTournamentEntryMutation,
 } from "@/features/tournaments/tournamentsApi";
 import { TieCard } from "@/features/tournaments/TieCard";
+import { ReplacePlayerDialog } from "@/features/tournaments/ReplacePlayerDialog";
 import { translateRoundLabel } from "@/features/tournaments/tournamentHelpers";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/pagination";
@@ -144,14 +145,21 @@ export const TournamentDetail = () => {
                   ? `${entry.player1.displayname} + ${entry.player2.displayname}`
                   : entry.player1.displayname}
                 {isAdmin ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => void run(() => removeEntry({ id: tournament.id, entryId: entry.id }).unwrap())}
-                  >
-                    {t("tournaments.removeEntry")}
-                  </Button>
+                  <span className="flex gap-2">
+                    <ReplacePlayerDialog
+                      tournamentId={tournament.id}
+                      entry={entry}
+                      enteredIds={enteredIds}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void run(() => removeEntry({ id: tournament.id, entryId: entry.id }).unwrap())}
+                    >
+                      {t("tournaments.removeEntry")}
+                    </Button>
+                  </span>
                 ) : null}
               </li>
             ))}
@@ -231,12 +239,49 @@ export const TournamentDetail = () => {
           </h2>
           <ul className="flex flex-col gap-1">
             {tournament.entries.map((entry) => (
-              <li key={entry.id} className="border border-border px-2 py-1 text-sm">
+              <li
+                key={entry.id}
+                className="flex items-center justify-between gap-2 border border-border px-2 py-1 text-sm"
+              >
                 {entry.player2
                   ? `${entry.player1.displayname} + ${entry.player2.displayname}`
                   : entry.player1.displayname}
+                {isAdmin ? (
+                  <ReplacePlayerDialog
+                    tournamentId={tournament.id}
+                    entry={entry}
+                    enteredIds={enteredIds}
+                  />
+                ) : null}
               </li>
             ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {isAdmin && tournament.status === "IN_PROGRESS" ? (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            {t("tournaments.teamsInPlay")}
+          </h2>
+          <ul className="flex flex-col gap-1">
+            {tournament.entries
+              .filter((entry) => entry.eliminatedRound === null)
+              .map((entry) => (
+                <li
+                  key={entry.id}
+                  className="flex items-center justify-between gap-2 border border-border px-2 py-1 text-sm"
+                >
+                  {entry.player2
+                    ? `${entry.player1.displayname} + ${entry.player2.displayname}`
+                    : entry.player1.displayname}
+                  <ReplacePlayerDialog
+                    tournamentId={tournament.id}
+                    entry={entry}
+                    enteredIds={enteredIds}
+                  />
+                </li>
+              ))}
           </ul>
         </section>
       ) : null}
@@ -252,7 +297,17 @@ export const TournamentDetail = () => {
                 </h2>
                 <ul className="flex flex-col gap-2">
                   {ties.map((tie) => (
-                    <TieCard key={tie.id} tie={tie} meId={me?.id} />
+                    <TieCard
+                      key={tie.id}
+                      tie={tie}
+                      meId={me?.id}
+                      isAdmin={isAdmin}
+                      canCorrect={
+                        isAdmin &&
+                        (tournament.status === "IN_PROGRESS" ||
+                          tournament.status === "COMPLETED")
+                      }
+                    />
                   ))}
                 </ul>
               </section>

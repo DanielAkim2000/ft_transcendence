@@ -69,19 +69,24 @@ export class GdprService {
   private async assertDeletable(userId: string): Promise<void> {
     const blockers = await this.gdprRepository.findDeletionBlockers(userId);
     if (blockers.openTournamentsCreated > 0) {
-      throw new ConflictException(
-        'You have a tournament in progress or in preparation: finish or cancel it before deleting your account',
-      );
+      throw new ConflictException({
+        message:
+          'You have a tournament in progress or in preparation: finish or cancel it before deleting your account',
+        code: 'DELETION_BLOCKED_TOURNAMENT_CREATED',
+      });
     }
     if (blockers.openTournamentsJoined > 0) {
-      throw new ConflictException(
-        'You are in a tournament that is not finished: wait for it to end',
-      );
+      throw new ConflictException({
+        message:
+          'You are in a tournament that is not finished: wait for it to end',
+        code: 'DELETION_BLOCKED_TOURNAMENT_JOINED',
+      });
     }
     if (blockers.onTable > 0) {
-      throw new ConflictException(
-        'You are playing on a table: finish your game first',
-      );
+      throw new ConflictException({
+        message: 'You are playing on a table: finish your game first',
+        code: 'DELETION_BLOCKED_ON_TABLE',
+      });
     }
   }
 
@@ -90,9 +95,10 @@ export class GdprService {
     await this.assertDeletable(user.id);
     const last = this.lastRequestAt.get(user.id) ?? 0;
     if (Date.now() - last < DELETION_REQUEST_COOLDOWN_MS) {
-      throw new ConflictException(
-        'A confirmation email was just sent, check your inbox',
-      );
+      throw new ConflictException({
+        message: 'A confirmation email was just sent, check your inbox',
+        code: 'CONFIRMATION_EMAIL_RECENTLY_SENT',
+      });
     }
     const token = await this.jwtService.signAsync(
       { sub: user.id, purpose: DELETION_PURPOSE },
@@ -123,12 +129,23 @@ export class GdprService {
       if (payload.purpose !== DELETION_PURPOSE) throw new Error('purpose');
       userId = payload.sub;
     } catch {
-      throw new UnauthorizedException('Invalid or expired confirmation link');
+      throw new UnauthorizedException({
+        message: 'Invalid or expired confirmation link',
+        code: 'CONFIRMATION_LINK_INVALID',
+      });
     }
+    await this.eraseAccount(userId);
+  }
+
+  /** Supprime définitivement un compte : refuse si un tournoi ou une partie l'en empêche, anonymise le compte, efface son avatar et envoie l'email de confirmation. Utilisé par la confirmation par email et par les administrateurs. */
+  async eraseAccount(userId: string): Promise<void> {
     const data = await this.gdprRepository.collectUserData(userId);
     const profile = data.profile;
     if (!profile) {
-      throw new NotFoundException('Account already deleted');
+      throw new NotFoundException({
+        message: 'Account already deleted',
+        code: 'ACCOUNT_ALREADY_DELETED',
+      });
     }
     await this.assertDeletable(userId);
     await this.gdprRepository.anonymizeUser(userId);

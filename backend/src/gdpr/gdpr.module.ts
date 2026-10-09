@@ -9,5 +9,6 @@ import { GdprService } from './gdpr.service';
   imports: [PrismaModule],
   controllers: [GdprController],
   providers: [GdprService, GdprRepository],
+  exports: [GdprService],
 })
 export class GdprModule {}

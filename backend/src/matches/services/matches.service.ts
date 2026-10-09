@@ -92,20 +92,35 @@ export class MatchesService {
     teammateId?: string,
   ): Promise<MatchEntity> {
     if (opponentId === challengerId) {
-      throw new BadRequestException('You cannot challenge yourself');
+      throw new BadRequestException({
+        message: 'You cannot challenge yourself',
+        code: 'CANNOT_CHALLENGE_SELF',
+      });
     }
     if (!(await this.usersService.findUserById(opponentId))) {
-      throw new NotFoundException('Opponent not found');
+      throw new NotFoundException({
+        message: 'Opponent not found',
+        code: 'OPPONENT_NOT_FOUND',
+      });
     }
     if (format === MatchFormat.TWO_V_TWO) {
       if (!teammateId) {
-        throw new BadRequestException('teammateId is required for 2v2');
+        throw new BadRequestException({
+          message: 'teammateId is required for 2v2',
+          code: 'TEAMMATE_REQUIRED',
+        });
       }
       if (teammateId === challengerId || teammateId === opponentId) {
-        throw new BadRequestException('Invalid teammate');
+        throw new BadRequestException({
+          message: 'Invalid teammate',
+          code: 'TEAMMATE_INVALID',
+        });
       }
       if (!(await this.usersService.findUserById(teammateId))) {
-        throw new NotFoundException('Teammate not found');
+        throw new NotFoundException({
+          message: 'Teammate not found',
+          code: 'TEAMMATE_NOT_FOUND',
+        });
       }
     }
     const match = await this.matchesRepository.create(
@@ -132,15 +147,24 @@ export class MatchesService {
   ): Promise<MatchEntity> {
     const match = await this.getMatch(matchId);
     if (match.status !== MatchStatus.PENDING) {
-      throw new ConflictException('This challenge is no longer pending');
+      throw new ConflictException({
+        message: 'This challenge is no longer pending',
+        code: 'CHALLENGE_NOT_PENDING',
+      });
     }
     if (match.teamB[0]?.id !== userId) {
-      throw new ForbiddenException('Only the challenged player can respond');
+      throw new ForbiddenException({
+        message: 'Only the challenged player can respond',
+        code: 'CHALLENGE_ONLY_CHALLENGED_RESPONDS',
+      });
     }
 
     if (!accept) {
       if (!(await this.matchesRepository.decline(matchId, userId))) {
-        throw new ConflictException('This challenge is no longer pending');
+        throw new ConflictException({
+          message: 'This challenge is no longer pending',
+          code: 'CHALLENGE_NOT_PENDING',
+        });
       }
       const updated = await this.getMatch(matchId);
       this.matchesGateway.emitToMatch(updated, 'match:responded', updated);
@@ -159,16 +183,25 @@ export class MatchesService {
 
     if (match.format === MatchFormat.TWO_V_TWO) {
       if (!teammateId) {
-        throw new BadRequestException('teammateId is required for 2v2');
+        throw new BadRequestException({
+          message: 'teammateId is required for 2v2',
+          code: 'TEAMMATE_REQUIRED',
+        });
       }
       if (
         teammateId === userId ||
         match.teamA.some((player) => player.id === teammateId)
       ) {
-        throw new BadRequestException('Invalid teammate');
+        throw new BadRequestException({
+          message: 'Invalid teammate',
+          code: 'TEAMMATE_INVALID',
+        });
       }
       if (!(await this.usersService.findUserById(teammateId))) {
-        throw new NotFoundException('Teammate not found');
+        throw new NotFoundException({
+          message: 'Teammate not found',
+          code: 'TEAMMATE_NOT_FOUND',
+        });
       }
     }
     if (
@@ -178,7 +211,10 @@ export class MatchesService {
         match.format === MatchFormat.TWO_V_TWO ? teammateId : undefined,
       ))
     ) {
-      throw new ConflictException('This challenge is no longer pending');
+      throw new ConflictException({
+        message: 'This challenge is no longer pending',
+        code: 'CHALLENGE_NOT_PENDING',
+      });
     }
     const updated = await this.getMatch(matchId);
     this.matchesGateway.emitToMatch(updated, 'match:responded', updated);
@@ -206,14 +242,19 @@ export class MatchesService {
   ): Promise<MatchEntity> {
     const match = await this.getMatch(matchId);
     this.assertParticipant(match, userId);
+    if (match.tournamentTieId) {
+      throw new ForbiddenException({
+        message: 'Tournament scores are entered by an admin',
+        code: 'TOURNAMENT_SCORE_ADMIN_ONLY',
+      });
+    }
     if (match.status !== MatchStatus.ACCEPTED) {
-      throw new ConflictException('Match is not ready for a score');
+      throw new ConflictException({
+        message: 'Match is not ready for a score',
+        code: 'MATCH_NOT_READY_FOR_SCORE',
+      });
     }
-    if (!this.isValidScore(scoreA, scoreB)) {
-      throw new BadRequestException(
-        `A match ends at ${MATCH_TARGET_SCORE} points: the score must be ${MATCH_TARGET_SCORE}-x with x from 0 to ${MATCH_TARGET_SCORE - 1} (no draw)`,
-      );
-    }
+    this.assertValidScore(scoreA, scoreB);
     const isTableMatch = match.tableId !== null && !match.tournamentTieId;
     const validationExpiresAt = new Date(
       Date.now() + SCORE_VALIDATION_TIMEOUT_MS,
@@ -227,7 +268,10 @@ export class MatchesService {
         validationExpiresAt,
       ))
     ) {
-      throw new ConflictException('Match is not ready for a score');
+      throw new ConflictException({
+        message: 'Match is not ready for a score',
+        code: 'MATCH_NOT_READY_FOR_SCORE',
+      });
     }
     this.scheduleValidationExpiry(matchId);
     if (isTableMatch) {
@@ -257,6 +301,103 @@ export class MatchesService {
     return updated;
   }
 
+  /** Un administrateur saisit le score d'une manche de tournoi : seul moyen d'en enregistrer un. Le match est terminé immédiatement, le tournoi avance (vainqueur, tableau, tables) et les joueurs sont notifiés. */
+  async submitTournamentScoreAsAdmin(
+    adminId: string,
+    matchId: string,
+    scoreA: number,
+    scoreB: number,
+  ): Promise<MatchEntity> {
+    const match = await this.getMatch(matchId);
+    if (!match.tournamentTieId) {
+      throw new BadRequestException({
+        message: 'Only tournament matches are scored by an admin',
+        code: 'ONLY_TOURNAMENT_MATCHES_ADMIN_SCORE',
+      });
+    }
+    if (match.status !== MatchStatus.ACCEPTED) {
+      throw new ConflictException({
+        message: 'Match is not ready for a score',
+        code: 'MATCH_NOT_READY_FOR_SCORE',
+      });
+    }
+    this.assertValidScore(scoreA, scoreB);
+    if (
+      !(await this.matchesRepository.completeByAdmin(
+        matchId,
+        adminId,
+        scoreA,
+        scoreB,
+      ))
+    ) {
+      throw new ConflictException({
+        message: 'Match is not ready for a score',
+        code: 'MATCH_NOT_READY_FOR_SCORE',
+      });
+    }
+    await this.tournamentsService.handleLegCompleted(matchId);
+    const updated = await this.getMatch(matchId);
+    this.matchesGateway.emitToMatch(updated, 'match:completed', updated);
+    await this.notifyCompleted(updated);
+    return updated;
+  }
+
+  /** Un administrateur corrige le score déjà saisi d'une manche de tournoi terminée. Le tournoi est recalculé (vainqueur, points, tableau) ou la correction refusée si le tour suivant a déjà commencé ; les joueurs sont prévenus. */
+  async correctTournamentScoreAsAdmin(
+    matchId: string,
+    scoreA: number,
+    scoreB: number,
+  ): Promise<MatchEntity> {
+    const match = await this.getMatch(matchId);
+    if (!match.tournamentTieId) {
+      throw new BadRequestException({
+        message: 'Only tournament matches are scored by an admin',
+        code: 'ONLY_TOURNAMENT_MATCHES_ADMIN_SCORE',
+      });
+    }
+    if (match.status !== MatchStatus.COMPLETED) {
+      throw new ConflictException({
+        message: 'This match has no finished score to correct',
+        code: 'MATCH_NOT_CORRECTABLE',
+      });
+    }
+    this.assertValidScore(scoreA, scoreB);
+    const tournament = await this.tournamentsService.correctLegScore(
+      matchId,
+      scoreA,
+      scoreB,
+    );
+    const updated = await this.getMatch(matchId);
+    this.matchesGateway.emitToMatch(updated, 'match:corrected', updated);
+    for (const [team, own, opponent] of [
+      [updated.teamA, scoreA, scoreB],
+      [updated.teamB, scoreB, scoreA],
+    ] as const) {
+      await this.notificationsService.createForUsers(
+        team.map((player) => player.id),
+        NotificationType.TOURNAMENT_SCORE_CORRECTED,
+        {
+          tournamentId: tournament.tournamentId,
+          tournamentName: tournament.tournamentName,
+          ownScore: own,
+          opponentScore: opponent,
+        },
+      );
+    }
+    return updated;
+  }
+
+  /** Lève une BadRequestException si le score n'est pas valide (un camp à 10 points, l'autre en dessous). */
+  private assertValidScore(scoreA: number, scoreB: number): void {
+    if (!this.isValidScore(scoreA, scoreB)) {
+      throw new BadRequestException({
+        message: `A match ends at ${MATCH_TARGET_SCORE} points: the score must be ${MATCH_TARGET_SCORE}-x with x from 0 to ${MATCH_TARGET_SCORE - 1} (no draw)`,
+        code: 'INVALID_SCORE',
+        params: { target: MATCH_TARGET_SCORE, max: MATCH_TARGET_SCORE - 1 },
+      });
+    }
+  }
+
   /** Vrai si l'un des deux camps a exactement 10 points et l'autre moins (jamais d'égalité). */
   private isValidScore(scoreA: number, scoreB: number): boolean {
     const target = MATCH_TARGET_SCORE;
@@ -275,20 +416,27 @@ export class MatchesService {
     const match = await this.getMatch(matchId);
     this.assertParticipant(match, userId);
     if (match.status !== MatchStatus.PENDING_VALIDATION) {
-      throw new ConflictException('No score awaiting validation');
+      throw new ConflictException({
+        message: 'No score awaiting validation',
+        code: 'NO_SCORE_TO_VALIDATE',
+      });
     }
     const submitterTeam = this.teamOf(match, match.submittedBy?.id ?? '');
     const validatorTeam = this.teamOf(match, userId);
     if (!submitterTeam || !validatorTeam || submitterTeam === validatorTeam) {
-      throw new ForbiddenException(
-        'Only the other team can validate this score',
-      );
+      throw new ForbiddenException({
+        message: 'Only the other team can validate this score',
+        code: 'ONLY_OTHER_TEAM_VALIDATES',
+      });
     }
 
     if (!accept) {
       this.clearTimer(matchId);
       if (!(await this.matchesRepository.dispute(matchId, userId))) {
-        throw new ConflictException('No score awaiting validation');
+        throw new ConflictException({
+          message: 'No score awaiting validation',
+          code: 'NO_SCORE_TO_VALIDATE',
+        });
       }
       const updated = await this.getMatch(matchId);
       this.matchesGateway.emitToMatch(updated, 'match:disputed', updated);
@@ -303,7 +451,10 @@ export class MatchesService {
     if (
       !(await this.matchesRepository.completeWithValidation(matchId, userId))
     ) {
-      throw new ConflictException('No score awaiting validation');
+      throw new ConflictException({
+        message: 'No score awaiting validation',
+        code: 'NO_SCORE_TO_VALIDATE',
+      });
     }
     if (match.tournamentTieId) {
       await this.tournamentsService.handleLegCompleted(matchId);
@@ -393,7 +544,10 @@ export class MatchesService {
   /** Lève une ForbiddenException si l'utilisateur ne fait pas partie du match. */
   private assertParticipant(match: MatchEntity, userId: string): void {
     if (!this.teamOf(match, userId)) {
-      throw new ForbiddenException('You are not part of this match');
+      throw new ForbiddenException({
+        message: 'You are not part of this match',
+        code: 'NOT_IN_MATCH',
+      });
     }
   }
 
@@ -401,7 +555,10 @@ export class MatchesService {
   private async getMatch(matchId: string): Promise<MatchEntity> {
     const match = await this.matchesRepository.findById(matchId);
     if (!match) {
-      throw new NotFoundException('Match not found');
+      throw new NotFoundException({
+        message: 'Match not found',
+        code: 'MATCH_NOT_FOUND',
+      });
     }
     return match;
   }

@@ -9,7 +9,7 @@ import {
 } from '../entities/tournament.entity';
 import { MatchFormat, MatchStatus } from '../../matches/entities/match.entity';
 import { roundLabel, resolveTie, type TieLeg } from '../lib/bracket';
-import type { Prisma } from '../../generated/prisma/client';
+import { Prisma } from '../../generated/prisma/client';
 import {
   PageQueryDto,
   pageOffset,
@@ -134,6 +134,54 @@ export class TournamentsRepository {
       where: { id: entryId, tournamentId },
     });
     return count > 0;
+  }
+
+  /** Remplace un joueur d'une entrée par un autre, y compris dans les manches en cours (acceptées ou en attente de validation) de ses rencontres ; les manches terminées gardent le joueur qui les a jouées. Une seule transaction. */
+  async replaceEntryPlayer(
+    tournamentId: string,
+    entryId: string,
+    playerId: string,
+    replacementId: string,
+  ): Promise<void> {
+    const live = [MatchStatus.ACCEPTED, MatchStatus.PENDING_VALIDATION];
+    await this.prisma.$transaction(async (tx) => {
+      const entry = await tx.tournamentEntry.findFirst({
+        where: { id: entryId, tournamentId },
+        select: { player1Id: true },
+      });
+      if (!entry) return;
+      await tx.tournamentEntry.update({
+        where: { id: entryId },
+        data:
+          entry.player1Id === playerId
+            ? { player1Id: replacementId }
+            : { player2Id: replacementId },
+      });
+      const asA = {
+        status: { in: live },
+        tournamentTie: { entryAId: entryId },
+      };
+      const asB = {
+        status: { in: live },
+        tournamentTie: { entryBId: entryId },
+      };
+      await tx.match.updateMany({
+        where: { ...asA, teamAPlayer1Id: playerId },
+        data: { teamAPlayer1Id: replacementId },
+      });
+      await tx.match.updateMany({
+        where: { ...asA, teamAPlayer2Id: playerId },
+        data: { teamAPlayer2Id: replacementId },
+      });
+      await tx.match.updateMany({
+        where: { ...asB, teamBPlayer1Id: playerId },
+        data: { teamBPlayer1Id: replacementId },
+      });
+      await tx.match.updateMany({
+        where: { ...asB, teamBPlayer2Id: playerId },
+        data: { teamBPlayer2Id: replacementId },
+      });
+    });
   }
 
   /** Retrouve un tournoi complet (entrées, rencontres) par id, ou null. */
@@ -311,7 +359,85 @@ export class TournamentsRepository {
   async findTieByRoundSlot(tournamentId: string, round: number, slot: number) {
     return this.prisma.tournamentTie.findUnique({
       where: { tournamentId_round_slot: { tournamentId, round, slot } },
-      include: { entryA: true, entryB: true },
+      include: {
+        entryA: true,
+        entryB: true,
+        legs: {
+          select: { id: true, status: true, scoreA: true, tableId: true },
+        },
+      },
+    });
+  }
+
+  /** Remplace le score d'une manche de tournoi déjà terminée ; false si la manche n'existe pas ou n'est pas terminée. */
+  async updateLegScore(
+    matchId: string,
+    scoreA: number,
+    scoreB: number,
+  ): Promise<boolean> {
+    const { count } = await this.prisma.match.updateMany({
+      where: {
+        id: matchId,
+        status: MatchStatus.COMPLETED,
+        tournamentTieId: { not: null },
+      },
+      data: { scoreA, scoreB },
+    });
+    return count === 1;
+  }
+
+  /** Supprime une manche de tournoi créée mais jamais jouée (acceptée, sans aucun score) ; false si elle a reçu un score entre-temps. */
+  async deleteUnplayedLeg(matchId: string): Promise<boolean> {
+    const { count } = await this.prisma.match.deleteMany({
+      where: {
+        id: matchId,
+        status: MatchStatus.ACCEPTED,
+        scoreA: null,
+        tournamentTieId: { not: null },
+      },
+    });
+    return count === 1;
+  }
+
+  /** Efface l'historique des points de tournoi gagnés enregistré sur une manche. */
+  async clearLegRatingDeltas(matchId: string): Promise<void> {
+    await this.prisma.match.update({
+      where: { id: matchId },
+      data: { ratingDeltas: Prisma.DbNull },
+    });
+  }
+
+  /** Rouvre une rencontre décidée : prête à être (re)jouée, sans vainqueur ni points. */
+  async reopenTie(tieId: string): Promise<void> {
+    await this.prisma.tournamentTie.update({
+      where: { id: tieId },
+      data: {
+        status: TournamentTieStatus.READY,
+        winnerEntryId: null,
+        pointsAwarded: null,
+      },
+    });
+  }
+
+  /** Vide un côté de la rencontre du tour suivant (le vainqueur qui y avait avancé change) ; la rencontre redevient en attente d'un adversaire. */
+  async clearAdvancedEntry(
+    tournamentId: string,
+    nextRound: number,
+    nextSlot: number,
+    side: 'A' | 'B',
+  ): Promise<void> {
+    await this.prisma.tournamentTie.update({
+      where: {
+        tournamentId_round_slot: {
+          tournamentId,
+          round: nextRound,
+          slot: nextSlot,
+        },
+      },
+      data: {
+        ...(side === 'A' ? { entryAId: null } : { entryBId: null }),
+        status: TournamentTieStatus.PENDING,
+      },
     });
   }
 
@@ -472,8 +598,21 @@ export class TournamentsRepository {
   /** Convertit un tournoi Prisma en TournamentEntity (rencontres converties ; le champion est le vainqueur de la finale une fois le tournoi terminé). */
   private toEntity(tournament: TournamentWithAll): TournamentEntity {
     const totalRounds = tournament.totalRounds ?? 0;
+    // Une équipe est éliminée au tour où elle perd une rencontre terminée (dérivé des rencontres, jamais stocké : reste juste après une correction de score).
+    const eliminatedRounds = new Map<string, number>();
+    for (const tie of tournament.ties) {
+      if (tie.status !== 'DONE' || !tie.winnerEntryId) continue;
+      const loserId =
+        tie.entryAId === tie.winnerEntryId ? tie.entryBId : tie.entryAId;
+      if (loserId) eliminatedRounds.set(loserId, tie.round);
+    }
     const ties = tournament.ties.map((tie) =>
-      this.tieToEntity(tie, totalRounds, tournament.twoLegged),
+      this.tieToEntity(
+        tie,
+        totalRounds,
+        tournament.twoLegged,
+        eliminatedRounds,
+      ),
     );
     const finalTie = ties.find((tie) => tie.round === totalRounds);
     return new TournamentEntity({
@@ -484,7 +623,9 @@ export class TournamentsRepository {
       status: tournament.status as TournamentStatus,
       totalRounds: tournament.totalRounds,
       createdBy: tournament.createdBy,
-      entries: tournament.entries.map((entry) => this.entryToEntity(entry)),
+      entries: tournament.entries.map((entry) =>
+        this.entryToEntity(entry, eliminatedRounds),
+      ),
       ties,
       createdAt: tournament.createdAt,
       startedAt: tournament.startedAt,
@@ -497,13 +638,16 @@ export class TournamentsRepository {
   }
 
   /** Convertit une entrée Prisma en TournamentEntryEntity. */
-  private entryToEntity(entry: EntryWithPlayers): TournamentEntryEntity {
+  private entryToEntity(
+    entry: EntryWithPlayers,
+    eliminatedRounds: Map<string, number>,
+  ): TournamentEntryEntity {
     return new TournamentEntryEntity({
       id: entry.id,
       seed: entry.seed,
       player1: entry.player1,
       player2: entry.player2,
-      eliminatedRound: entry.eliminatedRound,
+      eliminatedRound: eliminatedRounds.get(entry.id) ?? null,
     });
   }
 
@@ -512,6 +656,7 @@ export class TournamentsRepository {
     tie: TieWithDetails,
     totalRounds: number,
     twoLegged: boolean,
+    eliminatedRounds: Map<string, number>,
   ): TournamentTieEntity {
     const legs: TieLeg[] = tie.legs.map((leg) => ({
       legNumber: leg.legNumber ?? 1,
@@ -530,8 +675,12 @@ export class TournamentsRepository {
       round: tie.round,
       slot: tie.slot,
       roundLabel: roundLabel(tie.round, totalRounds),
-      entryA: tie.entryA ? this.entryToEntity(tie.entryA) : null,
-      entryB: tie.entryB ? this.entryToEntity(tie.entryB) : null,
+      entryA: tie.entryA
+        ? this.entryToEntity(tie.entryA, eliminatedRounds)
+        : null,
+      entryB: tie.entryB
+        ? this.entryToEntity(tie.entryB, eliminatedRounds)
+        : null,
       status: tie.status as TournamentTieStatus,
       winnerEntryId: tie.winnerEntryId,
       pointsAwarded: tie.pointsAwarded,
@@ -551,6 +700,23 @@ export class TournamentsRepository {
         firstTwo.length > 0
           ? firstTwo.reduce((sum, leg) => sum + (leg.scoreB ?? 0), 0)
           : null,
+      completedLegs: completedLegs.flatMap((leg) => {
+        const source = tie.legs.find(
+          (candidate) =>
+            candidate.status === 'COMPLETED' &&
+            (candidate.legNumber ?? 1) === leg.legNumber,
+        );
+        return source && leg.scoreA !== null && leg.scoreB !== null
+          ? [
+              {
+                id: source.id,
+                legNumber: leg.legNumber,
+                scoreA: leg.scoreA,
+                scoreB: leg.scoreB,
+              },
+            ]
+          : [];
+      }),
     });
   }
 }

@@ -7,6 +7,7 @@ import { usersApi } from "../users/usersApi";
 import { TAG_TYPES } from "@/constants/tagTypes";
 import { ROUTES } from "@/constants/routes";
 import { navigate } from "@/lib/navigation";
+import { banLoginPath } from "../ban/banHelpers";
 import { toast } from "@/components/ui/toast";
 import i18n from "@/i18n";
 import type { Status } from "../auth/authApi";
@@ -60,11 +61,11 @@ const PresenceBootstrap: React.FC<PresenceBootstrapProps> = ({ children }) => {
       });
     };
 
-    const onBanned =  (payload: { reason: string }) => {
+    const onBanned = (payload: { reason: string; endTime: string | null }) => {
       dispatch(clearCredentials());
-      toast.add({ title: `You have been banned: ${payload.reason}`, type: "error" });
-      navigate(ROUTES.LOGIN);
-    }
+      toast.add({ title: i18n.t("ban.notice.title"), type: "error" });
+      navigate(banLoginPath(payload.reason, payload.endTime));
+    };
 
     socket?.on("presence:update", onUpdate);
     socket?.on("presence:sync", onSync);

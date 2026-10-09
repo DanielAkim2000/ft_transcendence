@@ -28,6 +28,13 @@ export const API_ROUTES = {
   friend: (userId: string) => `/users/me/friends/${userId}`,
   friendAccept: (userId: string) => `/users/me/friends/${userId}/accept`,
 
+  ADMIN_USERS: "/admin/users",
+  adminUser: (id: string) => `/admin/users/${id}`,
+
+  ban: (userId: string) => `/ban/${userId}`,
+  banHistory: (userId: string) => `/ban/${userId}/history`,
+  banLift: (userId: string) => `/ban/${userId}/unban`,
+
   HEALTH: "/health",
 
   GDPR_EXPORT: "/gdpr/export",
@@ -35,11 +42,13 @@ export const API_ROUTES = {
   GDPR_DELETION_CONFIRM: "/gdpr/deletion-confirm",
 
   TABLES: "/tables",
+  table: (id: string) => `/tables/${id}`,
 
   QUEUE_ME: "/queue/me",
   queueForTable: (tableId: string) => `/queue/${tableId}`,
   queueJoin: (tableId: string) => `/queue/${tableId}/join`,
   queueReleaseVote: (tableId: string) => `/queue/${tableId}/release-vote`,
+  queueAdminRelease: (tableId: string) => `/queue/${tableId}/admin-release`,
   queueGroup: (groupId: string) => `/queue/groups/${groupId}`,
   queueGroupRespond: (groupId: string) => `/queue/groups/${groupId}/respond`,
   queueGroupConfirm: (groupId: string) => `/queue/groups/${groupId}/confirm`,
@@ -51,6 +60,7 @@ export const API_ROUTES = {
   match: (matchId: string) => `/matches/${matchId}`,
   matchRespond: (matchId: string) => `/matches/${matchId}/respond`,
   matchScore: (matchId: string) => `/matches/${matchId}/score`,
+  matchAdminScore: (matchId: string) => `/matches/${matchId}/admin-score`,
   matchValidate: (matchId: string) => `/matches/${matchId}/validate`,
 
   TOURNAMENTS: "/tournaments",
@@ -58,6 +68,7 @@ export const API_ROUTES = {
   tournament: (id: string) => `/tournaments/${id}`,
   tournamentEntries: (id: string) => `/tournaments/${id}/entries`,
   tournamentEntry: (id: string, entryId: string) => `/tournaments/${id}/entries/${entryId}`,
+  tournamentEntryPlayer: (id: string, entryId: string) => `/tournaments/${id}/entries/${entryId}/player`,
   tournamentLaunch: (id: string) => `/tournaments/${id}/launch`,
   tournamentCancel: (id: string) => `/tournaments/${id}/cancel`,
 

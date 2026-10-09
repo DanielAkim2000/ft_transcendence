@@ -82,7 +82,9 @@ export const QueueBootstrap = ({ children }: { children: React.ReactNode }) => {
           ? "queue.inviteExpiredToast"
           : payload.reason === "tournament"
             ? "queue.tournamentToast"
-            : "queue.expiredToast";
+            : payload.reason === "admin"
+              ? "queue.adminReleasedToast"
+              : "queue.expiredToast";
       toast.add({ title: i18n.t(key, { table: name }), type: "error" });
     };
 
@@ -121,7 +123,9 @@ export const QueueBootstrap = ({ children }: { children: React.ReactNode }) => {
       const key =
         payload.reason === "externalRelease"
           ? "queue.matchClosedByOthersToast"
-          : "queue.matchCancelledToast";
+          : payload.reason === "admin"
+            ? "queue.adminReleasedToast"
+            : "queue.matchCancelledToast";
       toast.add({ title: i18n.t(key), type: "error" });
     };
 

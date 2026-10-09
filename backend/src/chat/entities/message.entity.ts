@@ -26,6 +26,13 @@ export class MessageEntity {
     example: '2026-01-01T12:00:00.000Z',
   })
   createdAt!: Date;
+  @ApiProperty({
+    description:
+      'The id of the chess game when the message is a chess invitation, null for a regular message',
+    example: null,
+    nullable: true,
+  })
+  chessGameId!: string | null;
 
   /** Copie dans l'instance les champs fournis. */
   constructor(message: Partial<MessageEntity>) {

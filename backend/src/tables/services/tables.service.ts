@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { TablesRepository } from '../repositories/tables.repository';
 import { TableEntity } from '../entities/table.entity';
 import { TablesGateway } from '../tables.gateway';
@@ -27,9 +31,55 @@ export class TablesService {
   async getById(tableId: string): Promise<TableEntity> {
     const table = await this.tablesRepository.findById(tableId);
     if (!table) {
-      throw new NotFoundException('Table not found');
+      throw new NotFoundException({
+        message: 'Table not found',
+        code: 'TABLE_NOT_FOUND',
+      });
     }
     return table;
+  }
+
+  /** Crée une table (nom unique) et la diffuse à tous les clients. */
+  async create(name: string): Promise<TableEntity> {
+    await this.assertNameAvailable(name);
+    const table = await this.tablesRepository.create(name);
+    this.tablesGateway.emitTableUpdate(table);
+    return table;
+  }
+
+  /** Renomme une table (nom unique) et diffuse la mise à jour. */
+  async rename(tableId: string, name: string): Promise<TableEntity> {
+    const current = await this.getById(tableId);
+    if (current.name !== name) {
+      await this.assertNameAvailable(name);
+    }
+    const table = await this.tablesRepository.rename(tableId, name);
+    this.tablesGateway.emitTableUpdate(table);
+    return table;
+  }
+
+  /** Supprime une table inutilisée (libre, sans file ni tournoi) et prévient les clients ; lève une ConflictException sinon. */
+  async remove(tableId: string): Promise<void> {
+    await this.getById(tableId);
+    if (await this.tablesRepository.isInUse(tableId)) {
+      throw new ConflictException({
+        message:
+          'This table is in use: wait until it is free (no game, queue or tournament match)',
+        code: 'TABLE_IN_USE',
+      });
+    }
+    await this.tablesRepository.delete(tableId);
+    this.tablesGateway.emitTableRemoved(tableId);
+  }
+
+  /** Lève une ConflictException si une autre table porte déjà ce nom. */
+  private async assertNameAvailable(name: string): Promise<void> {
+    if (await this.tablesRepository.findIdByName(name)) {
+      throw new ConflictException({
+        message: 'A table with this name already exists',
+        code: 'TABLE_NAME_TAKEN',
+      });
+    }
   }
 
   /** Réserve une table libre pour une rencontre de tournoi (moteur uniquement). */

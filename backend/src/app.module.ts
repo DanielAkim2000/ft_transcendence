@@ -17,6 +17,7 @@ import { MailModule } from './mail/mail.module';
 import { GdprModule } from './gdpr/gdpr.module';
 import { ChessModule } from './chess/chess.module';
 import { BanModule } from './ban/ban.module';
+import { AdminModule } from './admin/admin.module';
 
 /** Module racine : charge la config (.env), le JWT global (access token, 1 h) et tous les modules fonctionnels de l'application. */
 @Module({
@@ -49,6 +50,7 @@ import { BanModule } from './ban/ban.module';
     MailModule,
     GdprModule,
     BanModule,
+    AdminModule,
   ],
   controllers: [],
   providers: [],

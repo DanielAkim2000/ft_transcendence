@@ -40,7 +40,7 @@ export const Profile = () => {
   const [removeFriend, { isLoading: isRemoving }] = useRemoveFriendMutation();
   const [actionError, setActionError] = useState<string | null>(null);
   const [justSentId, setJustSentId] = useState<string | null>(null);
-  const { inviteToChess } = useChessInvite();
+  const { inviteToChess, inviting } = useChessInvite();
 
   if (!id || isLoading) {
     return <PageFallback />;
@@ -208,7 +208,11 @@ export const Profile = () => {
                   {t("matches.challenge")}
                 </Button>
               </ChallengeDialog>
-              <Button variant="outline" onClick={() => inviteToChess(user.id)}>
+              <Button
+                variant="outline"
+                disabled={inviting}
+                onClick={() => void inviteToChess(user.id)}
+              >
                 <CrownIcon />
                 {t("chat.inviteChess")}
               </Button>

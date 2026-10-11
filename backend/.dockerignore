@@ -7,7 +7,6 @@ coverage
 *.log
 .git
 .agents
-.claude
 .windsurf
 test
 dist-seed

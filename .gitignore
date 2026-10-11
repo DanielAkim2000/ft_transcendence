@@ -21,3 +21,11 @@ frontend/.pnpm-store/*
 
 backend/node_modules
 backend/.pnpm-store/*
+
+# AI agent tooling
+.claude/
+.cursor/
+.windsurf/
+.agents/
+CLAUDE.md
+AGENTS.md

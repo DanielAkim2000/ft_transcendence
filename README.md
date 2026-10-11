@@ -84,22 +84,11 @@ Official documentation and references used throughout the project:
 - [Elo rating system (Wikipedia)](https://en.wikipedia.org/wiki/Elo_rating_system) — reference for the ranking formula (expected score, K-factor).
 - [PostgreSQL documentation](https://www.postgresql.org/docs/) and [nginx documentation](https://nginx.org/en/docs/) — database and reverse proxy.
 
-### How AI was used
-
-**Claude (Anthropic)** was used as a pair-programming assistant throughout the project, under the direction and review of the Tech Lead (`demane`), across essentially every part of the codebase built so far:
-
-- **Backend** — scaffolding and implementing NestJS modules (auth/JWT/2FA/OAuth, users/friends, presence, chat, tables, queue, matches/Elo, tournaments, gamification), designing the Prisma schema and hand-writing SQL migrations, and working through concurrency edge cases (e.g. atomic table-claim updates to avoid race conditions).
-- **Frontend** — building React pages and components, Redux Toolkit/RTK Query slices, WebSocket integration, i18n translations (EN/FR/ES), and the design system.
-- **Debugging & testing** — diagnosing bugs (e.g. a matches-played double-counting bug across two modules, a 2v2 teammate-selection bug), and writing throwaway Playwright/API test scripts used during development to verify features end-to-end (these scripts are not part of the shipped codebase).
-- **Documentation** — drafting and maintaining `docs/PLAN.md`, `docs/team/*.md`, `docs/DESIGN_SYSTEM.md`, and this README.
-
-All AI-assisted code was reviewed, tested, and is understood by the Tech Lead before being considered part of the project; per-feature implementation detail (so any team member can explain any part at the defense) is written up in [`docs/team/`](docs/team/), one file per member (see Team Information below).
-
 ## Team Information
 
 | Login | Role(s) | Responsibilities |
 | --- | --- | --- |
-| `demane` | Tech Lead | Owns the technical foundation (authentication, user management, presence, chat, i18n, theming, Docker/HTTPS/infra) and, at this stage, the full product feature set described below. Reviews and merges teammates' feature slices, keeps the architecture consistent, and coordinates AI-assisted implementation (see "How AI was used" above). Documented in [`docs/team/demane.md`](docs/team/demane.md). |
+| `demane` | Tech Lead | Owns the technical foundation (authentication, user management, presence, chat, i18n, theming, Docker/HTTPS/infra) and, at this stage, the full product feature set described below. Reviews and merges teammates' feature slices, keeps the architecture consistent,. Documented in [`docs/team/demane.md`](docs/team/demane.md). |
 | `rdinis` | Developer | Assigned to own the **Tables & Queue** feature slice end-to-end (Prisma model → NestJS route → React page), reviewed by the Tech Lead before merge. Documented in [`docs/team/rdinis.md`](docs/team/rdinis.md). |
 | `rbourdon` | Developer | Assigned to own the **Match & Elo** feature slice. Documented in [`docs/team/rbourdon.md`](docs/team/rbourdon.md). |
 | `vicli` | Developer | Assigned to own the **Tournaments** feature slice. Documented in [`docs/team/vicli.md`](docs/team/vicli.md). |
@@ -300,7 +289,7 @@ PWA (installable, offline table-status view) and cross-browser testing (Firefox/
 
 ## Individual Contributions
 
-At this stage in the project, `demane` (Tech Lead) has implemented the technical foundation and all product features listed above, with AI-assisted pair programming (Claude — see "How AI was used") reviewed and validated feature by feature; this is reflected honestly rather than split up artificially. `rdinis`, `rbourdon`, `vicli` and `bbouarab` (Developers) are each assigned one of the five product feature slices (Tables & Queue, Match & Elo, Tournaments, Gamification respectively) to take over, extend/refactor as needed, and be ready to present in depth at the defense — their code has not been pushed yet. Each has their own write-up of their assigned slice in [`docs/team/`](docs/team/) to work from.
+At this stage in the project, `demane` (Tech Lead) has implemented the technical foundation and all product features listed above,; this is reflected honestly rather than split up artificially. `rdinis`, `rbourdon`, `vicli` and `bbouarab` (Developers) are each assigned one of the five product feature slices (Tables & Queue, Match & Elo, Tournaments, Gamification respectively) to take over, extend/refactor as needed, and be ready to present in depth at the defense — their code has not been pushed yet. Each has their own write-up of their assigned slice in [`docs/team/`](docs/team/) to work from.
 
 ### Challenges faced (and how they were overcome)
 

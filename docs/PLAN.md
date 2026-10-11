@@ -36,7 +36,7 @@ Reste à finir **avant** que les mates branchent le métier :
 5. ✅ Gateways WebSocket + auth socket (`/presence`, `/chat`). Les mates peuvent ajouter tables / queue / notifs.
 6. ✅ README racine (anglais) — [`README.md`](../README.md).
 
-Fait en plus (hors liste initiale) : refonte UI **Phosphor** (maquette Claude Design : thème sombre monospace, dashboard, réglages, saisie 2FA en 6 cases, amis en ligne / hors ligne, aperçu de profil), blocage d'utilisateurs, messages non lus persistants (point sur « Chat » + badge par conversation).
+Fait en plus (hors liste initiale) : refonte UI **Phosphor** (maquette : thème sombre monospace, dashboard, réglages, saisie 2FA en 6 cases, amis en ligne / hors ligne, aperçu de profil), blocage d'utilisateurs, messages non lus persistants (point sur « Chat » + badge par conversation).
 
 ### Produit — mates (une personne = une slice)
 

@@ -11,7 +11,7 @@ import { ROUTES } from "@/constants/routes";
 
 const PERKS = ["live", "board3d", "resume"] as const;
 
-/** Bouton flottant (bas droite des pages connectées) qui ouvre une invitation à jouer aux échecs ; masqué sur la page des échecs. */
+/** Bouton flottant (bas droite des pages connectées) qui ouvre une invitation à jouer aux échecs ; masqué sur la page des échecs et sur le chat, où il recouvre le bouton d'envoi. */
 export function ChessLauncher() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -30,7 +30,7 @@ export function ChessLauncher() {
   const activeGames = games.filter((game) => game.status === "ACTIVE").length;
   const needsAttention = pendingInvites + activeGames > 0;
 
-  if (pathname.startsWith(ROUTES.CHESS)) return null;
+  if (pathname.startsWith(ROUTES.CHESS) || pathname.startsWith(ROUTES.CHAT)) return null;
 
   const play = () => {
     setOpen(false);

@@ -182,7 +182,7 @@ function ProfileMeForm({
             <p className="mt-3 text-sm text-destructive">{serverError}</p>
           ) : null}
         </CardContent>
-        <CardFooter className="justify-between">
+        <CardFooter className="flex-wrap justify-between gap-2">
           <Button
             variant="outline"
             render={<Link to={ROUTES.profile(user.id)} />}

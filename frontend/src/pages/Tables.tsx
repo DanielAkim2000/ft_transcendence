@@ -85,7 +85,7 @@ function SideCard({
   return (
     <div
       className={cn(
-        "flex min-h-24 flex-1 flex-col gap-2 border border-dashed border-border p-3",
+        "flex min-h-24 min-w-0 flex-1 flex-col gap-2 border border-dashed border-border p-3",
         isMine && "border-solid border-primary/60 bg-primary/5",
       )}
     >
@@ -733,12 +733,12 @@ export const Tables = () => {
         <InviteBanner group={myGroup} meId={me?.id} tableName={inviteTable} />
       ) : null}
       {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <CardSkeleton lines={6} className="min-h-72" />
           <CardSkeleton lines={6} className="min-h-72" />
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {tables.map((table) => (
             <TableCard
               key={table.id}

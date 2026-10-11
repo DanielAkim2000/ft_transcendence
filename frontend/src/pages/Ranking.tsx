@@ -184,15 +184,15 @@ export const Ranking = () => {
               <li
                 key={entry.id}
                 className={cn(
-                  "flex items-center justify-between gap-3 border border-border px-3 py-2",
+                  "flex items-center justify-between gap-2 border border-border px-2 py-2 sm:gap-3 sm:px-3",
                   entry.id === me?.id && "border-primary/60 bg-primary/5",
                 )}
               >
-                <div className="flex min-w-0 items-center gap-3">
-                  <span className="w-8 shrink-0 text-right text-xs font-bold text-muted-foreground">
+                <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+                  <span className="w-5 shrink-0 sm:w-8 text-right text-xs font-bold text-muted-foreground">
                     {entry.rank}
                   </span>
-                  <Avatar className="size-9 rounded-lg">
+                  <Avatar className="size-9 shrink-0 rounded-lg">
                     <AvatarImage
                       src={resolveAvatarUrl(entry.avatarUrl)}
                       alt={entry.displayname}
@@ -219,7 +219,7 @@ export const Ranking = () => {
                     </p>
                   </div>
                 </div>
-                <div className="flex shrink-0 items-center gap-3">
+                <div className="flex shrink-0 items-center gap-2 sm:gap-3">
                   <span className="font-mono text-sm font-bold">
                     {entry.rating}
                   </span>

@@ -236,7 +236,7 @@ export const Home = () => {
       ) : null}
 
       <Panel title={t("tables.title")} to={ROUTES.TABLES}>
-        <ul className="grid divide-y divide-border sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+        <ul className="grid grid-cols-1 divide-y divide-border sm:grid-cols-2 sm:divide-x sm:divide-y-0">
           {tables.map((table) => {
             const tie = table.currentTournamentTie;
             const busy = table.status === "BUSY" || tie !== null;
@@ -261,7 +261,7 @@ export const Home = () => {
         </ul>
       </Panel>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Panel title={t("friends.onlineTitle")} count={onlineCount} to={ROUTES.FRIENDS} className="min-h-48">
           {onlineFriends.length === 0 ? (
             <Empty>{t("home.noOnline")}</Empty>

@@ -88,7 +88,7 @@ Official documentation and references used throughout the project:
 
 | Login | Role(s) | Responsibilities |
 | --- | --- | --- |
-| `demane` | Tech Lead | Owns the technical foundation (authentication, user management, presence, chat, i18n, theming, Docker/HTTPS/infra) and, at this stage, the full product feature set described below. Reviews and merges teammates' feature slices, keeps the architecture consistent,. Documented in [`docs/team/demane.md`](docs/team/demane.md). |
+| `demane` | Tech Lead | Owns the technical foundation (authentication, user management, presence, chat, i18n, theming, Docker/HTTPS/infra) and, at this stage, the full product feature set described below. Reviews and merges teammates' feature slices, keeps the architecture consistent. Documented in [`docs/team/demane.md`](docs/team/demane.md). |
 | `rdinis` | Developer | Assigned to own the **Tables & Queue** feature slice end-to-end (Prisma model → NestJS route → React page), reviewed by the Tech Lead before merge. Documented in [`docs/team/rdinis.md`](docs/team/rdinis.md). |
 | `rbourdon` | Developer | Assigned to own the **Match & Elo** feature slice. Documented in [`docs/team/rbourdon.md`](docs/team/rbourdon.md). |
 | `vicli` | Developer | Assigned to own the **Tournaments** feature slice. Documented in [`docs/team/vicli.md`](docs/team/vicli.md). |

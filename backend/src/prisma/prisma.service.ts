@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaClient } from '../generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { PRISMA_ADAPTER } from './constants/injection-tokens';
 
 @Injectable()
 export class PrismaService
@@ -13,7 +14,7 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   /** Injecte les dépendances : PrismaPg. */
-  constructor(@Inject('PrismaAdapter') adapter: PrismaPg) {
+  constructor(@Inject(PRISMA_ADAPTER) adapter: PrismaPg) {
     super({
       adapter: adapter,
       log: ['query', 'info', 'warn', 'error'],

@@ -260,6 +260,7 @@ export class UserRepository {
     const where: Prisma.UserWhereInput = {
       id: { not: excludeUserId },
       deletedAt: null,
+      email: { not: { endsWith: '@bot.local' } },
       ...this.textFilter(query),
     };
     const [users, total] = await this.prisma.$transaction([
@@ -459,7 +460,7 @@ export class UserRepository {
     query: RankingQueryDto,
   ): Promise<{ entries: RankingEntry[]; total: number }> {
     const users = await this.prisma.user.findMany({
-      where: { deletedAt: null },
+      where: { deletedAt: null, email: { not: { endsWith: '@bot.local' } } },
       select: {
         id: true,
         displayname: true,

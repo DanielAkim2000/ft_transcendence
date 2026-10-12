@@ -32,6 +32,8 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { translateErrorCode } from "@/lib/get-error-message";
 import { ChessBoard3D } from "@/features/chess/ChessBoard3D";
+import { ListSkeleton } from "@/components/skeletons";
+import { PageFallback } from "@/components/page-fallback";
 import { ChessPlayerBar } from "@/features/chess/ChessPlayerBar";
 
 const BOT_ID_PREFIX = "chess-bot-";
@@ -48,9 +50,9 @@ export const Chess = () => {
     const { data: me } = useMeQuery();
     const accessToken = useAppSelector(selectAccessToken);
     const { data: friendsData, isLoading: friendsLoading } = useListFriendsQuery({ page: friendsPage, limit: 8 });
-    const { data: chessGames = [] } = useListChessGamesQuery(undefined, { pollingInterval: 5000 });
+    const { data: chessGames = [], isLoading: gamesLoading } = useListChessGamesQuery(undefined, { pollingInterval: 5000 });
     const [historyPage, setHistoryPage] = useState(1);
-    const { data: history } = useListChessHistoryQuery({ page: historyPage, limit: 8 }, { pollingInterval: 5000 });
+    const { data: history, isLoading: historyLoading } = useListChessHistoryQuery({ page: historyPage, limit: 8 }, { pollingInterval: 5000 });
     const finishedGames = history?.items ?? [];
     const [createGame, { isLoading: isCreating }] = useCreateChessGameMutation();
     const [createAiGame, { isLoading: isCreatingAi }] = useCreateChessAiGameMutation();
@@ -64,7 +66,7 @@ export const Chess = () => {
     const [acceptGame, { isLoading: isAccepting }] = useAcceptChessGameMutation();
     const [declineGame, { isLoading: isDeclining }] = useDeclineChessGameMutation();
     const gameId = requestedGameId;
-    const { data: game } = useGetChessGameQuery(gameId ?? "", { skip: !gameId, refetchOnMountOrArgChange: true });
+    const { data: game, isFetching: gameFetching } = useGetChessGameQuery(gameId ?? "", { skip: !gameId, refetchOnMountOrArgChange: true });
     const friends = friendsData?.items ?? [];
     const pendingGames = chessGames.filter((chessGame) => chessGame.status === "PENDING");
     const activeGames = chessGames.filter((chessGame) => chessGame.status === "ACTIVE");
@@ -353,6 +355,9 @@ export const Chess = () => {
         }
     }
 
+    // Ouverture d'une partie (lien, reprise, rejouer) : on évite d'afficher le lobby une fraction de seconde.
+    if (gameId && gameFetching && game?.id !== gameId) return <PageFallback />;
+
     return (
         <div className={cn("mx-auto flex min-h-svh w-full flex-col gap-6 px-4 py-6 md:py-10", boardVisible ? "max-w-6xl" : "max-w-2xl")}>
             {!boardVisible ? (
@@ -420,7 +425,9 @@ export const Chess = () => {
 
                     <section className="flex flex-col gap-3">
                         <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">{t("chess.page.challengesTitle")}</h2>
-                        {pendingGames.length === 0 && activeGames.length === 0 ? (
+                        {gamesLoading ? (
+                            <ListSkeleton count={2} action />
+                        ) : pendingGames.length === 0 && activeGames.length === 0 ? (
                             <p className="text-sm text-muted-foreground">{t("chess.page.noChallenges")}</p>
                         ) : (
                             <ul className="flex flex-col gap-2">
@@ -459,7 +466,9 @@ export const Chess = () => {
 
                     <section className="flex flex-col gap-3">
                         <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">{t("chess.page.historyTitle")}</h2>
-                        {finishedGames.length === 0 ? (
+                        {historyLoading ? (
+                            <ListSkeleton count={3} />
+                        ) : finishedGames.length === 0 ? (
                             <p className="text-sm text-muted-foreground">{t("chess.page.noHistory")}</p>
                         ) : (
                             <ul className="flex flex-col gap-2">

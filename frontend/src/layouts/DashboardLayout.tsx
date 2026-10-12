@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Outlet } from "react-router";
+import { Outlet, useLocation } from "react-router";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   SidebarInset,
@@ -13,6 +13,7 @@ import { PageFallback } from "@/components/page-fallback";
 import { ChessLauncher } from "@/features/chess/ChessLauncher";
 
 export const DashboardLayout = () => {
+  const { pathname } = useLocation();
   return (
     <TooltipProvider>
       <SidebarProvider>
@@ -23,7 +24,8 @@ export const DashboardLayout = () => {
             <Separator orientation="vertical" className="mr-2 h-4" />
           </header>
           <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
-            <Suspense fallback={<PageFallback />}>
+            {/* key : sans lui, React garde l'ancienne page affichée pendant le chargement du chunk (navigation en transition) et le loader n'apparaît qu'à la première visite. */}
+            <Suspense key={pathname} fallback={<PageFallback />}>
               <Outlet />
             </Suspense>
           </div>

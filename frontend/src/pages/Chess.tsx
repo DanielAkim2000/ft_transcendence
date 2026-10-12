@@ -3,6 +3,7 @@ import { boardFromFen, makePiece, type Piece, type Position, canMoove } from "@/
 import {
     useAcceptChessGameMutation,
     useCreateChessGameMutation,
+    useCreateChessAiGameMutation,
     useDeclineChessGameMutation,
     useGetChessGameQuery,
     useListChessGamesQuery,
@@ -12,7 +13,7 @@ import { useMeQuery } from "@/features/auth/authApi";
 import { selectAccessToken } from "@/features/auth/authSlice";
 import { useAppSelector } from "@/store/hooks";
 import { connectChess, disconnectChess } from "@/features/chess/chessSocket";
-import type { ChessGame, ChessGameStatus } from "@/features/chess/chessApi";
+import type { ChessAiLevel, ChessColor, ChessGame, ChessGameStatus } from "@/features/chess/chessApi";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/pagination";
@@ -25,6 +26,9 @@ import { translateErrorCode } from "@/lib/get-error-message";
 import { ChessBoard3D } from "@/features/chess/ChessBoard3D";
 import { ChessPlayerBar } from "@/features/chess/ChessPlayerBar";
 
+const AI_LEVELS: ChessAiLevel[] = ["EASY", "MEDIUM", "HARD", "EXPERT"];
+const AI_COLORS: ChessColor[] = ["WHITE", "BLACK", "RANDOM"];
+
 export const Chess = () => {
     const { t, i18n } = useTranslation();
     const [searchParams] = useSearchParams();
@@ -36,6 +40,9 @@ export const Chess = () => {
     const { data: friendsData, isLoading: friendsLoading } = useListFriendsQuery({ page: friendsPage, limit: 8 });
     const { data: chessGames = [] } = useListChessGamesQuery(undefined, { pollingInterval: 5000 });
     const [createGame, { isLoading: isCreating }] = useCreateChessGameMutation();
+    const [createAiGame, { isLoading: isCreatingAi }] = useCreateChessAiGameMutation();
+    const [aiLevel, setAiLevel] = useState<ChessAiLevel>("MEDIUM");
+    const [aiColor, setAiColor] = useState<ChessColor>("RANDOM");
     const [acceptGame, { isLoading: isAccepting }] = useAcceptChessGameMutation();
     const [declineGame, { isLoading: isDeclining }] = useDeclineChessGameMutation();
     const gameId = requestedGameId;
@@ -101,8 +108,10 @@ export const Chess = () => {
         ],
     ]);
 
-    useEffect(() => {
-        if (!game) return;
+    // Recopie l'état de la partie chargée dès que sa position change (ajustement pendant le rendu, plutôt que dans un effet).
+    const [syncedFen, setSyncedFen] = useState<string | undefined>(undefined);
+    if (game && game.fen !== syncedFen) {
+        setSyncedFen(game.fen);
         if (game.fen) setBoard(boardFromFen(game.fen));
         setTurn(game.turn);
         setGameStatus(game.status);
@@ -112,7 +121,7 @@ export const Chess = () => {
         setSelectedPosition(null);
         setPositions([]);
         setPromotion(null);
-    }, [game?.fen]);
+    }
 
     useEffect(() => {
         if (!accessToken || !gameId || gameStatus !== "ACTIVE") {
@@ -255,6 +264,15 @@ export const Chess = () => {
         }
     }
 
+    async function handleCreateAiGame() {
+        try {
+            const created = await createAiGame({ level: aiLevel, color: aiColor }).unwrap();
+            setSearchParams({ gameId: created.id });
+        } catch (error) {
+            toast.add({ title: getErrorMessage(error, t("chess.page.createFailed")), type: "error" });
+        }
+    }
+
     async function handleAcceptGame(targetGameId: string) {
         try {
             await acceptGame(targetGameId).unwrap();
@@ -285,6 +303,29 @@ export const Chess = () => {
                         </div>
                         <span className="text-[11px] uppercase tracking-[0.2em] text-primary">● {t("chess.page.live")}</span>
                     </header>
+
+                    <section className="flex flex-col gap-3">
+                        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">{t("chess.page.ai.title")}</h2>
+                        <div className="flex flex-col gap-3 border border-border p-3">
+                            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("chess.page.ai.level")}>
+                                {AI_LEVELS.map((level) => (
+                                    <Button key={level} type="button" size="sm" role="radio" aria-checked={aiLevel === level} variant={aiLevel === level ? "default" : "outline"} onClick={() => setAiLevel(level)}>
+                                        {t(`chess.page.ai.levels.${level}`)}
+                                    </Button>
+                                ))}
+                            </div>
+                            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("chess.page.ai.color")}>
+                                {AI_COLORS.map((color) => (
+                                    <Button key={color} type="button" size="sm" role="radio" aria-checked={aiColor === color} variant={aiColor === color ? "default" : "outline"} onClick={() => setAiColor(color)}>
+                                        {t(`chess.page.ai.colors.${color}`)}
+                                    </Button>
+                                ))}
+                            </div>
+                            <Button type="button" disabled={isCreatingAi} onClick={() => void handleCreateAiGame()}>
+                                {isCreatingAi ? t("chess.page.ai.starting") : t("chess.page.ai.play")}
+                            </Button>
+                        </div>
+                    </section>
 
                     <section className="flex flex-col gap-3">
                         <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">{t("chess.page.friendsTitle")}</h2>

@@ -923,6 +923,15 @@
       "title": "Ajedrez",
       "subtitle": "Reta a un amigo y siéntate al tablero.",
       "live": "En línea",
+      "ai": {
+        "title": "Jugar contra la IA",
+        "level": "Nivel",
+        "color": "Color",
+        "play": "Empezar partida",
+        "starting": "Iniciando…",
+        "levels": { "EASY": "Fácil", "MEDIUM": "Medio", "HARD": "Difícil", "EXPERT": "Experto" },
+        "colors": { "WHITE": "Blancas", "BLACK": "Negras", "RANDOM": "Aleatorio" }
+      },
       "friendsTitle": "Mis amigos",
       "friendsLoading": "Cargando amigos…",
       "noFriends": "Aún no tienes amigos a quienes retar.",

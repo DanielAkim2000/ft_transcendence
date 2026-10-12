@@ -54,6 +54,13 @@ export interface CreateChessGameRequest {
     rated?: boolean;
 }
 
+export type ChessAiLevel = "EASY" | "MEDIUM" | "HARD" | "EXPERT";
+
+export interface CreateChessAiGameRequest {
+    level: ChessAiLevel;
+    color?: ChessColor;
+}
+
 export const chessApi = api.injectEndpoints({
     endpoints: (builder) => ({
         [CHESS_ENDPOINTS.LIST_GAMES]: builder.query<ChessGame[], void>({
@@ -67,6 +74,14 @@ export const chessApi = api.injectEndpoints({
         [CHESS_ENDPOINTS.CREATE_GAME]: builder.mutation<ChessGame, CreateChessGameRequest>({
             query: (body) => ({
                 url: API_ROUTES.CHESS_GAMES,
+                method: "POST",
+                body,
+            }),
+            invalidatesTags: [TAG_TYPES.CHESS],
+        }),
+        [CHESS_ENDPOINTS.CREATE_AI_GAME]: builder.mutation<ChessGame, CreateChessAiGameRequest>({
+            query: (body) => ({
+                url: API_ROUTES.CHESS_GAMES_AI,
                 method: "POST",
                 body,
             }),
@@ -93,6 +108,7 @@ export const {
     useListChessGamesQuery,
     useGetChessGameQuery,
     useCreateChessGameMutation,
+    useCreateChessAiGameMutation,
     useAcceptChessGameMutation,
     useDeclineChessGameMutation,
 } = chessApi;

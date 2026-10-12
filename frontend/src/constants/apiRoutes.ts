@@ -75,6 +75,7 @@ export const API_ROUTES = {
   badges: (userId: string) => `/badges/${userId}`,
   
   CHESS_GAMES: "/chess/games",
+  CHESS_GAMES_AI: "/chess/games/ai",
   CHESS_GAMES_ME: "/chess/games/me",
   chessGame: (gameId: string) => `/chess/games/${gameId}`,
   chessGameAccept: (gameId: string) => `/chess/games/${gameId}/accept`,

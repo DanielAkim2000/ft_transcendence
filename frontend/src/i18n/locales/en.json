@@ -923,6 +923,15 @@
       "title": "Chess",
       "subtitle": "Challenge a friend and take your seat at the board.",
       "live": "Online",
+      "ai": {
+        "title": "Play against the AI",
+        "level": "Level",
+        "color": "Colour",
+        "play": "Start game",
+        "starting": "Starting…",
+        "levels": { "EASY": "Easy", "MEDIUM": "Medium", "HARD": "Hard", "EXPERT": "Expert" },
+        "colors": { "WHITE": "White", "BLACK": "Black", "RANDOM": "Random" }
+      },
       "friendsTitle": "My friends",
       "friendsLoading": "Loading friends…",
       "noFriends": "You have no friends to challenge yet.",

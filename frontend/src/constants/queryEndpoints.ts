@@ -118,6 +118,7 @@ export const GDPR_ENDPOINTS = {
 export const CHESS_ENDPOINTS = {
   LIST_GAMES: "listChessGames",
   CREATE_GAME: "createChessGame",
+  CREATE_AI_GAME: "createChessAiGame",
   GET_GAME: "getChessGame",
   ACCEPT_GAME: "acceptChessGame",
   DECLINE_GAME: "declineChessGame",

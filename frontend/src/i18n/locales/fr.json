@@ -923,6 +923,15 @@
       "title": "Échecs",
       "subtitle": "Défie un ami et prends ta place sur l'échiquier.",
       "live": "En ligne",
+      "ai": {
+        "title": "Jouer contre l'IA",
+        "level": "Niveau",
+        "color": "Couleur",
+        "play": "Lancer la partie",
+        "starting": "Démarrage…",
+        "levels": { "EASY": "Facile", "MEDIUM": "Moyen", "HARD": "Difficile", "EXPERT": "Expert" },
+        "colors": { "WHITE": "Blancs", "BLACK": "Noirs", "RANDOM": "Aléatoire" }
+      },
       "friendsTitle": "Mes amis",
       "friendsLoading": "Chargement des amis…",
       "noFriends": "Tu n'as pas encore d'ami à défier.",

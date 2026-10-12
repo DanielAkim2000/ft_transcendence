@@ -932,6 +932,7 @@
         "levels": { "EASY": "Facile", "MEDIUM": "Moyen", "HARD": "Difficile", "EXPERT": "Expert" },
         "colors": { "WHITE": "Blancs", "BLACK": "Noirs", "RANDOM": "Aléatoire" }
       },
+      "moves": { "title": "Coups", "empty": "Aucun coup joué pour l'instant." },
       "modal": {
         "back": "Retour",
         "chat": "Chat",

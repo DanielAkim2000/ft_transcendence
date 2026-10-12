@@ -38,6 +38,7 @@ export interface ChessGame {
     timeControlMs: number | null;
     incrementMs: number;
     rated: boolean;
+    moveCount: number;
     result: ChessResult | null;
     endReason: ChessEndReason | null;
     winnerId: string | null;
@@ -45,6 +46,12 @@ export interface ChessGame {
     updatedAt: string;
     startedAt: string | null;
     endedAt: string | null;
+}
+
+export interface ChessMoveEntry {
+    ply: number;
+    color: "WHITE" | "BLACK";
+    san: string;
 }
 
 export interface CreateChessGameRequest {
@@ -75,6 +82,10 @@ export const chessApi = api.injectEndpoints({
         [CHESS_ENDPOINTS.GET_GAME]: builder.query<ChessGame, string>({
             query: (gameId) => API_ROUTES.chessGame(gameId),
             providesTags: (_result, _error, gameId) => [{ type: TAG_TYPES.CHESS, id: gameId }],
+        }),
+        // `moveCount` ne sert qu'à relancer la requête après chaque coup (les coups arrivent par socket, pas par le cache).
+        [CHESS_ENDPOINTS.GET_MOVES]: builder.query<ChessMoveEntry[], { gameId: string; moveCount: number }>({
+            query: ({ gameId }) => API_ROUTES.chessGameMoves(gameId),
         }),
         [CHESS_ENDPOINTS.CREATE_GAME]: builder.mutation<ChessGame, CreateChessGameRequest>({
             query: (body) => ({
@@ -113,6 +124,7 @@ export const {
     useListChessGamesQuery,
     useListChessHistoryQuery,
     useGetChessGameQuery,
+    useGetChessMovesQuery,
     useCreateChessGameMutation,
     useCreateChessAiGameMutation,
     useAcceptChessGameMutation,

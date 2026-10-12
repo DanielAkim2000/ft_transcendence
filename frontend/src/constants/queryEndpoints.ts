@@ -121,6 +121,7 @@ export const CHESS_ENDPOINTS = {
   CREATE_GAME: "createChessGame",
   CREATE_AI_GAME: "createChessAiGame",
   GET_GAME: "getChessGame",
+  GET_MOVES: "getChessMoves",
   ACCEPT_GAME: "acceptChessGame",
   DECLINE_GAME: "declineChessGame",
 } as const;

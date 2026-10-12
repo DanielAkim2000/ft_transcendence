@@ -7,6 +7,7 @@ import {
     useCreateChessAiGameMutation,
     useDeclineChessGameMutation,
     useGetChessGameQuery,
+    useGetChessMovesQuery,
     useListChessGamesQuery,
     useListChessHistoryQuery,
 } from "@/features/chess/chessApi";
@@ -32,8 +33,6 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { translateErrorCode } from "@/lib/get-error-message";
 import { ChessBoard3D } from "@/features/chess/ChessBoard3D";
-import { ListSkeleton } from "@/components/skeletons";
-import { PageFallback } from "@/components/page-fallback";
 import { ChessPlayerBar } from "@/features/chess/ChessPlayerBar";
 
 const BOT_ID_PREFIX = "chess-bot-";
@@ -74,6 +73,7 @@ export const Chess = () => {
     const [positions, setPositions] = useState<Position[]>([]);
     const [selected, setSelected] = useState<Piece | null>(null);
     const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
+    const [moveCount, setMoveCount] = useState(0);
     const [turn, setTurn] = useState<"WHITE" | "BLACK">("WHITE");
     const [gameStatus, setGameStatus] = useState<ChessGameStatus>("PENDING");
     const [endReason, setEndReason] = useState<ChessGame["endReason"]>(null);
@@ -132,6 +132,7 @@ export const Chess = () => {
     if (game && `${game.id}:${game.fen}` !== syncedFen) {
         setSyncedFen(`${game.id}:${game.fen}`);
         if (game.fen) setBoard(boardFromFen(game.fen));
+        setMoveCount(game.moveCount);
         setTurn(game.turn);
         setGameStatus(game.status);
         setEndReason(game.endReason);
@@ -152,6 +153,7 @@ export const Chess = () => {
         const onState = (nextGame: ChessGame) => {
             if (nextGame.id !== gameId) return;
             setBoard(boardFromFen(nextGame.fen));
+            setMoveCount(nextGame.moveCount);
             setTurn(nextGame.turn);
             setGameStatus(nextGame.status);
             setEndReason(nextGame.endReason);
@@ -178,6 +180,7 @@ export const Chess = () => {
     }, [accessToken, gameStatus, gameId, t]);
 
     const opponentUserId = me && game ? (game.whitePlayerId === me.id ? game.blackPlayerId : game.whitePlayerId) : undefined;
+    const { data: moves = [] } = useGetChessMovesQuery({ gameId: gameId ?? "", moveCount }, { skip: !gameId || !game });
     const botLevel = opponentUserId?.startsWith(BOT_ID_PREFIX)
         ? (opponentUserId.slice(BOT_ID_PREFIX.length).toUpperCase() as ChessAiLevel)
         : null;
@@ -359,7 +362,7 @@ export const Chess = () => {
     if (gameId && gameFetching && game?.id !== gameId) return <PageFallback />;
 
     return (
-        <div className={cn("mx-auto flex min-h-svh w-full flex-col gap-6 px-4 py-6 md:py-10", boardVisible ? "max-w-6xl" : "max-w-2xl")}>
+        <div className={cn("mx-auto flex min-h-svh w-full flex-col gap-6 px-4 py-6 md:py-10", boardVisible ? "max-w-7xl" : "max-w-2xl")}>
             {!boardVisible ? (
                 <>
                     <header className="flex flex-wrap items-baseline justify-between gap-2">
@@ -503,8 +506,13 @@ export const Chess = () => {
                 </>
             ) : null}
             {boardVisible ? (
-                <div className="grid w-full gap-4 lg:grid-cols-[minmax(0,42rem)_minmax(0,1fr)] lg:items-stretch lg:justify-center">
-                    <div className="mx-auto flex w-full max-w-2xl min-w-0 flex-col gap-4">
+                <div className="grid w-full gap-4 lg:grid-cols-[minmax(0,42rem)_minmax(0,1fr)] lg:items-stretch xl:grid-cols-[13rem_minmax(0,42rem)_minmax(0,1fr)] lg:justify-center">
+                    {/* Grand écran : historique des coups à gauche, de la hauteur de l'échiquier. */}
+                    <aside className="relative hidden border border-border bg-card xl:block">
+                        <ChessMoveList moves={moves} className="absolute inset-0" />
+                    </aside>
+
+                    <div className="mx-auto flex w-full max-w-2xl min-w-0 flex-col gap-4 xl:order-none">
                         <div className="flex items-center justify-between gap-2">
                             <Button type="button" variant="ghost" size="sm" onClick={leaveGame}>
                                 <ArrowLeftIcon />
@@ -559,6 +567,7 @@ export const Chess = () => {
                             toMove={turn === playerColor}
                             finished={finished}
                         />
+                        <ChessMoveList moves={moves} className="max-h-48 border border-border bg-card xl:hidden" />
                         {promotion ? (
                             <div className="flex items-center justify-center gap-2 border border-border p-3" role="dialog" aria-label={t("chess.page.promotionLabel")}>
                                 {(["q", "r", "b", "n"] as const).map((piece) => (

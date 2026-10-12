@@ -932,6 +932,7 @@
         "levels": { "EASY": "Fácil", "MEDIUM": "Medio", "HARD": "Difícil", "EXPERT": "Experto" },
         "colors": { "WHITE": "Blancas", "BLACK": "Negras", "RANDOM": "Aleatorio" }
       },
+      "moves": { "title": "Jugadas", "empty": "Aún no se han jugado movimientos." },
       "modal": {
         "back": "Volver",
         "chat": "Chat",

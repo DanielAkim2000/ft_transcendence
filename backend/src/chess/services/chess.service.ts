@@ -68,6 +68,16 @@ export class ChessService {
     });
   }
 
+  /** Coups joués d'une partie, dans l'ordre (réservé aux deux joueurs). */
+  async listMoves(userId: string, gameId: string) {
+    await this.getGame(userId, gameId);
+    return this.prisma.chessMove.findMany({
+      where: { gameId },
+      orderBy: { ply: 'asc' },
+      select: { ply: true, color: true, san: true },
+    });
+  }
+
   /** Historique paginé : les parties terminées de l'utilisateur, les plus récentes d'abord. */
   async listHistory(userId: string, page: PageQueryDto) {
     const where = {

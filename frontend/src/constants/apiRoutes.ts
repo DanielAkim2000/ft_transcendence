@@ -79,6 +79,7 @@ export const API_ROUTES = {
   CHESS_GAMES_HISTORY: "/chess/games/history",
   CHESS_GAMES_ME: "/chess/games/me",
   chessGame: (gameId: string) => `/chess/games/${gameId}`,
+  chessGameMoves: (gameId: string) => `/chess/games/${gameId}/moves`,
   chessGameAccept: (gameId: string) => `/chess/games/${gameId}/accept`,
   chessGameDecline: (gameId: string) => `/chess/games/${gameId}/decline`,
 

@@ -29,3 +29,5 @@ backend/.pnpm-store/*
 .agents/
 CLAUDE.md
 AGENTS.md
+core
+core.*

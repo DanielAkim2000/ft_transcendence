@@ -932,6 +932,7 @@
         "levels": { "EASY": "Easy", "MEDIUM": "Medium", "HARD": "Hard", "EXPERT": "Expert" },
         "colors": { "WHITE": "White", "BLACK": "Black", "RANDOM": "Random" }
       },
+      "moves": { "title": "Moves", "empty": "No moves played yet." },
       "modal": {
         "back": "Back",
         "chat": "Chat",

@@ -66,7 +66,42 @@ type SceneState = {
     pieceMaterials: Record<"white" | "black", THREE.MeshStandardMaterial>;
     /** Pièces actuellement posées, pour les retrouver au clic. */
     pieceMeshes: THREE.Mesh[];
+    /** Repères (a-h, 1-8) posés sur le cadre. */
+    labels: THREE.Sprite[];
 };
+
+/** Distance du centre où se posent les repères : au milieu du cadre, juste hors des cases. */
+const LABEL_OFFSET = 4.15;
+
+/** Pose les lettres (colonnes) du côté du joueur et les chiffres (rangées) sur son côté gauche, pour qu'ils restent lisibles quand le plateau est retourné. */
+function placeLabels(labels: THREE.Sprite[], flipped: boolean): void {
+    labels.forEach((label) => {
+        const { kind, index } = label.userData as { kind: "file" | "rank"; index: number };
+        if (kind === "file") label.position.set(index - 3.5, 0.2, flipped ? -LABEL_OFFSET : LABEL_OFFSET);
+        else label.position.set(flipped ? LABEL_OFFSET : -LABEL_OFFSET, 0.2, index - 3.5);
+    });
+}
+
+/** Repère toujours tourné vers la caméra : une lettre ou un chiffre dessiné sur un canvas. */
+function createLabel(text: string, kind: "file" | "rank", index: number): THREE.Sprite {
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const context = canvas.getContext("2d");
+    if (context) {
+        context.font = "bold 44px sans-serif";
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillStyle = "#e9dcc3";
+        context.fillText(text, 32, 34);
+    }
+    const sprite = new THREE.Sprite(
+        new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, depthWrite: false, fog: false }),
+    );
+    sprite.scale.set(0.34, 0.34, 1);
+    sprite.userData = { kind, index };
+    return sprite;
+}
 
 /** Retire un groupe de sa scène et libère les géométries/matériaux créés pour lui. */
 function clearGroup(group: THREE.Group): void {
@@ -175,6 +210,14 @@ export function ChessBoard3D({ board, positions, selectedPosition, onSquareClick
         }
         scene.add(boardGroup);
 
+        const labels: THREE.Sprite[] = [];
+        for (let index = 0; index < 8; index += 1) {
+            // Ligne 0 = rang 8 ; colonne 0 = colonne « a ».
+            labels.push(createLabel("abcdefgh"[index], "file", index), createLabel(String(8 - index), "rank", index));
+        }
+        placeLabels(labels, false);
+        scene.add(...labels);
+
         const pieceGroup = new THREE.Group();
         const highlightGroup = new THREE.Group();
         scene.add(pieceGroup, highlightGroup);
@@ -184,7 +227,7 @@ export function ChessBoard3D({ board, positions, selectedPosition, onSquareClick
             black: new THREE.MeshStandardMaterial({ color: BLACK_PIECE, roughness: 0.38, metalness: 0.15 }),
         };
 
-        sceneStateRef.current = { renderer, camera, controls, pieceGroup, highlightGroup, squareMeshes, pieceMaterials, pieceMeshes: [] };
+        sceneStateRef.current = { renderer, camera, controls, pieceGroup, highlightGroup, squareMeshes, pieceMaterials, pieceMeshes: [], labels };
 
         // Sélection d'une case ou d'une pièce au clic ; un glisser (rotation de la vue) n'est pas un clic.
         const pointer = new THREE.Vector2();
@@ -241,6 +284,10 @@ export function ChessBoard3D({ board, positions, selectedPosition, onSquareClick
             pieceMaterials.black.dispose();
             squareMeshes.forEach((square) => (square.material as THREE.Material).dispose());
             squareGeometry.dispose();
+            labels.forEach((label) => {
+                (label.material as THREE.SpriteMaterial).map?.dispose();
+                label.material.dispose();
+            });
             [base, rim].forEach((mesh) => {
                 mesh.geometry.dispose();
                 (mesh.material as THREE.Material).dispose();
@@ -255,7 +302,8 @@ export function ChessBoard3D({ board, positions, selectedPosition, onSquareClick
     useEffect(() => {
         const sceneState = sceneStateRef.current;
         if (!sceneState) return;
-        const { camera, controls } = sceneState;
+        const { camera, controls, labels } = sceneState;
+        placeLabels(labels, flipped);
         camera.position.set(0, CAMERA_HEIGHT, flipped ? -CAMERA_DISTANCE : CAMERA_DISTANCE);
         camera.lookAt(0, 0.3, 0);
         controls.update();

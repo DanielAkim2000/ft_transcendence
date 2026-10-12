@@ -56,6 +56,11 @@ export class ChessController {
     return this.chess.getGame(req.user.id, id);
   }
 
+  @Get('games/:id/moves')
+  moves(@Req() req: Request & { user: UserEntity }, @Param('id') id: string) {
+    return this.chess.listMoves(req.user.id, id);
+  }
+
   @Post('games/:id/accept')
   accept(@Req() req: Request & { user: UserEntity }, @Param('id') id: string) {
     return this.chess.acceptGame(req.user.id, id);

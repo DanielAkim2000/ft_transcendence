@@ -182,10 +182,10 @@ export class AuthController {
     }
     await this.authService.revokeRefreshToken(req.user.id, refreshToken);
     res.clearCookie('refreshToken', {
-      path: '/auth',
+      path: this.cookiePath(),
     });
     res.clearCookie('preAuthToken', {
-      path: '/auth',
+      path: this.cookiePath(),
     });
   }
 
@@ -236,7 +236,7 @@ export class AuthController {
     await this.authService.verify2fa(req.user, dto.code);
     const tokens = await this.authService.createTokens(req.user);
     await this.setRefreshCookie(req.user, res, tokens.refreshToken);
-    res.clearCookie('preAuthToken', { path: '/auth' });
+    res.clearCookie('preAuthToken', { path: this.cookiePath() });
     return {
       user: req.user,
       accessToken: tokens.accessToken,
@@ -288,7 +288,7 @@ export class AuthController {
     );
     const tokens = await this.authService.createTokens(req.user);
     await this.setRefreshCookie(req.user, res, tokens.refreshToken);
-    res.clearCookie('preAuthToken', { path: '/auth' });
+    res.clearCookie('preAuthToken', { path: this.cookiePath() });
     return {
       user: req.user,
       accessToken: tokens.accessToken,
@@ -320,6 +320,11 @@ export class AuthController {
     };
   }
 
+  /** Chemin des cookies d'auth. `/auth` par défaut ; derrière un proxy qui préfixe l'API (ex. `/api`), il faut le chemin vu par le navigateur (`AUTH_COOKIE_PATH=/api/auth`), sinon le cookie n'est jamais renvoyé. */
+  private cookiePath(): string {
+    return this.configService.get<string>('AUTH_COOKIE_PATH') || '/auth';
+  }
+
   /** Indique si les cookies doivent être « secure » (production ou frontend en https). */
   private useSecureCookies(): boolean {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') ?? '';
@@ -349,11 +354,11 @@ export class AuthController {
       httpOnly: true,
       secure: this.useSecureCookies(),
       sameSite: 'lax',
-      path: '/auth',
+      path: this.cookiePath(),
       maxAge: ms(expirationTime),
     });
     res.clearCookie('preAuthToken', {
-      path: '/auth',
+      path: this.cookiePath(),
     });
   }
 
@@ -372,7 +377,7 @@ export class AuthController {
       httpOnly: true,
       secure: this.useSecureCookies(),
       sameSite: 'lax',
-      path: '/auth',
+      path: this.cookiePath(),
       maxAge: ms(expirationTime),
     });
   }

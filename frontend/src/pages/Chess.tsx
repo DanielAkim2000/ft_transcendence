@@ -1,4 +1,5 @@
-import { useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
+import { ROUTES } from "@/constants/routes";
 import { boardFromFen, makePiece, type Piece, type Position, canMoove } from "@/features/chess/utils";
 import {
     useAcceptChessGameMutation,
@@ -7,6 +8,7 @@ import {
     useDeclineChessGameMutation,
     useGetChessGameQuery,
     useListChessGamesQuery,
+    useListChessHistoryQuery,
 } from "@/features/chess/chessApi";
 import { useListFriendsQuery } from "@/features/users/usersApi";
 import { useMeQuery } from "@/features/auth/authApi";
@@ -21,16 +23,24 @@ import { getErrorMessage } from "@/lib/get-error-message";
 import { getInitials, resolveAvatarUrl } from "@/lib/user";
 import { toast } from "@/components/ui/toast";
 import { useEffect, useState } from "react";
+import { Dialog } from "@base-ui/react/dialog";
+import { ArrowLeftIcon, FlagIcon, MessageSquareIcon, XIcon } from "lucide-react";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { ChatThread } from "@/features/chat/ChatThread";
+import { useCreateConversationMutation, useListConversationsQuery } from "@/features/chat/chatApi";
+import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { translateErrorCode } from "@/lib/get-error-message";
 import { ChessBoard3D } from "@/features/chess/ChessBoard3D";
 import { ChessPlayerBar } from "@/features/chess/ChessPlayerBar";
 
+const BOT_ID_PREFIX = "chess-bot-";
 const AI_LEVELS: ChessAiLevel[] = ["EASY", "MEDIUM", "HARD", "EXPERT"];
 const AI_COLORS: ChessColor[] = ["WHITE", "BLACK", "RANDOM"];
 
 export const Chess = () => {
     const { t, i18n } = useTranslation();
+    const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const [, setSearchParams] = useSearchParams();
     const requestedGameId = searchParams.get("gameId");
@@ -39,18 +49,25 @@ export const Chess = () => {
     const accessToken = useAppSelector(selectAccessToken);
     const { data: friendsData, isLoading: friendsLoading } = useListFriendsQuery({ page: friendsPage, limit: 8 });
     const { data: chessGames = [] } = useListChessGamesQuery(undefined, { pollingInterval: 5000 });
+    const [historyPage, setHistoryPage] = useState(1);
+    const { data: history } = useListChessHistoryQuery({ page: historyPage, limit: 8 }, { pollingInterval: 5000 });
+    const finishedGames = history?.items ?? [];
     const [createGame, { isLoading: isCreating }] = useCreateChessGameMutation();
     const [createAiGame, { isLoading: isCreatingAi }] = useCreateChessAiGameMutation();
+    const [createConversation] = useCreateConversationMutation();
+    const { data: conversations = [] } = useListConversationsQuery();
+    const [chatConversationId, setChatConversationId] = useState<string | null>(null);
+    const [chatOpen, setChatOpen] = useState(false);
+    const [dismissedResultFor, setDismissedResultFor] = useState<string | null>(null);
     const [aiLevel, setAiLevel] = useState<ChessAiLevel>("MEDIUM");
     const [aiColor, setAiColor] = useState<ChessColor>("RANDOM");
     const [acceptGame, { isLoading: isAccepting }] = useAcceptChessGameMutation();
     const [declineGame, { isLoading: isDeclining }] = useDeclineChessGameMutation();
     const gameId = requestedGameId;
-    const { data: game } = useGetChessGameQuery(gameId ?? "", { skip: !gameId });
+    const { data: game } = useGetChessGameQuery(gameId ?? "", { skip: !gameId, refetchOnMountOrArgChange: true });
     const friends = friendsData?.items ?? [];
     const pendingGames = chessGames.filter((chessGame) => chessGame.status === "PENDING");
     const activeGames = chessGames.filter((chessGame) => chessGame.status === "ACTIVE");
-    const finishedGames = chessGames.filter((chessGame) => chessGame.status === "FINISHED");
 
     const [positions, setPositions] = useState<Position[]>([]);
     const [selected, setSelected] = useState<Piece | null>(null);
@@ -110,8 +127,8 @@ export const Chess = () => {
 
     // Recopie l'état de la partie chargée dès que sa position change (ajustement pendant le rendu, plutôt que dans un effet).
     const [syncedFen, setSyncedFen] = useState<string | undefined>(undefined);
-    if (game && game.fen !== syncedFen) {
-        setSyncedFen(game.fen);
+    if (game && `${game.id}:${game.fen}` !== syncedFen) {
+        setSyncedFen(`${game.id}:${game.fen}`);
         if (game.fen) setBoard(boardFromFen(game.fen));
         setTurn(game.turn);
         setGameStatus(game.status);
@@ -158,6 +175,23 @@ export const Chess = () => {
         };
     }, [accessToken, gameStatus, gameId, t]);
 
+    const opponentUserId = me && game ? (game.whitePlayerId === me.id ? game.blackPlayerId : game.whitePlayerId) : undefined;
+    const botLevel = opponentUserId?.startsWith(BOT_ID_PREFIX)
+        ? (opponentUserId.slice(BOT_ID_PREFIX.length).toUpperCase() as ChessAiLevel)
+        : null;
+
+    // Le chat de la partie est la conversation avec l'adversaire (pas de chat contre l'IA).
+    useEffect(() => {
+        if (!opponentUserId || botLevel) return;
+        let cancelled = false;
+        createConversation({ otherUserId: opponentUserId })
+            .unwrap()
+            .then((conversation) => { if (!cancelled) setChatConversationId(conversation.id); })
+            .catch(() => { if (!cancelled) setChatConversationId(null); });
+        return () => { cancelled = true; };
+    }, [opponentUserId, botLevel, createConversation]);
+    const chatConversation = botLevel ? null : conversations.find((conversation) => conversation.id === chatConversationId) ?? null;
+
     function isSelected(rowIndex: number, colIndex: number): boolean {
         const result = positions.some(
             position => position.x === colIndex && position.y === rowIndex
@@ -200,6 +234,33 @@ export const Chess = () => {
         ));
     }
 
+    function handleResign() {
+        if (!accessToken || !gameId) return;
+        connectChess(accessToken).emit("chess:resign", { gameId });
+    }
+
+    function leaveGame() {
+        setChatOpen(false);
+        navigate(ROUTES.CHESS);
+    }
+
+    async function handleReplay() {
+        if (!opponentUserId || !game) return;
+        try {
+            if (botLevel) {
+                const created = await createAiGame({ level: botLevel, color: playerColor }).unwrap();
+                setSearchParams({ gameId: created.id });
+            } else {
+                await createGame({ opponentId: opponentUserId, color: "RANDOM" }).unwrap();
+                setDismissedResultFor(gameId);
+                setChatOpen(true);
+                toast.add({ title: t("chess.page.inviteSent"), type: "success" });
+            }
+        } catch (error) {
+            toast.add({ title: getErrorMessage(error, t("chess.page.createFailed")), type: "error" });
+        }
+    }
+
     function choosePromotion(piece: "q" | "r" | "b" | "n") {
         if (!promotion || !accessToken || !gameId) return;
         connectChess(accessToken).emit("chess:move", { gameId, from: promotion.from, to: promotion.to, promotion: piece });
@@ -227,16 +288,16 @@ export const Chess = () => {
     const opponentColor = playerColor === "WHITE" ? "BLACK" : "WHITE";
     const myPlayer = playerColor === "WHITE" ? game?.whitePlayer : game?.blackPlayer;
     const opponentPlayer = playerColor === "WHITE" ? game?.blackPlayer : game?.whitePlayer;
-    const boardVisible = Boolean(game && (gameStatus === "ACTIVE" || gameStatus === "FINISHED"));
-    const endMessage = endReason === "CHECKMATE"
-        ? t(winnerId === me?.id ? "chess.page.end.mateWin" : "chess.page.end.mateLoss")
-        : endReason === "STALEMATE"
-            ? t("chess.page.end.stalemate")
-            : endReason === "THREEFOLD_REPETITION"
-                ? t("chess.page.end.repetition")
-                : endReason === "INSUFFICIENT_MATERIAL"
-                    ? t("chess.page.end.insufficient")
-                    : t("chess.page.end.finished");
+    const boardVisible = Boolean(gameId && game?.id === gameId && (gameStatus === "ACTIVE" || gameStatus === "FINISHED"));
+    const finished = gameStatus === "FINISHED";
+    const outcome: "win" | "loss" | "draw" = winnerId === null ? "draw" : winnerId === me?.id ? "win" : "loss";
+    const resultOpen = boardVisible && finished && dismissedResultFor !== gameId;
+    const resultActions = (
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button type="button" variant="outline" onClick={leaveGame}>{t("chess.page.modal.quit")}</Button>
+            <Button type="button" disabled={isCreating || isCreatingAi} onClick={() => void handleReplay()}>{t("chess.page.modal.replay")}</Button>
+        </div>
+    );
 
     function getHistoryResult(chessGame: ChessGame): "draw" | "win" | "aborted" | "loss" {
         if (chessGame.result === "DRAW") return "draw";
@@ -293,7 +354,7 @@ export const Chess = () => {
     }
 
     return (
-        <div className="mx-auto flex min-h-svh w-full max-w-2xl flex-col gap-6 px-4 py-10">
+        <div className={cn("mx-auto flex min-h-svh w-full flex-col gap-6 px-4 py-6 md:py-10", boardVisible ? "max-w-6xl" : "max-w-2xl")}>
             {!boardVisible ? (
                 <>
                     <header className="flex flex-wrap items-baseline justify-between gap-2">
@@ -428,48 +489,123 @@ export const Chess = () => {
                                 })}
                             </ul>
                         )}
+                        <Pagination page={history?.page ?? historyPage} totalPages={history?.totalPages ?? 1} onPageChange={setHistoryPage} />
                     </section>
                 </>
             ) : null}
             {boardVisible ? (
-                <>
-                    <ChessPlayerBar
-                        player={opponentPlayer}
-                        color={opponentColor}
-                        isMe={false}
-                        toMove={turn === opponentColor}
-                        finished={gameStatus === "FINISHED"}
-                    />
-                    {gameStatus === "FINISHED" ? (
-                        <div className="border border-primary/40 bg-primary/10 px-3 py-3 text-center text-sm font-medium">
-                            {endMessage}
+                <div className="grid w-full gap-4 lg:grid-cols-[minmax(0,42rem)_minmax(0,1fr)] lg:items-stretch lg:justify-center">
+                    <div className="mx-auto flex w-full max-w-2xl min-w-0 flex-col gap-4">
+                        <div className="flex items-center justify-between gap-2">
+                            <Button type="button" variant="ghost" size="sm" onClick={leaveGame}>
+                                <ArrowLeftIcon />
+                                {t("chess.page.modal.back")}
+                            </Button>
+                            <div className="flex items-center gap-2">
+                                <Button type="button" variant="outline" size="sm" className="lg:hidden" aria-pressed={chatOpen} onClick={() => setChatOpen((open) => !open)}>
+                                    <MessageSquareIcon />
+                                    {t("chess.page.modal.chat")}
+                                </Button>
+                                {gameStatus === "ACTIVE" ? (
+                                    <ConfirmDialog
+                                        title={t("chess.page.modal.resignTitle")}
+                                        description={t("chess.page.modal.resignDescription")}
+                                        confirmLabel={t("chess.page.modal.resign")}
+                                        onConfirm={handleResign}
+                                    >
+                                        <Button type="button" variant="destructive" size="sm">
+                                            <FlagIcon />
+                                            {t("chess.page.modal.resign")}
+                                        </Button>
+                                    </ConfirmDialog>
+                                ) : null}
+                            </div>
                         </div>
-                    ) : null}
-                    <ChessBoard3D
-                        board={board}
-                        positions={positions}
-                        selectedPosition={selectedPosition}
-                        onSquareClick={selectPiece}
-                        flipped={playerColor === "BLACK"}
-                    />
-                    <ChessPlayerBar
-                        player={myPlayer}
-                        color={playerColor}
-                        isMe
-                        toMove={turn === playerColor}
-                        finished={gameStatus === "FINISHED"}
-                    />
-                    {promotion ? (
-                        <div className="flex items-center justify-center gap-2 border border-border p-3" role="dialog" aria-label={t("chess.page.promotionLabel")}>
-                            {(["q", "r", "b", "n"] as const).map((piece) => (
-                                <button key={piece} type="button" className="size-14 border border-border p-2 hover:bg-muted" onClick={() => choosePromotion(piece)}>
-                                    <img src={`/chess/${promotion.color === "white" ? "w" : "b"}${piece === "n" ? "N" : piece.toUpperCase()}.svg`} alt={t(`chess.page.pieces.${piece}`)} className="h-full w-full" />
-                                </button>
-                            ))}
+                        <ChessPlayerBar
+                            player={opponentPlayer}
+                            color={opponentColor}
+                            isMe={false}
+                            toMove={turn === opponentColor}
+                            finished={finished}
+                        />
+                        {finished && !resultOpen ? (
+                            <div className="flex flex-col gap-3 border border-primary/40 bg-primary/10 p-3">
+                                <p className="text-center text-sm font-medium">
+                                    {t(`chess.page.result.${outcome}`)} · {t(`chess.page.reason.${endReason ?? "FINISHED"}`)}
+                                </p>
+                                {resultActions}
+                            </div>
+                        ) : null}
+                        <ChessBoard3D
+                            board={board}
+                            positions={positions}
+                            selectedPosition={selectedPosition}
+                            onSquareClick={selectPiece}
+                            flipped={playerColor === "BLACK"}
+                        />
+                        <ChessPlayerBar
+                            player={myPlayer}
+                            color={playerColor}
+                            isMe
+                            toMove={turn === playerColor}
+                            finished={finished}
+                        />
+                        {promotion ? (
+                            <div className="flex items-center justify-center gap-2 border border-border p-3" role="dialog" aria-label={t("chess.page.promotionLabel")}>
+                                {(["q", "r", "b", "n"] as const).map((piece) => (
+                                    <button key={piece} type="button" className="size-14 border border-border p-2 hover:bg-muted" onClick={() => choosePromotion(piece)}>
+                                        <img src={`/chess/${promotion.color === "white" ? "w" : "b"}${piece === "n" ? "N" : piece.toUpperCase()}.svg`} alt={t(`chess.page.pieces.${piece}`)} className="h-full w-full" />
+                                    </button>
+                                ))}
+                            </div>
+                        ) : null}
+                    </div>
+
+                    {/* Mobile : plein écran au-dessus de la partie, avec un bouton Fermer. Ordinateur : colonne à droite, de la hauteur de l'échiquier (le contenu est en absolu pour ne pas l'allonger). */}
+                    <aside className={cn("min-h-0 border border-border bg-card lg:relative lg:block lg:self-stretch", chatOpen ? "fixed inset-0 z-50 flex flex-col lg:static lg:z-auto" : "hidden")}>
+                        <div className="flex min-h-0 flex-1 flex-col lg:absolute lg:inset-0">
+                            <div className="flex items-center justify-between border-b border-border px-3 py-2 lg:hidden">
+                                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">{t("chess.page.modal.chat")}</span>
+                                <Button type="button" variant="ghost" size="sm" onClick={() => setChatOpen(false)}>
+                                    <XIcon />
+                                    {t("chess.page.modal.close")}
+                                </Button>
+                            </div>
+                            <div className="min-h-0 flex-1 *:h-full">
+                                {chatConversation ? (
+                                    <ChatThread conversation={chatConversation} meId={me?.id} embedded />
+                                ) : (
+                                    <p className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
+                                        {botLevel ? t("chess.page.modal.noChatAi") : t("chess.page.modal.chatLoading")}
+                                    </p>
+                                )}
+                            </div>
                         </div>
-                    ) : null}
-                </>
+                    </aside>
+                </div>
             ) : null}
+
+            <Dialog.Root open={resultOpen} onOpenChange={(open) => { if (!open) setDismissedResultFor(gameId); }}>
+                <Dialog.Portal>
+                    <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/40 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs" />
+                    <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-card p-6 text-card-foreground shadow-2xl outline-none transition-all duration-200 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
+                        <div className="flex flex-col gap-5">
+                            <div className="text-center">
+                                <span aria-hidden className={cn("font-heading text-5xl leading-none", outcome === "loss" ? "text-destructive" : "text-primary")}>
+                                    {outcome === "win" ? "♛" : outcome === "loss" ? "♚" : "♞"}
+                                </span>
+                                <Dialog.Title className="mt-3 font-heading text-2xl font-bold tracking-tight">
+                                    {t(`chess.page.modal.title.${outcome}`)}
+                                </Dialog.Title>
+                                <Dialog.Description className="mt-1 text-sm text-muted-foreground">
+                                    {t(`chess.page.reason.${endReason ?? "FINISHED"}`)}
+                                </Dialog.Description>
+                            </div>
+                            {resultActions}
+                        </div>
+                    </Dialog.Popup>
+                </Dialog.Portal>
+            </Dialog.Root>
         </div>
     );
 };

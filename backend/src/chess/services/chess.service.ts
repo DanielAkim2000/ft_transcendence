@@ -12,6 +12,11 @@ import { Chess } from 'chess.js';
 import { join } from 'path';
 import { Worker } from 'worker_threads';
 import { AiLevel, AiMove } from '../ai/chess-ai';
+import {
+  PageQueryDto,
+  pageOffset,
+} from '../../common/pagination/page-query.dto';
+import { Paginated, toPaginated } from '../../common/pagination/paginated';
 import { CreateAiGameDto } from '../dto/create-ai-game.dto';
 import { ChatService } from '../../chat/services/chat.service';
 import { NotificationsService } from '../../notifications/services/notifications.service';
@@ -49,7 +54,7 @@ export class ChessService {
     return this.prisma.chessGame.findMany({
       where: {
         OR: [{ whitePlayerId: userId }, { blackPlayerId: userId }],
-        status: { in: ['PENDING', 'ACTIVE', 'FINISHED'] },
+        status: { in: ['PENDING', 'ACTIVE'] },
       },
       include: {
         whitePlayer: {
@@ -61,6 +66,26 @@ export class ChessService {
       },
       orderBy: { updatedAt: 'desc' },
     });
+  }
+
+  /** Historique paginé : les parties terminées de l'utilisateur, les plus récentes d'abord. */
+  async listHistory(userId: string, page: PageQueryDto) {
+    const where = {
+      status: 'FINISHED' as const,
+      OR: [{ whitePlayerId: userId }, { blackPlayerId: userId }],
+    };
+    const player = { select: { id: true, displayname: true, avatarUrl: true } };
+    const [games, total] = await this.prisma.$transaction([
+      this.prisma.chessGame.findMany({
+        where,
+        include: { whitePlayer: player, blackPlayer: player },
+        orderBy: { endedAt: 'desc' },
+        skip: pageOffset(page),
+        take: page.limit,
+      }),
+      this.prisma.chessGame.count({ where }),
+    ]);
+    return toPaginated(games, total, page);
   }
 
   async getGame(userId: string, gameId: string) {
@@ -188,6 +213,28 @@ export class ChessService {
     ]);
 
     return updated;
+  }
+
+  /** Abandon : la partie se termine tout de suite, victoire de l'adversaire. */
+  async resign(userId: string, gameId: string) {
+    const game = await this.getGame(userId, gameId);
+    if (game.status !== 'ACTIVE') {
+      throw new ConflictException({
+        message: 'The game is not active',
+        code: 'GAME_NOT_ACTIVE',
+      });
+    }
+    const iAmWhite = userId === game.whitePlayerId;
+    return this.prisma.chessGame.update({
+      where: { id: gameId },
+      data: {
+        status: 'FINISHED',
+        result: iAmWhite ? 'BLACK_WIN' : 'WHITE_WIN',
+        endReason: 'RESIGNATION',
+        winnerId: iAmWhite ? game.blackPlayerId : game.whitePlayerId,
+        endedAt: new Date(),
+      },
+    });
   }
 
   /** Les adversaires IA sont de vrais comptes (clé étrangère des parties) créés à la demande. */

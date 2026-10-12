@@ -117,6 +117,7 @@ export const GDPR_ENDPOINTS = {
 /** Noms des endpoints RTK Query — chessApi */
 export const CHESS_ENDPOINTS = {
   LIST_GAMES: "listChessGames",
+  LIST_HISTORY: "listChessHistory",
   CREATE_GAME: "createChessGame",
   CREATE_AI_GAME: "createChessAiGame",
   GET_GAME: "getChessGame",

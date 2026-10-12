@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Query,
   Post,
   Req,
   UseGuards,
@@ -12,6 +13,7 @@ import { Request } from 'express';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { UserEntity } from '../users/entities/user.entity';
 import { ChessService } from './services/chess.service';
+import { PageQueryDto } from '../common/pagination/page-query.dto';
 import { CreateGameDto } from './dto/create-game.dto';
 import { CreateAiGameDto } from './dto/create-ai-game.dto';
 
@@ -39,6 +41,14 @@ export class ChessController {
   @Get('games/me')
   listMine(@Req() req: Request & { user: UserEntity }) {
     return this.chess.listGames(req.user.id);
+  }
+
+  @Get('games/history')
+  history(
+    @Req() req: Request & { user: UserEntity },
+    @Query() query: PageQueryDto,
+  ) {
+    return this.chess.listHistory(req.user.id, query);
   }
 
   @Get('games/:id')

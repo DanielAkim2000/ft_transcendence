@@ -932,6 +932,19 @@
         "levels": { "EASY": "Facile", "MEDIUM": "Moyen", "HARD": "Difficile", "EXPERT": "Expert" },
         "colors": { "WHITE": "Blancs", "BLACK": "Noirs", "RANDOM": "Aléatoire" }
       },
+      "modal": {
+        "back": "Retour",
+        "chat": "Chat",
+        "noChatAi": "Tu joues contre l'IA : pas de chat pour cette partie.",
+        "close": "Fermer",
+        "chatLoading": "Chargement du chat…",
+        "resign": "Abandonner",
+        "resignTitle": "Abandonner la partie ?",
+        "resignDescription": "Tu perdras la partie immédiatement. Pour simplement sortir sans l'arrêter, utilise « Retour ».",
+        "replay": "Rejouer",
+        "quit": "Quitter",
+        "title": { "win": "Victoire !", "loss": "Défaite", "draw": "Match nul" }
+      },
       "friendsTitle": "Mes amis",
       "friendsLoading": "Chargement des amis…",
       "noFriends": "Tu n'as pas encore d'ami à défier.",

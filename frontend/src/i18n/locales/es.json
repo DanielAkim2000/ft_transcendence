@@ -932,6 +932,19 @@
         "levels": { "EASY": "Fácil", "MEDIUM": "Medio", "HARD": "Difícil", "EXPERT": "Experto" },
         "colors": { "WHITE": "Blancas", "BLACK": "Negras", "RANDOM": "Aleatorio" }
       },
+      "modal": {
+        "back": "Volver",
+        "chat": "Chat",
+        "noChatAi": "Juegas contra la IA: no hay chat en esta partida.",
+        "close": "Cerrar",
+        "chatLoading": "Cargando chat…",
+        "resign": "Abandonar",
+        "resignTitle": "¿Abandonar la partida?",
+        "resignDescription": "Perderás la partida de inmediato. Para salir sin terminarla, usa «Volver».",
+        "replay": "Jugar de nuevo",
+        "quit": "Salir",
+        "title": { "win": "¡Victoria!", "loss": "Derrota", "draw": "Tablas" }
+      },
       "friendsTitle": "Mis amigos",
       "friendsLoading": "Cargando amigos…",
       "noFriends": "Aún no tienes amigos a quienes retar.",

@@ -1,6 +1,7 @@
 import { api } from "@/store/api";
 import { API_ROUTES } from "@/constants/apiRoutes";
 import { CHESS_ENDPOINTS } from "@/constants/queryEndpoints";
+import type { PageArgs, Paginated } from "@/lib/pagination";
 import { TAG_TYPES } from "@/constants/tagTypes";
 
 export type ChessColor = "WHITE" | "BLACK" | "RANDOM";
@@ -67,6 +68,10 @@ export const chessApi = api.injectEndpoints({
             query: () => API_ROUTES.CHESS_GAMES_ME,
             providesTags: [TAG_TYPES.CHESS],
         }),
+        [CHESS_ENDPOINTS.LIST_HISTORY]: builder.query<Paginated<ChessGame>, PageArgs | void>({
+            query: (args) => ({ url: API_ROUTES.CHESS_GAMES_HISTORY, params: { ...args } }),
+            providesTags: [TAG_TYPES.CHESS],
+        }),
         [CHESS_ENDPOINTS.GET_GAME]: builder.query<ChessGame, string>({
             query: (gameId) => API_ROUTES.chessGame(gameId),
             providesTags: (_result, _error, gameId) => [{ type: TAG_TYPES.CHESS, id: gameId }],
@@ -106,6 +111,7 @@ export const chessApi = api.injectEndpoints({
 
 export const {
     useListChessGamesQuery,
+    useListChessHistoryQuery,
     useGetChessGameQuery,
     useCreateChessGameMutation,
     useCreateChessAiGameMutation,

@@ -932,6 +932,19 @@
         "levels": { "EASY": "Easy", "MEDIUM": "Medium", "HARD": "Hard", "EXPERT": "Expert" },
         "colors": { "WHITE": "White", "BLACK": "Black", "RANDOM": "Random" }
       },
+      "modal": {
+        "back": "Back",
+        "chat": "Chat",
+        "noChatAi": "You are playing against the AI: no chat for this game.",
+        "close": "Close",
+        "chatLoading": "Loading chat…",
+        "resign": "Resign",
+        "resignTitle": "Resign the game?",
+        "resignDescription": "You will lose the game immediately. To leave without ending it, use “Back”.",
+        "replay": "Play again",
+        "quit": "Quit",
+        "title": { "win": "Victory!", "loss": "Defeat", "draw": "Draw" }
+      },
       "friendsTitle": "My friends",
       "friendsLoading": "Loading friends…",
       "noFriends": "You have no friends to challenge yet.",

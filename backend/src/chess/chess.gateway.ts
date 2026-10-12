@@ -67,6 +67,30 @@ export class ChessGateway implements OnGatewayConnection {
     }
   }
 
+  @SubscribeMessage('chess:resign')
+  async handleResign(
+    @ConnectedSocket() client: ChessSocket,
+    @MessageBody() payload: { gameId?: string },
+  ): Promise<void> {
+    const userId = client.data.userId;
+    if (!userId || !payload?.gameId) return;
+
+    try {
+      const game = await this.chessService.resign(userId, payload.gameId);
+      this.server
+        .to([game.whitePlayerId, game.blackPlayerId])
+        .emit('chess:state', game);
+    } catch (error) {
+      const response =
+        error instanceof HttpException ? error.getResponse() : null;
+      const code =
+        typeof response === 'object' && response !== null && 'code' in response
+          ? String(response.code)
+          : 'GAME_NOT_ACTIVE';
+      client.emit('chess:error', { message: String(error), code });
+    }
+  }
+
   @SubscribeMessage('chess:move')
   async handleMove(
     @ConnectedSocket() client: ChessSocket,

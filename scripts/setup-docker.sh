@@ -4,12 +4,14 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-if [ ! -f .env ]; then
-  cp .env.example .env
-  echo "Created .env from .env.example — edit it with your values."
-else
-  echo ".env already exists, skipping."
-fi
+for env_file in .env.dev .env.prod; do
+  if [ ! -f "$env_file" ]; then
+    cp .env.example "$env_file"
+    echo "Created $env_file from .env.example — edit it with your values."
+  else
+    echo "$env_file already exists, skipping."
+  fi
+done
 
 for example in secrets/*.example; do
   secret_name="$(basename "$example" .example)"
@@ -24,10 +26,11 @@ for example in secrets/*.example; do
 done
 
 chmod 600 secrets/* 2>/dev/null || true
-chmod 600 .env 2>/dev/null || true
+chmod 600 .env.dev .env.prod 2>/dev/null || true
 
 echo ""
 echo "Setup complete. Next steps:"
-echo "  1. Edit .env (CLIENT_ID, URLs, ports...)"
+echo "  1. Edit .env.dev and .env.prod (CLIENT_ID, URLs, ports...)"
 echo "  2. Edit secrets/* with strong values (especially JWT secrets)"
-echo "  3. Run: docker compose up --build"
+echo "  3. Create secrets/client_secret (prod) and secrets/client_secret.dev (dev)
+  4. Run: make dev (or make prod)"

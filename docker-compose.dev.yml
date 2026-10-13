@@ -144,7 +144,7 @@ secrets:
   jwt_pre_auth_token_secret:
     file: ./secrets/jwt_pre_auth_token_secret
   client_secret:
-    file: ./secrets/client_secret
+    file: ./secrets/client_secret.dev
 
 volumes:
   postgres_data_dev:

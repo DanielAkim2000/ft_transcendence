@@ -3,8 +3,10 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Production (images compilées) et développement (hot reload).
-COMPOSE_PROD := docker compose -f docker-compose.yml
-COMPOSE_DEV  := docker compose -f docker-compose.dev.yml
+COMPOSE_PROD := docker compose --env-file .env.prod -f docker-compose.yml
+COMPOSE_DEV  := docker compose --env-file .env.dev -f docker-compose.dev.yml
+
+# Chaque environnement a son fichier .env.<env> ; secrets : secrets/client_secret (prod) et secrets/client_secret.dev (dev).
 
 # Environnement ciblé par les commandes génériques (logs, ps, shell, db-*...).
 # Dev par défaut ; `make logs ENV=prod` pour la production.
@@ -32,23 +34,27 @@ help: ## Affiche cette aide
 
 # ─── Installation ────────────────────────────────────────────────────────────
 .PHONY: setup
-setup: ## Crée .env et les secrets Docker à partir des exemples
+setup: ## Crée .env.dev, .env.prod et les secrets Docker à partir des exemples
 	@./scripts/setup-docker.sh
 
-.PHONY: check-env
-check-env:
-	@test -f .env && test -f secrets/postgres_password || { \
-		echo "Il manque .env ou les secrets : lance d'abord 'make setup'."; exit 1; }
+.PHONY: check-env-dev check-env-prod
+check-env-dev:
+	@test -f .env.dev && test -f secrets/postgres_password && test -f secrets/client_secret.dev || { \
+		echo "Il manque .env.dev ou des secrets (dont client_secret.dev) : lance d'abord 'make setup'."; exit 1; }
+check-env-prod:
+	@test -f .env.prod && test -f secrets/postgres_password && test -f secrets/client_secret || { \
+		echo "Il manque .env.prod ou des secrets (dont client_secret) : lance d'abord 'make setup'."; exit 1; }
+check-env: check-env-$(ENV)
 
 # ─── Lancement ───────────────────────────────────────────────────────────────
 .PHONY: all dev prod up down stop restart
 all: prod ## Alias de prod
 
-dev: check-env ## Lance l'environnement de développement (hot reload), au premier plan
+dev: check-env-dev ## Lance l'environnement de développement (hot reload), au premier plan
 	@$(COMPOSE_PROD) down --remove-orphans >/dev/null 2>&1 || true
 	$(COMPOSE_DEV) up --build
 
-prod: check-env ## Lance l'environnement de production (images compilées), au premier plan
+prod: check-env-prod ## Lance l'environnement de production (images compilées), au premier plan
 	@$(COMPOSE_DEV) down --remove-orphans >/dev/null 2>&1 || true
 	$(COMPOSE_PROD) up --build
 
@@ -96,7 +102,7 @@ db-backups: ## Liste les sauvegardes disponibles
 	$(COMPOSE) exec backup /db-backup.sh list
 
 db-restore: ## Restaure la sauvegarde la plus récente (F=fichier pour une précise)
-	COMPOSE_FILE=$(if $(filter prod,$(ENV)),docker-compose.yml,docker-compose.dev.yml) ./scripts/db-restore.sh $(F)
+	COMPOSE_ENV_FILES=.env.$(ENV) COMPOSE_FILE=$(if $(filter prod,$(ENV)),docker-compose.yml,docker-compose.dev.yml) ./scripts/db-restore.sh $(F)
 
 db-shell: ## Ouvre psql sur la base
 	$(COMPOSE) exec db sh -c 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'

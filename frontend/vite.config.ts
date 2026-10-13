@@ -16,6 +16,14 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
+  build: {
+    rolldownOptions: {
+      output: {
+        // Production : aucun log dans la console du navigateur (y compris ceux des dépendances).
+        minify: { compress: { dropConsole: true, dropDebugger: true } },
+      },
+    },
+  },
   server: {
     host: "0.0.0.0",
     port: 5173,

@@ -1,6 +1,9 @@
+# On reconstruit le front dans Docker, sans les builds locaux.
 node_modules
 dist
 dist-ssr
+
+# Les fichiers de config locaux ne partent pas dans l'image.
 .env
 .env.*
 !.env.example

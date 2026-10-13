@@ -1,10 +1,15 @@
+# Fichiers locaux ou generes : inutiles dans le contexte de build.
 node_modules
 dist
 coverage
+
+# La configuration locale ne doit pas entrer dans l'image.
 .env
 .env.*
 !.env.example
 *.log
+
+# Dossiers outils et fichiers hors application.
 .git
 .agents
 .windsurf

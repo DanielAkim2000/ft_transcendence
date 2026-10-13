@@ -1,3 +1,4 @@
+# Premiere etape : construire les fichiers statiques avec Vite.
 FROM node:22-alpine AS builder
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -14,6 +15,7 @@ ENV VITE_API_URL=$VITE_API_URL
 
 RUN pnpm run build
 
+# Deuxieme etape : nginx sert le resultat, sans garder Node pour tourner.
 FROM nginx:1.27-alpine AS runner
 
 RUN apk add --no-cache openssl
@@ -22,6 +24,7 @@ ENV NGINX_ENVSUBST_FILTER="^(HTTPS_PORT|BACKEND_PORT)$" \
     HTTPS_PORT=8443 \
     BACKEND_PORT=5000
 
+# Le template nginx utilise les ports fournis par Compose.
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY docker-entrypoint.d-generate-cert.sh /docker-entrypoint.d/40-generate-cert.sh
 RUN chmod +x /docker-entrypoint.d/40-generate-cert.sh

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Raccourci pour lancer la version dev avec son fichier .env.dev.
+# On coupe la prod avant pour eviter de garder deux stacks sur les memes ports.
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

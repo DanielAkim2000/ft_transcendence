@@ -1,4 +1,6 @@
 #!/bin/sh
+# Certificat local autosigne : on ne le regenere pas s'il existe deja.
+# Le volume tls_certs le garde entre deux recreations du conteneur.
 set -e
 
 CERT_DIR=/etc/nginx/certs

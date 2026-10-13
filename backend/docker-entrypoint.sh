@@ -1,9 +1,11 @@
 #!/bin/sh
+# Preparation du backend avant de lancer Node.
+# On garde CI=true pour eviter les questions interactives de pnpm/Prisma.
 set -e
 
-# Prisma/pnpm must never wait for a TTY prompt inside Docker.
 export CI=true
 
+# Compose fournit les secrets sous forme de fichiers dans /run/secrets.
 load_secret() {
   var_name="$1"
   secret_file="$2"
@@ -20,6 +22,7 @@ load_secret JWT_REFRESH_TOKEN_SECRET /run/secrets/jwt_refresh_token_secret
 load_secret JWT_PRE_AUTH_TOKEN_SECRET /run/secrets/jwt_pre_auth_token_secret
 load_secret CLIENT_SECRET /run/secrets/client_secret
 
+# La connexion est construite avec le nom du service Docker db.
 if [ -z "$DATABASE_URL" ] && [ -n "$POSTGRES_PASSWORD" ]; then
   POSTGRES_USER="${POSTGRES_USER:-ft_user}"
   POSTGRES_DB="${POSTGRES_DB:-ft_transcendence}"
@@ -31,6 +34,7 @@ if [ -z "$DATABASE_URL" ]; then
   exit 1
 fi
 
+# Mise a jour du client Prisma et des migrations avant le lancement.
 echo "Generating Prisma client..."
 pnpm exec prisma generate --no-hints
 

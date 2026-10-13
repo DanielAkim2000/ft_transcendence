@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Prepare les fichiers .env.dev et .env.prod a partir du modele.
+# Les secrets sont copies depuis secrets/*.example quand ces fichiers existent.
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

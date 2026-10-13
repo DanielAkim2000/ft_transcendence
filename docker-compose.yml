@@ -1,6 +1,9 @@
+# Version avec images compilees : le frontend est servi par nginx.
+# Les chemins, ports et volumes sont ceux utilises pour le lancement en HTTPS.
 name: ft_transcendence
 
 services:
+  # Postgres garde ses donnees dans un volume, pas dans le conteneur.
   db:
     image: postgres:16-alpine
     container_name: ft_postgres
@@ -26,6 +29,7 @@ services:
     ports:
       - "${POSTGRES_PORT:-5433}:5432"
 
+  # API NestJS. On attend que Postgres reponde avant le demarrage.
   backend:
     build:
       context: ./backend
@@ -76,6 +80,7 @@ services:
       retries: 5
       start_period: 60s
 
+  # Front compile + nginx. C'est le point d'entree HTTP/HTTPS.
   frontend:
     build:
       context: ./frontend
@@ -105,6 +110,7 @@ services:
     volumes:
       - tls_certs:/etc/nginx/certs
 
+  # Boite mail de test pour les emails envoyes par l'application.
   mailpit:
     image: axllent/mailpit:latest
     container_name: ft_mailpit
@@ -112,6 +118,7 @@ services:
     ports:
       - "${MAILPIT_UI_PORT:-8025}:8025"
 
+  # Sauvegarde Postgres dans un volume separe de la base.
   backup:
     image: postgres:16-alpine
     container_name: ft_backup
@@ -131,6 +138,7 @@ services:
       - ./scripts/db-backup.sh:/db-backup.sh:ro
       - db_backups:/backups
 
+# Fichiers lus par Docker et montes sous /run/secrets dans les services.
 secrets:
   postgres_password:
     file: ./secrets/postgres_password
@@ -143,6 +151,7 @@ secrets:
   client_secret:
     file: ./secrets/client_secret
 
+# Les donnees restent disponibles meme si on recree un conteneur.
 volumes:
   postgres_data:
   db_backups:

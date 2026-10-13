@@ -1,4 +1,4 @@
-# Redirige le HTTP vers le HTTPS
+# Le port HTTP ne sert qu'a rediriger vers HTTPS.
 server {
     listen 80;
     server_name _;
@@ -17,16 +17,15 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
-    # Résolution DNS du backend à chaque requête (résolveur interne de Docker) :
-    # avec un simple proxy_pass sur un nom, nginx figerait l'IP au démarrage et
-    # renverrait des 502 dès que le conteneur backend est recréé ou redémarré.
+    # Docker peut changer l'IP d'un conteneur apres un redemarrage.
+    # Ce resolver evite que nginx garde une ancienne adresse du backend.
     resolver 127.0.0.11 valid=5s ipv6=off;
     set $backend_upstream http://backend:${BACKEND_PORT};
 
     gzip on;
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
 
-    # WebSockets (socket.io) : /api/socket.io -> backend /socket.io
+    # Socket.IO : le navigateur passe par /api/socket.io, puis le backend /socket.io.
     location /api/socket.io/ {
         rewrite ^/api/(.*)$ /$1 break;
         proxy_pass $backend_upstream;
@@ -39,7 +38,8 @@ server {
         proxy_read_timeout 1h;
     }
 
-    # API REST : /api/* -> backend /* (le cookie de refresh garde son chemin /auth)
+    # Pour l'API, nginx enleve /api avant de transmettre au backend.
+    # Le chemin du cookie est aussi adapte pour le navigateur.
     location /api/ {
         client_max_body_size 5m;
         rewrite ^/api/(.*)$ /$1 break;
@@ -51,6 +51,7 @@ server {
         proxy_cookie_path /auth /api/auth;
     }
 
+    # Les routes du front restent gerees par React.
     location / {
         try_files $uri $uri/ /index.html;
     }

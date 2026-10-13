@@ -1,13 +1,8 @@
 #!/bin/sh
-# Sauvegardes PostgreSQL, exécuté dans le conteneur "backup" (postgres:16-alpine).
-#
-#   db-backup.sh run                 boucle : un dump immédiat, puis un toutes les BACKUP_INTERVAL_HOURS
-#   db-backup.sh once                un dump immédiat
-#   db-backup.sh list                liste les dumps disponibles
-#   db-backup.sh restore [fichier]   restaure un dump (le plus récent par défaut)
-#
-# Un dump est un .sql.gz horodaté dans BACKUP_DIR ; ceux de plus de
-# BACKUP_RETENTION_DAYS jours sont supprimés (on garde toujours le plus récent).
+# Sauvegardes Postgres depuis le conteneur backup.
+# run : sauvegarde en boucle ; once : une seule sauvegarde.
+# list : affiche les dumps ; restore [fichier] : restaure un dump.
+# Les fichiers .sql.gz sont gardes dans /backups (ou BACKUP_DIR).
 set -eu
 
 BACKUP_DIR="${BACKUP_DIR:-/backups}"
@@ -27,11 +22,9 @@ mkdir -p "$BACKUP_DIR"
 
 log() { echo "[backup] $(date -u +%Y-%m-%dT%H:%M:%SZ) $*"; }
 
-# Dump complet (--clean --if-exists : restaurable sur une base existante).
-# On dump d'abord dans un fichier brut, puis on compresse : avec un simple
-# « pg_dump | gzip », le code de retour serait celui de gzip et un dump raté
-# (base injoignable) passerait pour réussi. Le fichier final n'apparaît (mv)
-# qu'une fois le dump ET la compression terminés, et il ne doit pas être vide.
+# D'abord pg_dump dans un fichier temporaire, puis gzip.
+# Sans ca, un pipe direct pourrait cacher une erreur de pg_dump.
+# Le .sql.gz final n'est garde que si les deux etapes ont reussi.
 backup_once() {
   file="$BACKUP_DIR/${PGDATABASE}_$(date -u +%Y%m%d_%H%M%S).sql.gz"
   raw="$file.raw"
@@ -50,7 +43,7 @@ backup_once() {
   fi
 }
 
-# Supprime les dumps plus vieux que la rétention, sauf le plus récent.
+# Nettoyage des vieux dumps, en gardant au moins le dernier.
 prune() {
   latest="$(ls -1t "$BACKUP_DIR"/*.sql.gz 2>/dev/null | head -n 1 || true)"
   find "$BACKUP_DIR" -name '*.sql.gz' -mtime "+$BACKUP_RETENTION_DAYS" | while read -r old; do
@@ -60,8 +53,8 @@ prune() {
 
 list_backups() { ls -1t "$BACKUP_DIR"/*.sql.gz 2>/dev/null || echo "(aucune sauvegarde)"; }
 
-# Restaure dans une seule transaction : en cas d'erreur, la base reste intacte.
-# L'application doit être arrêtée (aucune connexion active) : voir scripts/db-restore.sh.
+# Restauration SQL dans une transaction.
+# Utiliser db-restore.sh pour arreter le backend avant cette operation.
 restore() {
   file="${1:-$(ls -1t "$BACKUP_DIR"/*.sql.gz 2>/dev/null | head -n 1 || true)}"
   case "$file" in /*|"") ;; *) file="$BACKUP_DIR/$file" ;; esac

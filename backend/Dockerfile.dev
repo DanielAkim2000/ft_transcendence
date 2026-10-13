@@ -1,3 +1,4 @@
+# Version dev : le code est monte par Compose, on garde le mode watch.
 FROM node:22-alpine
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -8,6 +9,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
+# Prisma doit etre genere avant de lancer le backend.
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 RUN pnpm exec prisma generate

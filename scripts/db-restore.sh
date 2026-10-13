@@ -1,8 +1,8 @@
 #!/bin/sh
-# Restaure la base depuis une sauvegarde (procédure de reprise après sinistre).
-#   ./scripts/db-restore.sh [fichier.sql.gz]   (le plus récent par défaut)
-#   COMPOSE_FILE=docker-compose.dev.yml ./scripts/db-restore.sh
-# Arrête le backend, restaure, puis le relance (il rejoue les migrations au démarrage).
+# Restauration manuelle d'un dump Postgres.
+# Sans argument : dernier dump ; avec un nom : dump demande.
+# Pour la dev : COMPOSE_FILE=docker-compose.dev.yml ./scripts/db-restore.sh
+# Le script demande confirmation, stoppe le backend puis le relance.
 set -eu
 cd "$(dirname "$0")/.."
 COMPOSE="docker compose${COMPOSE_FILE:+ -f $COMPOSE_FILE}"

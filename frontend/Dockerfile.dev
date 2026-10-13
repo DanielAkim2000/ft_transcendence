@@ -1,3 +1,4 @@
+# En dev, Vite reste lance dans le conteneur (pas de nginx ici).
 FROM node:22-alpine
 
 RUN corepack enable && corepack prepare pnpm@latest --activate

@@ -575,7 +575,7 @@ export const Chess = () => {
                             <div className="flex items-center justify-center gap-2 border border-border p-3" role="dialog" aria-label={t("chess.page.promotionLabel")}>
                                 {(["q", "r", "b", "n"] as const).map((piece) => (
                                     <button key={piece} type="button" className="size-14 border border-border p-2 hover:bg-muted" onClick={() => choosePromotion(piece)}>
-                                        <img src={`/chess/${promotion.color === "white" ? "w" : "b"}${piece === "n" ? "N" : piece.toUpperCase()}.svg`} alt={t(`chess.page.pieces.${piece}`)} className="h-full w-full" />
+                                        <img src={`/chess-pieces/${promotion.color === "white" ? "w" : "b"}${piece === "n" ? "N" : piece.toUpperCase()}.svg`} alt={t(`chess.page.pieces.${piece}`)} className="h-full w-full" />
                                     </button>
                                 ))}
                             </div>

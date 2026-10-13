@@ -15,6 +15,7 @@ import storage from "redux-persist/es/storage";
 import authReducer from "@/features/auth/authSlice";
 import settingsReducer from "@/features/settings/settingsSlice";
 import { api } from "./api";
+import { clearSessionHint, setSessionHint } from "@/lib/sessionHint";
 import "@/features/auth/authApi";
 import "@/features/users/usersApi";
 
@@ -37,6 +38,16 @@ export const store = configureStore({
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
     }).concat(api.middleware),
+});
+
+// Témoin de session : posé quand un access token apparaît, retiré quand il disparaît (déconnexion, ban, refresh refusé).
+let hadToken = false;
+store.subscribe(() => {
+  const hasToken = Boolean(store.getState().auth.accessToken);
+  if (hasToken === hadToken) return;
+  hadToken = hasToken;
+  if (hasToken) setSessionHint();
+  else clearSessionHint();
 });
 
 // Lance la réhydratation localStorage → settings.

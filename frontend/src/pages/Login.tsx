@@ -32,6 +32,7 @@ import {
   createTwoFactorSchema,
 } from "@/features/auth/two-factor.schema";
 import { clearCredentials } from "@/features/auth/authSlice";
+import { setSessionHint } from "@/lib/sessionHint";
 import { AuthShell } from "@/layouts/AuthShell";
 import { BanNotice } from "@/features/ban/BanNotice";
 import { ROUTES } from "@/constants/routes";
@@ -75,6 +76,8 @@ function LoginCredentialsForm() {
   });
 
   const handleLoginWith42 = () => {
+    // Au retour de 42, le cookie de refresh est posé : le témoin permet à l'app de le consommer au démarrage.
+    setSessionHint();
     window.location.href = `${import.meta.env.VITE_API_URL}${API_ROUTES.AUTH_42_LOGIN}`;
   };
 

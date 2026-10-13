@@ -2,6 +2,7 @@ import { useAppSelector } from "@/store/hooks";
 import { useRefreshMutation } from "./authApi";
 import { useState, useEffect } from "react";
 import { logger } from "@/lib/logger";
+import { clearSessionHint, hasSessionHint } from "@/lib/sessionHint";
 
 let bootstrapRefresh: Promise<void> | null = null;
 
@@ -18,11 +19,15 @@ export const AuthBootstrap = ({ children }: AuthBootstrapProps) => {
     let cancelled = false;
 
     (async () => {
-      if (!accessToken) {
+      // Sans témoin de session, pas de refresh : il répondrait 401 et le navigateur l'afficherait en console.
+      if (!accessToken && hasSessionHint()) {
         bootstrapRefresh ??= refresh()
           .unwrap()
           .then(() => undefined)
-          .catch(() => logger("No session", "error"));
+          .catch(() => {
+            clearSessionHint();
+            logger("No session", "error");
+          });
         await bootstrapRefresh;
       }
       if (!cancelled) setReady(true);

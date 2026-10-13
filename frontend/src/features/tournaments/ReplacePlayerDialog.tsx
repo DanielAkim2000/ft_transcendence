@@ -187,7 +187,7 @@ export function ReplacePlayerDialog({ tournamentId, entry, enteredIds }: Props) 
             </Dialog.Close>
             <Button
               type="button"
-              disabled={!replacement || isLoading}
+              loading={isLoading} disabled={!replacement}
               onClick={() => void handleConfirm()}
             >
               {t("tournaments.replaceConfirm")}

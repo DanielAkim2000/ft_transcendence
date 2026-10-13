@@ -135,7 +135,7 @@ export const Profile = () => {
           ) : friendshipStatus === "pending_in" ? (
             <>
               <Button
-                disabled={isBusy}
+                loading={isBusy}
                 onClick={async () => {
                   setActionError(null);
                   try {
@@ -180,7 +180,7 @@ export const Profile = () => {
             </Button>
           ) : (
             <Button
-              disabled={isBusy}
+              loading={isBusy}
               onClick={async () => {
                 setActionError(null);
                 try {
@@ -210,7 +210,7 @@ export const Profile = () => {
               </ChallengeDialog>
               <Button
                 variant="outline"
-                disabled={inviting}
+                loading={inviting}
                 onClick={() => void inviteToChess(user.id)}
               >
                 <CrownIcon />

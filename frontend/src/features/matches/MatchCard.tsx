@@ -95,7 +95,7 @@ function AcceptTwoVTwoDialog({
             </Dialog.Close>
             <Button
               type="button"
-              disabled={isLoading || !teammateId}
+              loading={isLoading} disabled={!teammateId}
               onClick={() => void submit()}
             >
               {t("matches.accept")}
@@ -188,7 +188,7 @@ export function MatchCard({ match, meId }: { match: Match; meId: string }) {
             <Button
               type="button"
               size="sm"
-              disabled={responding}
+              loading={responding}
               onClick={() => void acceptSolo()}
             >
               {t("matches.accept")}
@@ -256,7 +256,7 @@ export function MatchCard({ match, meId }: { match: Match; meId: string }) {
               <Button
                 type="button"
                 size="sm"
-                disabled={submitting || !scoreValid}
+                loading={submitting} disabled={!scoreValid}
               >
                 {t("matches.submitScore")}
               </Button>
@@ -289,7 +289,7 @@ export function MatchCard({ match, meId }: { match: Match; meId: string }) {
               <Button
                 type="button"
                 size="sm"
-                disabled={validating}
+                loading={validating}
                 onClick={() =>
                   void run(
                     () =>

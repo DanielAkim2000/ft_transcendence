@@ -249,7 +249,7 @@ export function UserFormDialog({ user, isSelf = false, onClose }: Props) {
             <Button
               type="submit"
               form="admin-user-form"
-              disabled={form.state.isSubmitting}
+              loading={form.state.isSubmitting}
             >
               {form.state.isSubmitting
                 ? t("admin.users.form.saving")

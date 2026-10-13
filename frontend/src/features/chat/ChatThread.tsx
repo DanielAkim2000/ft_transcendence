@@ -280,7 +280,7 @@ export function ChatThread({
               size="sm"
               variant="outline"
               aria-label={t("chat.inviteChess")}
-              disabled={inviting}
+              loading={inviting}
               onClick={() => void inviteToChess(peerId)}
             >
               <CrownIcon />
@@ -293,7 +293,7 @@ export function ChatThread({
             type="button"
             size="sm"
             variant="outline"
-            disabled={unblocking}
+            loading={unblocking}
             onClick={() => void toggleBlock()}
           >
             {t("chat.unblock")}
@@ -322,7 +322,7 @@ export function ChatThread({
             variant="ghost"
             size="sm"
             className="self-center text-xs"
-            disabled={isFetching}
+            loading={isFetching}
             onClick={loadOlder}
           >
             {t("chat.loadOlder")}

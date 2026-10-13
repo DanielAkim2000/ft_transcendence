@@ -199,7 +199,7 @@ function ProfileMeForm({
           >
             <Button
               type="button"
-              disabled={isSaving || form.state.isSubmitting}
+              loading={isSaving || form.state.isSubmitting}
             >
               {isSaving ? t("profile.saving") : t("profile.save")}
             </Button>

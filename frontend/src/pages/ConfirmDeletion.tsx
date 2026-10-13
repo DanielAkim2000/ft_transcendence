@@ -90,7 +90,7 @@ export const ConfirmDeletion = () => {
               <Button
                 type="button"
                 variant="destructive"
-                disabled={isLoading}
+                loading={isLoading}
                 onClick={() => void handleConfirm()}
               >
                 {isLoading

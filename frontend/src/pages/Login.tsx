@@ -202,7 +202,7 @@ function LoginCredentialsForm() {
           form="login-form"
           size="lg"
           className="h-10 w-full"
-          disabled={isLoading || form.state.isSubmitting}
+          loading={isLoading || form.state.isSubmitting}
         >
           {isLoading || form.state.isSubmitting
             ? t("auth.login.submitting")
@@ -329,7 +329,7 @@ function RecoveryCodeForm({
           form="recovery-code-form"
           size="lg"
           className="h-10 w-full"
-          disabled={isLoading || form.state.isSubmitting}
+          loading={isLoading || form.state.isSubmitting}
         >
           {isLoading || form.state.isSubmitting
             ? t("auth.twoFactor.submitting")
@@ -449,7 +449,7 @@ function TwoFactorForm({ onUseRecovery }: { onUseRecovery: () => void }) {
           form="two-factor-form"
           size="lg"
           className="h-10 w-full"
-          disabled={isLoading || form.state.isSubmitting}
+          loading={isLoading || form.state.isSubmitting}
         >
           {isLoading || form.state.isSubmitting
             ? t("auth.twoFactor.submitting")

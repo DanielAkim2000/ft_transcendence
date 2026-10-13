@@ -101,7 +101,7 @@ export function ChessInviteCard({ gameId, meId, peerName }: Props) {
 
       {status === "PENDING" && !isChallenger ? (
         <div className="flex gap-2">
-          <Button type="button" size="sm" disabled={busy} onClick={() => void handleAccept()}>
+          <Button type="button" size="sm" loading={busy} onClick={() => void handleAccept()}>
             {t("chess.invite.accept")}
           </Button>
           <Button

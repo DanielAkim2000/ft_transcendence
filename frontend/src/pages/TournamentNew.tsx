@@ -195,7 +195,7 @@ export const TournamentNew = () => {
 
       <Button
         type="button"
-        disabled={isLoading || !name.trim()}
+        loading={isLoading} disabled={!name.trim()}
         onClick={() => void submit()}
       >
         {t("tournaments.create")}

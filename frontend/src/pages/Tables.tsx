@@ -174,7 +174,7 @@ function ScoreForm({ table }: { table: BabyTable }) {
             )
           }
         >
-          <Button type="button" size="sm" disabled={isLoading || !valid}>
+          <Button type="button" size="sm" loading={isLoading} disabled={!valid}>
             {t("matches.submitScore")}
           </Button>
         </ScoreConfirmDialog>
@@ -275,7 +275,7 @@ function JoinDialog({
             </Dialog.Close>
             <Button
               type="button"
-              disabled={isLoading || (isTwoVTwo && !teammateId)}
+              loading={isLoading} disabled={(isTwoVTwo && !teammateId)}
               onClick={() => void submit()}
             >
               {isTwoVTwo ? t("queue.invite") : t("queue.joinConfirm")}
@@ -353,7 +353,7 @@ function QueueSection({
           <Button
             type="button"
             size="sm"
-            disabled={confirming}
+            loading={confirming}
             onClick={() => void run(() => confirm(myGroupHere.id).unwrap())}
           >
             {t("queue.confirm")}
@@ -365,7 +365,7 @@ function QueueSection({
           type="button"
           size="sm"
           variant="outline"
-          disabled={leaving}
+          loading={leaving}
           onClick={() => void run(() => leave(myGroupHere.id).unwrap())}
         >
           {t("queue.leave")}
@@ -420,7 +420,7 @@ function TableActions({
                 type="button"
                 variant="outline"
                 className="w-full"
-                disabled={voting}
+                loading={voting}
                 onClick={() => void run(() => vote(table.id).unwrap())}
               >
                 {t("tables.cancelRelease")}
@@ -466,7 +466,7 @@ function TableActions({
           type="button"
           variant="outline"
           className="w-full"
-          disabled={leaving}
+          loading={leaving}
           onClick={() => void run(() => leave(myGroupHere.id).unwrap())}
         >
           {t("tables.leaveTable")}
@@ -498,7 +498,7 @@ function TableActions({
           type="button"
           variant="outline"
           className="w-full"
-          disabled={voting}
+          loading={voting}
           onClick={() => void run(() => vote(table.id).unwrap())}
         >
           {t("tables.cancelRelease")}
@@ -682,7 +682,7 @@ function InviteBanner({
         <div className="flex gap-2">
           <Button
             size="sm"
-            disabled={responding}
+            loading={responding}
             onClick={() => void run(() => respond({ groupId: group.id, accept: true }).unwrap())}
           >
             {t("matches.accept")}
@@ -700,7 +700,7 @@ function InviteBanner({
         <Button
           size="sm"
           variant="outline"
-          disabled={leaving}
+          loading={leaving}
           onClick={() => void run(() => leave(group.id).unwrap())}
         >
           {t("queue.cancelInvite")}

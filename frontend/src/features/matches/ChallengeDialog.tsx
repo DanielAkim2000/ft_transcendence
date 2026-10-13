@@ -108,7 +108,7 @@ export function ChallengeDialog({
             </Dialog.Close>
             <Button
               type="button"
-              disabled={isLoading || (format === "TWO_V_TWO" && !teammateId)}
+              loading={isLoading} disabled={(format === "TWO_V_TWO" && !teammateId)}
               onClick={() => void submit()}
             >
               {t("matches.sendChallenge")}

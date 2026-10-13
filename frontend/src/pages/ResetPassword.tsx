@@ -171,7 +171,7 @@ export const ResetPassword = () => {
                             form="reset-password-form"
                             size="lg"
                             className="h-10 w-full"
-                            disabled={isLoading || form.state.isSubmitting}
+                            loading={isLoading || form.state.isSubmitting}
                         >
                             {isLoading || form.state.isSubmitting
                                 ? t("auth.resetPassword.submitting")

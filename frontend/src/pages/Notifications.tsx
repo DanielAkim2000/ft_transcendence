@@ -75,7 +75,7 @@ export const Notifications = () => {
             type="button"
             size="sm"
             variant="outline"
-            disabled={marking}
+            loading={marking}
             onClick={() => void markAllRead()}
           >
             {t("notifications.markAllRead")}

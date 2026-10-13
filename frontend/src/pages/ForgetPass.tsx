@@ -132,7 +132,7 @@ export const ForgetPass = () => {
                             form="forget-pass-form"
                             size="lg"
                             className="h-10 w-full"
-                            disabled={isLoading || form.state.isSubmitting}
+                            loading={isLoading || form.state.isSubmitting}
                         >
                             {isLoading || form.state.isSubmitting
                                 ? t("auth.forgetPass.submitting")

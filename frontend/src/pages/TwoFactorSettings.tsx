@@ -168,7 +168,7 @@ export const TwoFactorSettings = () => {
                 variant="outline"
                 className="w-fit"
                 onClick={handleSetup}
-                disabled={isSettingUp}
+                loading={isSettingUp}
               >
                 {isSettingUp
                   ? t("settings.twoFactor.setupLoading")
@@ -276,7 +276,7 @@ export const TwoFactorSettings = () => {
             >
               <Button
                 type="button"
-                disabled={isToggling || form.state.isSubmitting}
+                loading={isToggling || form.state.isSubmitting}
               >
                 {isToggling || form.state.isSubmitting
                   ? t("settings.twoFactor.toggling")
@@ -287,9 +287,7 @@ export const TwoFactorSettings = () => {
             <Button
               type="submit"
               form="toggle-2fa-form"
-              disabled={
-                isToggling || form.state.isSubmitting || !qrDataUrl
-              }
+              loading={isToggling || form.state.isSubmitting} disabled={!qrDataUrl}
             >
               {isToggling || form.state.isSubmitting
                 ? t("settings.twoFactor.toggling")

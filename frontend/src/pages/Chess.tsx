@@ -33,7 +33,10 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { translateErrorCode } from "@/lib/get-error-message";
 import { ChessBoard3D } from "@/features/chess/ChessBoard3D";
+import { ListSkeleton } from "@/components/skeletons";
+import { PageFallback } from "@/components/page-fallback";
 import { ChessPlayerBar } from "@/features/chess/ChessPlayerBar";
+import { ChessMoveList } from "@/features/chess/ChessMoveList";
 
 const BOT_ID_PREFIX = "chess-bot-";
 const AI_LEVELS: ChessAiLevel[] = ["EASY", "MEDIUM", "HARD", "EXPERT"];
@@ -300,7 +303,7 @@ export const Chess = () => {
     const resultActions = (
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button type="button" variant="outline" onClick={leaveGame}>{t("chess.page.modal.quit")}</Button>
-            <Button type="button" disabled={isCreating || isCreatingAi} onClick={() => void handleReplay()}>{t("chess.page.modal.replay")}</Button>
+            <Button type="button" loading={isCreating || isCreatingAi} onClick={() => void handleReplay()}>{t("chess.page.modal.replay")}</Button>
         </div>
     );
 
@@ -390,7 +393,7 @@ export const Chess = () => {
                                     </Button>
                                 ))}
                             </div>
-                            <Button type="button" disabled={isCreatingAi} onClick={() => void handleCreateAiGame()}>
+                            <Button type="button" loading={isCreatingAi} onClick={() => void handleCreateAiGame()}>
                                 {isCreatingAi ? t("chess.page.ai.starting") : t("chess.page.ai.play")}
                             </Button>
                         </div>
@@ -416,7 +419,7 @@ export const Chess = () => {
                                                 <p className="text-xs text-muted-foreground">{friend.isOnline ? t("chess.page.online") : t("chess.page.offline")}</p>
                                             </div>
                                         </div>
-                                        <Button type="button" size="sm" variant="outline" disabled={isCreating} onClick={() => void handleCreateGame(friend.id)}>
+                                        <Button type="button" size="sm" variant="outline" loading={isCreating} onClick={() => void handleCreateGame(friend.id)}>
                                             {isCreating ? t("chess.page.sending") : t("chess.page.challenge")}
                                         </Button>
                                     </li>
@@ -444,10 +447,10 @@ export const Chess = () => {
                                         </div>
                                         {pendingGame.challengerId !== me?.id ? (
                                             <div className="flex gap-2">
-                                                <Button type="button" size="sm" onClick={() => void handleAcceptGame(pendingGame.id)} disabled={isAccepting || isDeclining}>
+                                                <Button type="button" size="sm" onClick={() => void handleAcceptGame(pendingGame.id)} loading={isAccepting} disabled={isDeclining}>
                                                     {t("chess.page.accept")}
                                                 </Button>
-                                                <Button type="button" size="sm" variant="destructive" onClick={() => void handleDeclineGame(pendingGame.id)} disabled={isAccepting || isDeclining}>
+                                                <Button type="button" size="sm" variant="destructive" onClick={() => void handleDeclineGame(pendingGame.id)} loading={isDeclining} disabled={isAccepting}>
                                                     {t("chess.page.decline")}
                                                 </Button>
                                             </div>

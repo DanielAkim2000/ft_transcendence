@@ -132,7 +132,7 @@ export const AdminTables = () => {
                     autoFocus
                     aria-label={t("admin.tables.namePlaceholder")}
                   />
-                  <Button type="submit" size="sm" disabled={renaming}>
+                  <Button type="submit" size="sm" loading={renaming}>
                     {t("admin.tables.save")}
                   </Button>
                   <Button

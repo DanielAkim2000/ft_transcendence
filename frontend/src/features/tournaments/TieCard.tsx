@@ -227,7 +227,7 @@ export function TieCard({
               <Button
                 type="button"
                 size="sm"
-                disabled={submitting || !scoreValid}
+                loading={submitting} disabled={!scoreValid}
               >
                 {t("matches.submitScore")}
               </Button>
@@ -262,7 +262,7 @@ export function TieCard({
               <Button
                 type="button"
                 size="sm"
-                disabled={validating}
+                loading={validating}
                 onClick={() =>
                   void run(
                     () =>

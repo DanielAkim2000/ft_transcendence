@@ -1,4 +1,5 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
+import { Loader2Icon } from "lucide-react"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
@@ -44,15 +45,26 @@ function Button({
   className,
   variant = "default",
   size = "default",
+  loading = false,
+  disabled,
+  children,
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants> & {
+  /** Affiche un spinner (couleur du texte du bouton) et désactive le bouton pendant une action en cours. */
+  loading?: boolean
+}) {
   return (
     <ButtonPrimitive
       data-slot="button"
       nativeButton={props.render ? false : undefined}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size, className }), loading && "disabled:opacity-80")}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
       {...props}
-    />
+    >
+      {loading ? <Loader2Icon aria-hidden className="animate-spin motion-reduce:animate-none" /> : null}
+      {children}
+    </ButtonPrimitive>
   )
 }
 

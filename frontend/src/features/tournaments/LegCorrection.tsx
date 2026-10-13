@@ -121,7 +121,7 @@ function LegRow({
               <Button
                 type="button"
                 size="sm"
-                disabled={isLoading || !valid || unchanged}
+                loading={isLoading} disabled={!valid || unchanged}
               >
                 {isLoading
                   ? t("tournaments.correction.saving")
@@ -132,7 +132,7 @@ function LegRow({
               type="button"
               size="sm"
               variant="outline"
-              disabled={isLoading}
+              loading={isLoading}
               onClick={() => setEditing(false)}
             >
               {t("common.cancel")}

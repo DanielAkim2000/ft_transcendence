@@ -145,6 +145,9 @@ export function ChessBoard3D({ board, positions, selectedPosition, onSquareClick
         renderer.domElement.setAttribute("aria-label", i18n.t("chess.page.boardAria"));
         renderer.domElement.setAttribute("role", "img");
         renderer.domElement.style.touchAction = "none";
+        // setSize(..., false) ne pose pas de taille CSS : sans ça, le canvas garde sa taille en pixels réels (×pixelRatio) et déborde du conteneur (échiquier tronqué sur mobile).
+        renderer.domElement.style.width = "100%";
+        renderer.domElement.style.height = "100%";
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;

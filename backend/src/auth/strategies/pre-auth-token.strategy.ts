@@ -10,6 +10,7 @@ import { PRE_AUTH_TOKEN_STRATEGY } from '../constants/injection-tokens';
 import { PayloadJwtDto } from '../types/payload.type';
 import type { Request } from 'express';
 
+/** [Minor · 2FA] Stratégie passport du token de pré-authentification utilisé pendant l'étape 2FA. */
 @Injectable()
 export class PreAuthTokenStrategy extends PassportStrategy(
   Strategy,
@@ -17,7 +18,7 @@ export class PreAuthTokenStrategy extends PassportStrategy(
 ) {
   private readonly logger = new Logger(PreAuthTokenStrategy.name);
 
-  /** Injecte les dépendances : AuthService. */
+  /** [Minor · 2FA] Injecte les dépendances : AuthService. */
   constructor(private readonly authService: AuthService) {
     const secret = process.env.JWT_PRE_AUTH_TOKEN_SECRET;
     if (!secret) {
@@ -40,7 +41,7 @@ export class PreAuthTokenStrategy extends PassportStrategy(
     super(options);
   }
 
-  /** Retrouve l'utilisateur du payload JWT de pré-authentification ; il devient req.user. */
+  /** [Minor · 2FA] Retrouve l'utilisateur du payload JWT de pré-authentification ; il devient req.user. */
   async validate(payload: PayloadJwtDto) {
     try {
       return await this.authService.validateUserFromToken(payload.userId);

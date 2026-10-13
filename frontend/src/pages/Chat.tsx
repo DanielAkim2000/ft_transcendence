@@ -16,6 +16,7 @@ import { getErrorMessage } from "@/lib/get-error-message";
 import { cn } from "@/lib/utils";
 import { RowSkeleton } from "@/components/skeletons";
 
+/** [Major · Interaction entre utilisateurs] Ligne de la liste des conversations : avatar et nom de l'interlocuteur, aperçu du dernier message, pastille de messages non lus. */
 function ConversationRow({
   conversation,
   meId,
@@ -85,6 +86,7 @@ function ConversationRow({
   );
 }
 
+/** [Major · Interaction entre utilisateurs] Page de chat : liste des conversations à gauche, fil de discussion à droite ; ouvre ou crée la conversation demandée par `?user=`. */
 export const Chat = () => {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();

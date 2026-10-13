@@ -22,6 +22,7 @@ import { ScoreConfirmDialog } from "@/components/score-confirm-dialog";
 
 const TARGET_SCORE = 10;
 
+/** [Minor · Stats et historique] Affiche les joueurs d'une équipe (avatar + nom). */
 function TeamNames({ team }: { team: MatchPlayer[] }) {
   return (
     <span className="flex flex-wrap items-center gap-1.5">
@@ -35,6 +36,7 @@ function TeamNames({ team }: { team: MatchPlayer[] }) {
   );
 }
 
+/** [Minor · Stats et historique] Boîte de dialogue pour accepter un défi 2v2 : choix du coéquipier avant d'accepter. */
 function AcceptTwoVTwoDialog({
   match,
   children,
@@ -48,6 +50,7 @@ function AcceptTwoVTwoDialog({
   const teamAIds = match.teamA.map((player) => player.id);
   const [respond, { isLoading }] = useRespondMatchMutation();
 
+  /** [Minor · Stats et historique] Accepte le défi 2v2 avec le coéquipier choisi puis ferme la boîte. */
   const submit = async () => {
     if (!teammateId) return;
     try {
@@ -107,6 +110,7 @@ function AcceptTwoVTwoDialog({
   );
 }
 
+/** [Minor · Stats et historique] Carte d'un match selon son statut : proposé (accepter/refuser), accepté (saisir le score), score en attente de validation (valider/contester), terminé ou contesté. */
 export function MatchCard({ match, meId }: { match: Match; meId: string }) {
   const { t } = useTranslation();
   const [respond, { isLoading: responding }] = useRespondMatchMutation();
@@ -120,6 +124,7 @@ export function MatchCard({ match, meId }: { match: Match; meId: string }) {
     match.format === "ONE_V_ONE" ? "matches.oneVOne" : "matches.twoVTwo",
   );
 
+  /** [Minor · Stats et historique] Exécute une action sur le match, affiche un toast de succès ou l'erreur. */
   const run = async (
     action: () => Promise<unknown>,
     successMessage?: string,
@@ -135,8 +140,10 @@ export function MatchCard({ match, meId }: { match: Match; meId: string }) {
     }
   };
 
+  /** [Minor · Stats et historique] Refuse le défi. */
   const decline = () =>
     run(() => respond({ matchId: match.id, accept: false }).unwrap());
+  /** [Minor · Stats et historique] Accepte le défi en 1v1. */
   const acceptSolo = () =>
     run(() => respond({ matchId: match.id, accept: true }).unwrap());
 
@@ -152,6 +159,7 @@ export function MatchCard({ match, meId }: { match: Match; meId: string }) {
     ((a === TARGET_SCORE && b < TARGET_SCORE) ||
       (b === TARGET_SCORE && a < TARGET_SCORE));
 
+  /** [Minor · Stats et historique] Envoie le score saisi (si valide) à l'adversaire pour validation. */
   const submit = () => {
     if (!scoreValid) return;
     return run(
@@ -345,6 +353,7 @@ export function MatchCard({ match, meId }: { match: Match; meId: string }) {
   );
 }
 
+/** [Minor · Stats et historique] Petit avatar d'un joueur (image ou initiales). */
 export function TeamAvatar({ player }: { player: MatchPlayer }) {
   return (
     <Avatar className="size-6">

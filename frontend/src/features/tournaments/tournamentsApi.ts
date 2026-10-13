@@ -65,6 +65,7 @@ export interface Tournament {
   championEntryId: string | null;
 }
 
+/** [Minor · Tournois] Endpoints RTK Query du domaine « tournaments » (requêtes/mutations typées, cache et invalidation par tags) : LIST_TOURNAMENTS, COUNT_TOURNAMENT_ACTIONS, GET_TOURNAMENT, CREATE_TOURNAMENT, ADD_ENTRY, REMOVE_ENTRY, REPLACE_PLAYER, LAUNCH_TOURNAMENT, CANCEL_TOURNAMENT. */
 export const tournamentsApi = api.injectEndpoints({
   endpoints: (builder) => ({
     [TOURNAMENTS_ENDPOINTS.LIST_TOURNAMENTS]: builder.query<
@@ -140,7 +141,7 @@ export const tournamentsApi = api.injectEndpoints({
 
 type Dispatch = (action: unknown) => unknown;
 
-/** Un tournoi a changé (websocket) : on met à jour son détail dans le cache et on recharge les listes, paginées côté backend. */
+/** [Minor · Tournois] Un tournoi a changé (websocket) : on met à jour son détail dans le cache et on recharge les listes, paginées côté backend. */
 export function applyTournamentToCache(dispatch: Dispatch, tournament: Tournament) {
   dispatch(
     tournamentsApi.util.updateQueryData(

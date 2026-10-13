@@ -6,6 +6,7 @@ import { useLazyCheck2faPendingQuery } from "@/features/auth/authApi";
 import { ROUTES } from "@/constants/routes";
 import { PageFallback } from "@/components/page-fallback";
 
+/** [Minor · OAuth 42] Page de retour de l'OAuth 42 : si AuthBootstrap a déjà récupéré la session (cookie de refresh), redirige vers l'accueil ; sinon vérifie si une pré-authentification 2FA est en attente (marque alors la 2FA comme requise) et renvoie vers /login. */
 export const AuthCallback = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();

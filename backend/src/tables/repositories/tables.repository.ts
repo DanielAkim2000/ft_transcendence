@@ -49,7 +49,7 @@ type TableWithState = Prisma.TableGetPayload<{
   include: typeof withState;
 }>;
 
-/** Construit le libellé d'une équipe de tournoi (« Joueur1 + Joueur2 » en double, nom seul en simple, « ? » si inconnue). */
+/** [Socle produit babyfoot (hors module)] Construit le libellé d'une équipe de tournoi (« Joueur1 + Joueur2 » en double, nom seul en simple, « ? » si inconnue). */
 function entryLabel(
   entry: {
     player1: { displayname: string };
@@ -62,7 +62,7 @@ function entryLabel(
     : entry.player1.displayname;
 }
 
-/** Convertit un numéro de tour en libellé (FINAL, SEMI, QUARTER, ROUND_OF_16, sinon ROUND_n) selon le nombre total de tours. */
+/** [Socle produit babyfoot (hors module)] Convertit un numéro de tour en libellé (FINAL, SEMI, QUARTER, ROUND_OF_16, sinon ROUND_n) selon le nombre total de tours. */
 function roundLabelFor(round: number, totalRounds: number | null): string {
   const distance = (totalRounds ?? round) - round;
   if (distance === 0) return 'FINAL';
@@ -72,12 +72,13 @@ function roundLabelFor(round: number, totalRounds: number | null): string {
   return `ROUND_${round}`;
 }
 
+/** [Socle produit babyfoot (hors module)] Dépôt de données des tables de babyfoot : requêtes Prisma et conversion en entités. */
 @Injectable()
 export class TablesRepository {
   /** Injecte les dépendances : PrismaService. */
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Liste toutes les tables triées par nom, avec leurs groupes, le match en cours et la rencontre de tournoi en cours. */
+  /** [Socle produit babyfoot (hors module)] Liste toutes les tables triées par nom, avec leurs groupes, le match en cours et la rencontre de tournoi en cours. */
   async list(): Promise<TableEntity[]> {
     const tables = await this.prisma.table.findMany({
       orderBy: { name: 'asc' },
@@ -86,7 +87,7 @@ export class TablesRepository {
     return tables.map((table) => this.toEntity(table));
   }
 
-  /** Retrouve une table par son id (avec groupes, match et rencontre de tournoi), ou null. */
+  /** [Socle produit babyfoot (hors module)] Retrouve une table par son id (avec groupes, match et rencontre de tournoi), ou null. */
   async findById(id: string): Promise<TableEntity | null> {
     const table = await this.prisma.table.findUnique({
       where: { id },
@@ -95,7 +96,7 @@ export class TablesRepository {
     return table ? this.toEntity(table) : null;
   }
 
-  /** Retrouve l'id d'une table par son nom exact, ou null. */
+  /** [Socle produit babyfoot (hors module)] Retrouve l'id d'une table par son nom exact, ou null. */
   async findIdByName(name: string): Promise<string | null> {
     const table = await this.prisma.table.findUnique({
       where: { name },
@@ -104,7 +105,7 @@ export class TablesRepository {
     return table?.id ?? null;
   }
 
-  /** Crée une table libre. */
+  /** [Socle produit babyfoot (hors module)] Crée une table libre. */
   async create(name: string): Promise<TableEntity> {
     const table = await this.prisma.table.create({
       data: { name },
@@ -113,7 +114,7 @@ export class TablesRepository {
     return this.toEntity(table);
   }
 
-  /** Renomme une table. */
+  /** [Socle produit babyfoot (hors module)] Renomme une table. */
   async rename(id: string, name: string): Promise<TableEntity> {
     const table = await this.prisma.table.update({
       where: { id },
@@ -123,7 +124,7 @@ export class TablesRepository {
     return this.toEntity(table);
   }
 
-  /** Vrai si la table est utilisée : occupée, réservée par un tournoi ou avec un groupe encore actif (en file, appelé ou installé). */
+  /** [Socle produit babyfoot (hors module)] Vrai si la table est utilisée : occupée, réservée par un tournoi ou avec un groupe encore actif (en file, appelé ou installé). */
   async isInUse(id: string): Promise<boolean> {
     const table = await this.prisma.table.findUnique({
       where: { id },
@@ -149,12 +150,12 @@ export class TablesRepository {
     );
   }
 
-  /** Supprime une table (ses groupes terminés et votes partent avec elle, ses manches de tournoi restent sans table). */
+  /** [Socle produit babyfoot (hors module)] Supprime une table (ses groupes terminés et votes partent avec elle, ses manches de tournoi restent sans table). */
   async delete(id: string): Promise<void> {
     await this.prisma.table.delete({ where: { id } });
   }
 
-  /** Atomique : réserve une table libre et non déjà réclamée pour une rencontre de tournoi. */
+  /** [Socle produit babyfoot (hors module)] Atomique : réserve une table libre et non déjà réclamée pour une rencontre de tournoi. */
   async claimForTournament(id: string, tieId: string): Promise<boolean> {
     const { count } = await this.prisma.table.updateMany({
       where: { id, status: TableStatus.FREE, currentTournamentTieId: null },
@@ -167,7 +168,7 @@ export class TablesRepository {
     return count === 1;
   }
 
-  /** Libère la table réclamée par la rencontre de tournoi donnée et la remet à FREE. */
+  /** [Socle produit babyfoot (hors module)] Libère la table réclamée par la rencontre de tournoi donnée et la remet à FREE. */
   async releaseTournamentClaim(tieId: string): Promise<void> {
     await this.prisma.table.updateMany({
       where: { currentTournamentTieId: tieId },
@@ -179,7 +180,7 @@ export class TablesRepository {
     });
   }
 
-  /** Libère toutes les tables réservées par les rencontres d'un tournoi (annulation) et retourne leurs ids. */
+  /** [Socle produit babyfoot (hors module)] Libère toutes les tables réservées par les rencontres d'un tournoi (annulation) et retourne leurs ids. */
   async releaseClaimsForTournament(tournamentId: string): Promise<string[]> {
     const claimed = await this.prisma.table.findMany({
       where: { currentTournamentTie: { tournamentId } },
@@ -197,7 +198,7 @@ export class TablesRepository {
     return claimed.map((table) => table.id);
   }
 
-  /** Tables libres et non réclamées par un tournoi, dans un ordre aléatoire. */
+  /** [Socle produit babyfoot (hors module)] Tables libres et non réclamées par un tournoi, dans un ordre aléatoire. */
   async listFreeUnclaimed(): Promise<string[]> {
     const tables = await this.prisma.table.findMany({
       where: { status: TableStatus.FREE, currentTournamentTieId: null },
@@ -211,7 +212,7 @@ export class TablesRepository {
     return ids;
   }
 
-  /** Convertit une ligne Prisma en TableEntity, en calculant les libellés de la rencontre de tournoi en cours. */
+  /** [Socle produit babyfoot (hors module)] Convertit une ligne Prisma en TableEntity, en calculant les libellés de la rencontre de tournoi en cours. */
   private toEntity(table: TableWithState): TableEntity {
     return new TableEntity({
       id: table.id,

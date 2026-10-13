@@ -11,6 +11,7 @@ import { navigate } from "@/lib/navigation";
 import { toast } from "@/components/ui/toast";
 import i18n from "@/i18n";
 
+/** [Socle produit babyfoot (hors module)] Retrouve le nom d'une table (cache ou requête) pour les toasts. */
 async function tableName(
   dispatch: ReturnType<typeof useAppDispatch>,
   tableId: string,
@@ -19,6 +20,7 @@ async function tableName(
   return result.data?.find((table) => table.id === tableId)?.name ?? "?";
 }
 
+/** [Major · Temps réel WebSockets] Connecte le socket de la file d'attente et transforme chaque événement serveur en mise à jour du cache et en toast (invitation, appel à la table, expiration, début/fin/annulation de match). */
 export const QueueBootstrap = ({ children }: { children: React.ReactNode }) => {
   const accessToken = useAppSelector(selectAccessToken);
   const dispatch = useAppDispatch();
@@ -29,18 +31,23 @@ export const QueueBootstrap = ({ children }: { children: React.ReactNode }) => {
       return;
     }
     const socket = connect(accessToken);
+    /** [Socle produit babyfoot (hors module)] Navigue vers la page des tables (action des toasts). */
     const goToTables = () => navigate(ROUTES.TABLES);
+    /** [Socle produit babyfoot (hors module)] Invalide les caches de la file et des tables pour les recharger. */
     const refresh = () => {
       dispatch(queueApi.util.invalidateTags([TAG_TYPES.QUEUE]));
       dispatch(tablesApi.util.invalidateTags([TAG_TYPES.TABLES]));
     };
+    /** [Socle produit babyfoot (hors module)] Invalide le cache des matchs. */
     const refreshMatches = () =>
       dispatch(matchesApi.util.invalidateTags([TAG_TYPES.MATCHES]));
 
+    /** [Major · Temps réel WebSockets] Mise à jour de la file d'une table poussée par le serveur : applique les groupes dans le cache. */
     const onUpdate = (payload: { tableId: string; groups: QueueGroup[] }) => {
       applyQueueUpdateToCache(dispatch, payload.tableId, payload.groups);
     };
 
+    /** [Minor · Notifications] Invitation à rejoindre un groupe reçue : toast avec lien vers les tables. */
     const onInvite = async (payload: { tableId: string; from: string }) => {
       refresh();
       const name = await tableName(dispatch, payload.tableId);
@@ -51,6 +58,7 @@ export const QueueBootstrap = ({ children }: { children: React.ReactNode }) => {
       });
     };
 
+    /** [Minor · Notifications] Un invité a refusé : toast d'erreur. */
     const onInviteDeclined = (payload: { by: string }) => {
       refresh();
       toast.add({
@@ -59,11 +67,13 @@ export const QueueBootstrap = ({ children }: { children: React.ReactNode }) => {
       });
     };
 
+    /** [Minor · Notifications] Le groupe a été fermé : toast d'information. */
     const onGroupClosed = () => {
       refresh();
       toast.add({ title: i18n.t("queue.groupClosedToast"), type: "info" });
     };
 
+    /** [Minor · Notifications] C'est le tour du groupe de l'utilisateur : toast « table libre ». */
     const onCalled = async (payload: { tableId: string }) => {
       refresh();
       const name = await tableName(dispatch, payload.tableId);
@@ -74,6 +84,7 @@ export const QueueBootstrap = ({ children }: { children: React.ReactNode }) => {
       });
     };
 
+    /** [Minor · Notifications] Appel ou invitation expiré (délai, tournoi) : toast adapté à la raison. */
     const onExpired = async (payload: { tableId: string; reason?: string }) => {
       refresh();
       const name = await tableName(dispatch, payload.tableId);
@@ -88,6 +99,7 @@ export const QueueBootstrap = ({ children }: { children: React.ReactNode }) => {
       toast.add({ title: i18n.t(key, { table: name }), type: "error" });
     };
 
+    /** [Minor · Notifications] Match démarré sur une table : toast de confirmation. */
     const onMatchStarted = async (payload: { tableId: string }) => {
       refresh();
       refreshMatches();
@@ -99,6 +111,7 @@ export const QueueBootstrap = ({ children }: { children: React.ReactNode }) => {
       });
     };
 
+    /** [Minor · Notifications] Le score doit être saisi : toast avec lien vers les tables. */
     const onScoreRequired = () => {
       refresh();
       toast.add({
@@ -108,6 +121,7 @@ export const QueueBootstrap = ({ children }: { children: React.ReactNode }) => {
       });
     };
 
+    /** [Minor · Notifications] Match terminé : indique si le groupe reste ou quitte la table. */
     const onMatchEnded = (payload: { stays: boolean }) => {
       refresh();
       refreshMatches();
@@ -117,6 +131,7 @@ export const QueueBootstrap = ({ children }: { children: React.ReactNode }) => {
       });
     };
 
+    /** [Minor · Notifications] Match annulé (libération collective, admin…) : toast selon la raison. */
     const onMatchCancelled = (payload: { reason?: string }) => {
       refresh();
       refreshMatches();
@@ -129,6 +144,7 @@ export const QueueBootstrap = ({ children }: { children: React.ReactNode }) => {
       toast.add({ title: i18n.t(key), type: "error" });
     };
 
+    /** [Major · Temps réel WebSockets] Après une reconnexion du socket : resynchronise la file. */
     const onReconnect = () => refresh();
 
     socket.on("queue:update", onUpdate);

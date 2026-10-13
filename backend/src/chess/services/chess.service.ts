@@ -31,17 +31,19 @@ const BOT_NAMES: Record<AiLevel, string> = {
   EXPERT: 'IA Expert',
 };
 
+/** [Major · Jeu web (Échecs)] Service métier des parties d'échecs. */
 @Injectable()
 export class ChessService {
   private readonly logger = new Logger(ChessService.name);
 
+  /** [Major · Jeu web (Échecs)] Injecte Prisma, le chat (invitation de partie envoyée dans la conversation) et les notifications. */
   constructor(
     private readonly prisma: PrismaService,
     private readonly chatService: ChatService,
     private readonly notificationsService: NotificationsService,
   ) {}
 
-  /** Nom d'affichage d'un joueur (pour les notifications), « ? » s'il est introuvable. */
+  /** [Major · Jeu web (Échecs)] Nom d'affichage d'un joueur (pour les notifications), « ? » s'il est introuvable. */
   private async displayName(userId: string): Promise<string> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -50,6 +52,7 @@ export class ChessService {
     return user?.displayname ?? '?';
   }
 
+  /** [Major · Jeu web (Échecs)] Parties en attente ou en cours d'un joueur (avec noms et avatars des deux camps), la plus récemment mise à jour d'abord. */
   async listGames(userId: string) {
     return this.prisma.chessGame.findMany({
       where: {
@@ -68,7 +71,7 @@ export class ChessService {
     });
   }
 
-  /** Coups joués d'une partie, dans l'ordre (réservé aux deux joueurs). */
+  /** [Major · Jeu web (Échecs)] Coups joués d'une partie, dans l'ordre (réservé aux deux joueurs). */
   async listMoves(userId: string, gameId: string) {
     await this.getGame(userId, gameId);
     return this.prisma.chessMove.findMany({
@@ -78,7 +81,7 @@ export class ChessService {
     });
   }
 
-  /** Historique paginé : les parties terminées de l'utilisateur, les plus récentes d'abord. */
+  /** [Major · Jeu web (Échecs)] Historique paginé : les parties terminées de l'utilisateur, les plus récentes d'abord. */
   async listHistory(userId: string, page: PageQueryDto) {
     const where = {
       status: 'FINISHED' as const,
@@ -98,6 +101,7 @@ export class ChessService {
     return toPaginated(games, total, page);
   }
 
+  /** [Major · Jeu web (Échecs)] Charge une partie et vérifie que l'utilisateur en est l'un des deux joueurs (404 GAME_NOT_FOUND, 403 NOT_YOUR_GAME). */
   async getGame(userId: string, gameId: string) {
     const game = await this.prisma.chessGame.findUnique({
       where: { id: gameId },
@@ -126,6 +130,7 @@ export class ChessService {
     return game;
   }
 
+  /** [Major · Jeu web (Échecs)] Joue un coup : vérifie que la partie est active et que c'est le tour du joueur, valide la légalité avec chess.js, détecte mat, pat, triple répétition et matériel insuffisant, puis enregistre dans une transaction la nouvelle position (FEN) et le coup (SAN). */
   async playMove(
     userId: string,
     gameId: string,
@@ -225,7 +230,7 @@ export class ChessService {
     return updated;
   }
 
-  /** Abandon : la partie se termine tout de suite, victoire de l'adversaire. */
+  /** [Major · Jeu web (Échecs)] Abandon : la partie se termine tout de suite, victoire de l'adversaire. */
   async resign(userId: string, gameId: string) {
     const game = await this.getGame(userId, gameId);
     if (game.status !== 'ACTIVE') {
@@ -247,15 +252,17 @@ export class ChessService {
     });
   }
 
-  /** Les adversaires IA sont de vrais comptes (clé étrangère des parties) créés à la demande. */
+  /** [Major · Adversaire IA] Les adversaires IA sont de vrais comptes (clé étrangère des parties) créés à la demande. */
   private botId(level: AiLevel): string {
     return `${BOT_ID_PREFIX}${level.toLowerCase()}`;
   }
 
+  /** [Major · Adversaire IA] Indique si l'identifiant correspond à un compte d'IA (préfixe `chess-bot-`). */
   isBot(userId: string): boolean {
     return userId.startsWith(BOT_ID_PREFIX);
   }
 
+  /** [Major · Adversaire IA] Crée à la demande le compte factice de l'IA du niveau demandé (nécessaire pour les clés étrangères des parties) et renvoie son id. */
   private async ensureBot(level: AiLevel): Promise<string> {
     const id = this.botId(level);
     await this.prisma.user.upsert({
@@ -270,7 +277,7 @@ export class ChessService {
     return id;
   }
 
-  /** Calcule le coup de l'IA dans un thread à part (la recherche peut durer plusieurs secondes). */
+  /** [Major · Adversaire IA] Calcule le coup de l'IA dans un thread à part (la recherche peut durer plusieurs secondes). */
   private computeAiMove(fen: string, level: AiLevel): Promise<AiMove | null> {
     return new Promise((resolve, reject) => {
       const worker = new Worker(join(__dirname, '../ai/chess-ai.worker.js'), {
@@ -284,7 +291,7 @@ export class ChessService {
     });
   }
 
-  /** Joue le coup de l'IA si c'est son tour dans cette partie ; renvoie la partie mise à jour, sinon null. */
+  /** [Major · Adversaire IA] Joue le coup de l'IA si c'est son tour dans cette partie ; renvoie la partie mise à jour, sinon null. */
   async playBotTurn(
     gameId: string,
   ): Promise<Awaited<ReturnType<ChessService['playMove']>> | null> {
@@ -314,6 +321,7 @@ export class ChessService {
   }
 
   // --- Partie contre l'IA : démarre tout de suite, sans invitation ---
+  /** [Major · Adversaire IA] Crée et démarre tout de suite une partie contre l'IA (couleur au choix ou tirée au hasard) ; si l'IA a les blancs, elle joue son premier coup avant de renvoyer la partie. */
   async createAiGame(userId: string, dto: CreateAiGameDto) {
     const botId = await this.ensureBot(dto.level);
     const color = dto.color ?? 'RANDOM';
@@ -345,6 +353,7 @@ export class ChessService {
   }
 
   // --- Envoyer un défi ---
+  /** [Major · Jeu web (Échecs)] Envoie un défi : refuse l'auto-défi, un adversaire inconnu ou bot, un blocage entre joueurs et une partie déjà ouverte avec ce joueur ; crée la partie en attente, poste l'invitation dans le chat et notifie l'adversaire. */
   async createGame(userId: string, dto: CreateGameDto) {
     const { opponentId } = dto;
 
@@ -434,6 +443,7 @@ export class ChessService {
     return game;
   }
 
+  /** [Major · Jeu web (Échecs)] L'adversaire accepte le défi : la partie passe en ACTIVE (horodatages, pendules, historique de positions), les profils d'échecs sont créés au besoin et le challenger est notifié. */
   async acceptGame(userId: string, gameId: string) {
     const game = await this.prisma.chessGame.findUnique({
       where: { id: gameId },
@@ -495,6 +505,7 @@ export class ChessService {
   }
 
   // --- Refuser ---
+  /** [Major · Jeu web (Échecs)] L'adversaire refuse le défi : la partie passe en DECLINED et le challenger est notifié. */
   async declineGame(userId: string, gameId: string) {
     const game = await this.prisma.chessGame.findUnique({
       where: { id: gameId },

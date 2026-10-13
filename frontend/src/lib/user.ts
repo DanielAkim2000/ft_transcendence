@@ -1,3 +1,4 @@
+/** [Major · Gestion des utilisateurs] Initiales (2 lettres max) du nom pour l'avatar de repli, « FT » si le nom est vide. */
 export function getInitials(name?: string | null) {
   if (!name?.trim()) return "FT";
   return name
@@ -8,6 +9,7 @@ export function getInitials(name?: string | null) {
     .join("");
 }
 
+/** [Major · Gestion des utilisateurs] Transforme l'URL d'avatar renvoyée par l'API (relative ou absolue) en URL complète utilisable dans une image. */
 export function resolveAvatarUrl(
   url: string | null | undefined,
 ): string | undefined {

@@ -19,31 +19,32 @@ import { AdminUsersQueryDto } from './dtos/admin-users-query.dto';
 import { CreateAdminUserDto } from './dtos/create-admin-user.dto';
 import { UpdateAdminUserDto } from './dtos/update-admin-user.dto';
 
+/** [Major · Permissions avancées] Contrôleur HTTP de l'administration des utilisateurs (CRUD réservé aux admins) : routes REST protégées par les guards d'authentification. */
 @Controller('admin/users')
 @AuthRoles(Role.ADMIN)
 export class AdminUsersController {
   /** Injecte les dépendances : AdminUsersService. */
   constructor(private readonly adminUsersService: AdminUsersService) {}
 
-  /** GET /admin/users?q=&page=&limit= : page d'utilisateurs, recherche par nom, email ou login 42. */
+  /** [Major · Permissions avancées] GET /admin/users?q=&page=&limit= : page d'utilisateurs, recherche par nom, email ou login 42. */
   @Get()
   list(@Query() query: AdminUsersQueryDto) {
     return this.adminUsersService.list(query);
   }
 
-  /** GET /admin/users/:id : détail d'un utilisateur. */
+  /** [Major · Permissions avancées] GET /admin/users/:id : détail d'un utilisateur. */
   @Get(':id')
   getOne(@Param('id') id: string) {
     return this.adminUsersService.getById(id);
   }
 
-  /** POST /admin/users : crée un compte. */
+  /** [Major · Permissions avancées] POST /admin/users : crée un compte. */
   @Post()
   create(@Body() dto: CreateAdminUserDto) {
     return this.adminUsersService.create(dto);
   }
 
-  /** PATCH /admin/users/:id : modifie nom, email, rôle ou mot de passe. */
+  /** [Major · Permissions avancées] PATCH /admin/users/:id : modifie nom, email, rôle ou mot de passe. */
   @Patch(':id')
   update(
     @Req() req: Request & { user: UserEntity },
@@ -53,7 +54,7 @@ export class AdminUsersController {
     return this.adminUsersService.update(req.user.id, id, dto);
   }
 
-  /** DELETE /admin/users/:id : supprime (anonymise) le compte, comme le fait l'utilisateur lui-même. */
+  /** [Major · Permissions avancées] DELETE /admin/users/:id : supprime (anonymise) le compte, comme le fait l'utilisateur lui-même. */
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   async remove(

@@ -29,6 +29,7 @@ import { useChessInvite } from "@/features/chess/useChessInvite";
 import { ROUTES } from "@/constants/routes";
 import { PageFallback } from "@/components/page-fallback";
 
+/** [Major · Interaction entre utilisateurs] Profil public d'un joueur : infos, statut en ligne, carte de badges/niveau (PlayerBadgesCard) et actions d'amitié (envoyer, accepter, refuser, supprimer). */
 export const Profile = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();

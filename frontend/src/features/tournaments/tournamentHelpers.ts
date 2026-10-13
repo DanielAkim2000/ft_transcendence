@@ -1,6 +1,6 @@
 const NAMED_ROUNDS = new Set(["FINAL", "SEMI", "QUARTER", "ROUND_OF_16"]);
 
-/** Traduit un roundLabel ("FINAL", "SEMI"...) ; retombe sur "Tour N" pour les tableaux plus grands. */
+/** [Minor · Tournois] Traduit un roundLabel ("FINAL", "SEMI"...) ; retombe sur "Tour N" pour les tableaux plus grands. */
 export function translateRoundLabel(label: string, t: (key: string, opts?: Record<string, unknown>) => string): string {
   if (NAMED_ROUNDS.has(label)) {
     return t(`tournaments.round.${label}`);
@@ -12,7 +12,7 @@ export function translateRoundLabel(label: string, t: (key: string, opts?: Recor
   return label;
 }
 
-/** Nom d'une équipe de tournoi (« Joueur1 + Joueur2 » en double), ou le libellé « à déterminer » si elle n'est pas encore connue. */
+/** [Minor · Tournois] Nom d'une équipe de tournoi (« Joueur1 + Joueur2 » en double), ou le libellé « à déterminer » si elle n'est pas encore connue. */
 export function entryLabel(
   entry: {
     player1: { displayname: string };

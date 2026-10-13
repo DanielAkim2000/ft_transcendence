@@ -39,7 +39,7 @@ import { CardSkeleton } from "@/components/skeletons";
 
 const TARGET_SCORE = 10;
 
-/** Exécute une action et affiche un toast d'erreur en cas d'échec. */
+/** [Socle produit babyfoot (hors module)] Exécute une action et affiche un toast d'erreur en cas d'échec. */
 function useRun() {
   const { t } = useTranslation();
   return async (action: () => Promise<unknown>, successMessage?: string) => {
@@ -55,10 +55,12 @@ function useRun() {
   };
 }
 
+/** [Socle produit babyfoot (hors module)] Libellé traduit d'un format de match (1v1 ou 2v2). */
 function formatLabel(t: (key: string) => string, format: MatchFormat): string {
   return t(format === "ONE_V_ONE" ? "matches.oneVOne" : "matches.twoVTwo");
 }
 
+/** [Socle produit babyfoot (hors module)] Pastille d'un joueur : avatar et nom. */
 function PlayerChip({ player }: { player: { displayname: string; avatarUrl: string | null } }) {
   return (
     <div className="flex min-w-0 items-center gap-2">
@@ -71,6 +73,7 @@ function PlayerChip({ player }: { player: { displayname: string; avatarUrl: stri
   );
 }
 
+/** [Socle produit babyfoot (hors module)] Carte d'un camp de la table (joueurs du groupe en jeu), avec mise en évidence de l'utilisateur. */
 function SideCard({
   index,
   group,
@@ -103,7 +106,7 @@ function SideCard({
   );
 }
 
-/** Saisie du score final d'un match de table : un côté a 10 points, l'autre moins. */
+/** [Socle produit babyfoot (hors module)] Saisie du score final d'un match de table : un côté a 10 points, l'autre moins. */
 function ScoreForm({ table }: { table: BabyTable }) {
   const { t } = useTranslation();
   const run = useRun();
@@ -120,6 +123,7 @@ function ScoreForm({ table }: { table: BabyTable }) {
     a >= 0 &&
     b >= 0 &&
     ((a === TARGET_SCORE && b < TARGET_SCORE) || (b === TARGET_SCORE && a < TARGET_SCORE));
+  /** [Socle produit babyfoot (hors module)] Noms des joueurs d'un groupe joints par « + ». */
   const label = (group: TableGroup | undefined) =>
     group?.players.map((player) => player.displayname).join(" + ") ?? "";
   const [groupA, groupB] = [table.groups[0], table.groups[1]];
@@ -186,7 +190,7 @@ function ScoreForm({ table }: { table: BabyTable }) {
   );
 }
 
-/** Fenêtre pour créer son groupe sur une table : format (si la table est vide) et ami (en 2v2). */
+/** [Socle produit babyfoot (hors module)] Fenêtre pour créer son groupe sur une table : format (si la table est vide) et ami (en 2v2). */
 function JoinDialog({
   table,
   children,
@@ -203,6 +207,7 @@ function JoinDialog({
   const format = table.format ?? pickedFormat;
   const isTwoVTwo = format === "TWO_V_TWO";
 
+  /** [Socle produit babyfoot (hors module)] Rejoint la file d'attente de la table (format, coéquipier éventuel). */
   const submit = async () => {
     await run(async () => {
       await join({
@@ -287,10 +292,12 @@ function JoinDialog({
   );
 }
 
+/** [Socle produit babyfoot (hors module)] Noms des joueurs d'un groupe de la file joints par « + ». */
 function groupNames(group: QueueGroup): string {
   return group.players.map((player) => player.displayname).join(" + ");
 }
 
+/** [Socle produit babyfoot (hors module)] Section « file d'attente » d'une table : groupes en attente, appelé, invités, délais restants. */
 function QueueSection({
   table,
   now,
@@ -375,6 +382,7 @@ function QueueSection({
   );
 }
 
+/** [Socle produit babyfoot (hors module)] Boutons d'action d'une table selon la situation de l'utilisateur (rejoindre, confirmer, quitter, voter la libération, libérer pour l'admin). */
 function TableActions({
   table,
   meId,
@@ -539,6 +547,7 @@ function TableActions({
   );
 }
 
+/** [Socle produit babyfoot (hors module)] Carte d'une table : état (libre, occupée, réservée tournoi), chrono, camps, file d'attente et actions. */
 function TableCard({
   table,
   now,
@@ -652,7 +661,7 @@ function TableCard({
   );
 }
 
-/** Bandeau de l'utilisateur pour un groupe en cours d'invitation (reçue ou envoyée). */
+/** [Socle produit babyfoot (hors module)] Bandeau de l'utilisateur pour un groupe en cours d'invitation (reçue ou envoyée). */
 function InviteBanner({
   group,
   meId,
@@ -710,6 +719,7 @@ function InviteBanner({
   );
 }
 
+/** [Socle produit babyfoot (hors module)] Page des tables : liste en temps réel des babyfoot avec leur état et la file d'attente de chacun. */
 export const Tables = () => {
   const { t } = useTranslation();
   const { data: tables = [], isLoading } = useListTablesQuery();

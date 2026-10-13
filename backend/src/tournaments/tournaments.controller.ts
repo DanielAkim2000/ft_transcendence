@@ -20,31 +20,32 @@ import { CreateTournamentDto } from './dtos/create-tournament.dto';
 import { AddEntryDto } from './dtos/add-entry.dto';
 import { ReplacePlayerDto } from './dtos/replace-player.dto';
 
+/** [Minor · Tournois] Contrôleur HTTP des tournois : routes REST protégées par les guards d'authentification. */
 @Controller('tournaments')
 @UseGuards(AccessTokenGuard)
 export class TournamentsController {
   /** Injecte les dépendances : TournamentsService. */
   constructor(private readonly tournamentsService: TournamentsService) {}
 
-  /** GET /tournaments?page=&limit= : page des tournois, les plus récents d'abord. */
+  /** [Minor · Tournois] GET /tournaments?page=&limit= : page des tournois, les plus récents d'abord. */
   @Get()
   listPage(@Query() query: PageQueryDto) {
     return this.tournamentsService.listPage(query);
   }
 
-  /** GET /tournaments/me/pending-actions : nombre de manches à jouer ou valider par l'utilisateur connecté. */
+  /** [Minor · Tournois] GET /tournaments/me/pending-actions : nombre de manches à jouer ou valider par l'utilisateur connecté. */
   @Get('me/pending-actions')
   countPendingActions(@Req() req: Request & { user: UserEntity }) {
     return this.tournamentsService.countPendingActions(req.user.id);
   }
 
-  /** GET /tournaments/:id : détail d'un tournoi (entrées, tableau, rencontres). */
+  /** [Minor · Tournois] GET /tournaments/:id : détail d'un tournoi (entrées, tableau, rencontres). */
   @Get(':id')
   getOne(@Param('id') id: string) {
     return this.tournamentsService.getById(id);
   }
 
-  /** POST /tournaments (admin) : crée un tournoi en brouillon avec ses éventuelles entrées initiales. */
+  /** [Minor · Tournois] POST /tournaments (admin) : crée un tournoi en brouillon avec ses éventuelles entrées initiales. */
   @Post()
   @AuthRoles(Role.ADMIN)
   create(
@@ -60,21 +61,21 @@ export class TournamentsController {
     );
   }
 
-  /** POST /tournaments/:id/entries (admin) : ajoute un joueur (ou une paire en 2v2) à un tournoi en brouillon. */
+  /** [Minor · Tournois] POST /tournaments/:id/entries (admin) : ajoute un joueur (ou une paire en 2v2) à un tournoi en brouillon. */
   @Post(':id/entries')
   @AuthRoles(Role.ADMIN)
   addEntry(@Param('id') id: string, @Body() dto: AddEntryDto) {
     return this.tournamentsService.addEntry(id, dto.player1Id, dto.player2Id);
   }
 
-  /** DELETE /tournaments/:id/entries/:entryId (admin) : retire une entrée d'un tournoi en brouillon. */
+  /** [Minor · Tournois] DELETE /tournaments/:id/entries/:entryId (admin) : retire une entrée d'un tournoi en brouillon. */
   @Delete(':id/entries/:entryId')
   @AuthRoles(Role.ADMIN)
   removeEntry(@Param('id') id: string, @Param('entryId') entryId: string) {
     return this.tournamentsService.removeEntry(id, entryId);
   }
 
-  /** PATCH /tournaments/:id/entries/:entryId/player (admin) : remplace un joueur de l'équipe (brouillon, en file ou en cours). */
+  /** [Minor · Tournois] PATCH /tournaments/:id/entries/:entryId/player (admin) : remplace un joueur de l'équipe (brouillon, en file ou en cours). */
   @Patch(':id/entries/:entryId/player')
   @AuthRoles(Role.ADMIN)
   replacePlayer(
@@ -90,14 +91,14 @@ export class TournamentsController {
     );
   }
 
-  /** POST /tournaments/:id/launch (admin) : tire au sort le tableau et démarre le tournoi. */
+  /** [Minor · Tournois] POST /tournaments/:id/launch (admin) : tire au sort le tableau et démarre le tournoi. */
   @Post(':id/launch')
   @AuthRoles(Role.ADMIN)
   launch(@Param('id') id: string) {
     return this.tournamentsService.launch(id);
   }
 
-  /** POST /tournaments/:id/cancel (admin) : annule le tournoi et libère les tables réservées. */
+  /** [Minor · Tournois] POST /tournaments/:id/cancel (admin) : annule le tournoi et libère les tables réservées. */
   @Post(':id/cancel')
   @AuthRoles(Role.ADMIN)
   cancel(@Param('id') id: string) {

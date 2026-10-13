@@ -30,12 +30,13 @@ export const SCORE_VALIDATION_TIMEOUT_MS = 10 * 60 * 1000;
 /** Points nécessaires pour gagner un match, quel qu'il soit (défi, table, manche de tournoi) : le score final est donc toujours 10-x, sans égalité possible. */
 export const MATCH_TARGET_SCORE = 10;
 
+/** [Minor · Stats et historique] Service métier des matchs (défis, scores, Elo, historique). */
 @Injectable()
 export class MatchesService {
   private readonly logger = new Logger(MatchesService.name);
   private readonly timers = new Map<string, NodeJS.Timeout>();
 
-  /** Injecte les dépendances : MatchesRepository, MatchesGateway, UsersService, TournamentsService, BadgesService, QueueService, NotificationsService. */
+  /** [Minor · Stats et historique] Injecte les dépendances : MatchesRepository, MatchesGateway, UsersService, TournamentsService, BadgesService, QueueService, NotificationsService. */
   constructor(
     private readonly matchesRepository: MatchesRepository,
     private readonly matchesGateway: MatchesGateway,
@@ -46,7 +47,7 @@ export class MatchesService {
     private readonly notificationsService: NotificationsService,
   ) {}
 
-  /** Liste une page des défis de ladder de l'utilisateur (hors manches de tournoi et défis refusés). */
+  /** [Minor · Stats et historique] Liste une page des défis de ladder de l'utilisateur (hors manches de tournoi et défis refusés). */
   async listMine(
     userId: string,
     page: PageQueryDto,
@@ -58,7 +59,7 @@ export class MatchesService {
     return toPaginated(matches, total, page);
   }
 
-  /** Liste une page des matchs terminés de l'utilisateur, ladder et tournois confondus, avec filtres et tri. */
+  /** [Minor · Recherche avancée] Liste une page des matchs terminés de l'utilisateur, ladder et tournois confondus, avec filtres et tri. */
   async listHistory(
     userId: string,
     query: HistoryQueryDto,
@@ -70,21 +71,21 @@ export class MatchesService {
     return toPaginated(matches, total, query);
   }
 
-  /** Nombre de défis en attente d'une action de l'utilisateur (pastille de la barre latérale). */
+  /** [Minor · Stats et historique] Nombre de défis en attente d'une action de l'utilisateur (pastille de la barre latérale). */
   async countActionable(userId: string): Promise<{ count: number }> {
     return {
       count: await this.matchesRepository.countActionableForUser(userId),
     };
   }
 
-  /** Retourne un match si l'utilisateur en est participant, sinon lève une erreur 403/404. */
+  /** [Minor · Stats et historique] Retourne un match si l'utilisateur en est participant, sinon lève une erreur 403/404. */
   async getForUser(userId: string, matchId: string): Promise<MatchEntity> {
     const match = await this.getMatch(matchId);
     this.assertParticipant(match, userId);
     return match;
   }
 
-  /** Crée un défi (PENDING) : vérifie adversaire et coéquipier (obligatoire en 2v2), puis notifie l'adversaire en temps réel. */
+  /** [Minor · Stats et historique] Crée un défi (PENDING) : vérifie adversaire et coéquipier (obligatoire en 2v2), puis notifie l'adversaire en temps réel. */
   async propose(
     challengerId: string,
     opponentId: string,
@@ -138,7 +139,7 @@ export class MatchesService {
     return match;
   }
 
-  /** Traite la réponse du joueur défié : refus, ou acceptation (avec son coéquipier en 2v2) ; diffuse le match mis à jour aux participants. */
+  /** [Minor · Stats et historique] Traite la réponse du joueur défié : refus, ou acceptation (avec son coéquipier en 2v2) ; diffuse le match mis à jour aux participants. */
   async respond(
     userId: string,
     matchId: string,
@@ -233,7 +234,7 @@ export class MatchesService {
     return updated;
   }
 
-  /** Enregistre le score proposé par un participant, passe le match en attente de validation et arme le délai de validation. */
+  /** [Minor · Stats et historique] Enregistre le score proposé par un participant, passe le match en attente de validation et arme le délai de validation. */
   async submitScore(
     userId: string,
     matchId: string,
@@ -301,7 +302,7 @@ export class MatchesService {
     return updated;
   }
 
-  /** Un administrateur saisit le score d'une manche de tournoi : seul moyen d'en enregistrer un. Le match est terminé immédiatement, le tournoi avance (vainqueur, tableau, tables) et les joueurs sont notifiés. */
+  /** [Minor · Tournois] Un administrateur saisit le score d'une manche de tournoi : seul moyen d'en enregistrer un. Le match est terminé immédiatement, le tournoi avance (vainqueur, tableau, tables) et les joueurs sont notifiés. */
   async submitTournamentScoreAsAdmin(
     adminId: string,
     matchId: string,
@@ -342,7 +343,7 @@ export class MatchesService {
     return updated;
   }
 
-  /** Un administrateur corrige le score déjà saisi d'une manche de tournoi terminée. Le tournoi est recalculé (vainqueur, points, tableau) ou la correction refusée si le tour suivant a déjà commencé ; les joueurs sont prévenus. */
+  /** [Minor · Tournois] Un administrateur corrige le score déjà saisi d'une manche de tournoi terminée. Le tournoi est recalculé (vainqueur, points, tableau) ou la correction refusée si le tour suivant a déjà commencé ; les joueurs sont prévenus. */
   async correctTournamentScoreAsAdmin(
     matchId: string,
     scoreA: number,
@@ -387,7 +388,7 @@ export class MatchesService {
     return updated;
   }
 
-  /** Lève une BadRequestException si le score n'est pas valide (un camp à 10 points, l'autre en dessous). */
+  /** [Minor · Stats et historique] Lève une BadRequestException si le score n'est pas valide (un camp à 10 points, l'autre en dessous). */
   private assertValidScore(scoreA: number, scoreB: number): void {
     if (!this.isValidScore(scoreA, scoreB)) {
       throw new BadRequestException({
@@ -398,7 +399,7 @@ export class MatchesService {
     }
   }
 
-  /** Vrai si l'un des deux camps a exactement 10 points et l'autre moins (jamais d'égalité). */
+  /** [Minor · Stats et historique] Vrai si l'un des deux camps a exactement 10 points et l'autre moins (jamais d'égalité). */
   private isValidScore(scoreA: number, scoreB: number): boolean {
     const target = MATCH_TARGET_SCORE;
     return (
@@ -407,7 +408,7 @@ export class MatchesService {
     );
   }
 
-  /** Permet à l'équipe adverse de valider (match terminé, Elo/tournoi mis à jour) ou de contester (litige) le score soumis. */
+  /** [Minor · Stats et historique] Permet à l'équipe adverse de valider (match terminé, Elo/tournoi mis à jour) ou de contester (litige) le score soumis. */
   async validateScore(
     userId: string,
     matchId: string,
@@ -467,7 +468,7 @@ export class MatchesService {
     return updated;
   }
 
-  /** Notifie chaque participant du résultat final, victoire ou défaite selon son propre camp. */
+  /** [Minor · Stats et historique] Notifie chaque participant du résultat final, victoire ou défaite selon son propre camp. */
   private async notifyCompleted(match: MatchEntity): Promise<void> {
     for (const player of [...match.teamA, ...match.teamB]) {
       const team = this.teamOf(match, player.id);
@@ -488,7 +489,7 @@ export class MatchesService {
     }
   }
 
-  /** Notifie tous les participants du litige (score contesté ou jamais validé à temps). */
+  /** [Minor · Stats et historique] Notifie tous les participants du litige (score contesté ou jamais validé à temps). */
   private async notifyDisputed(match: MatchEntity): Promise<void> {
     await this.notificationsService.createForUsers(
       [...match.teamA, ...match.teamB].map((player) => player.id),
@@ -497,7 +498,7 @@ export class MatchesService {
     );
   }
 
-  /** Calcule et applique les nouvelles notes Elo des joueurs, puis enregistre le résultat (victoire, défaite ou nul) pour les badges et l'XP. */
+  /** [Minor · Stats et historique] Calcule et applique les nouvelles notes Elo des joueurs, puis enregistre le résultat (victoire, défaite ou nul) pour les badges et l'XP. */
   private async applyElo(matchId: string, match: MatchEntity): Promise<void> {
     const teams = await this.matchesRepository.getTeamsForElo(matchId);
     if (!teams || match.scoreA === null || match.scoreB === null) {
@@ -517,7 +518,7 @@ export class MatchesService {
         [...teams.teamA, ...teams.teamB].map((p) => p.id),
       );
     } else {
-      /** Moyenne des notes d'un groupe de joueurs. */
+      /** [Minor · Stats et historique] Moyenne des notes d'un groupe de joueurs. */
       const average = (players: { rating: number }[]) =>
         players.reduce((sum, p) => sum + p.rating, 0) / players.length;
       const [winners, losers] =
@@ -534,14 +535,14 @@ export class MatchesService {
     }
   }
 
-  /** Retourne 'A' ou 'B' selon l'équipe de l'utilisateur dans le match, ou null s'il n'y participe pas. */
+  /** [Minor · Stats et historique] Retourne 'A' ou 'B' selon l'équipe de l'utilisateur dans le match, ou null s'il n'y participe pas. */
   private teamOf(match: MatchEntity, userId: string): 'A' | 'B' | null {
     if (match.teamA.some((player) => player.id === userId)) return 'A';
     if (match.teamB.some((player) => player.id === userId)) return 'B';
     return null;
   }
 
-  /** Lève une ForbiddenException si l'utilisateur ne fait pas partie du match. */
+  /** [Minor · Stats et historique] Lève une ForbiddenException si l'utilisateur ne fait pas partie du match. */
   private assertParticipant(match: MatchEntity, userId: string): void {
     if (!this.teamOf(match, userId)) {
       throw new ForbiddenException({
@@ -551,7 +552,7 @@ export class MatchesService {
     }
   }
 
-  /** Retrouve un match par id ou lève une NotFoundException. */
+  /** [Minor · Stats et historique] Retrouve un match par id ou lève une NotFoundException. */
   private async getMatch(matchId: string): Promise<MatchEntity> {
     const match = await this.matchesRepository.findById(matchId);
     if (!match) {
@@ -563,7 +564,7 @@ export class MatchesService {
     return match;
   }
 
-  /** Programme le passage automatique en litige si le score n'est pas validé dans SCORE_VALIDATION_TIMEOUT_MS. */
+  /** [Minor · Stats et historique] Programme le passage automatique en litige si le score n'est pas validé dans SCORE_VALIDATION_TIMEOUT_MS. */
   private scheduleValidationExpiry(matchId: string): void {
     this.clearTimer(matchId);
     const timer = setTimeout(() => {
@@ -572,7 +573,7 @@ export class MatchesService {
     this.timers.set(matchId, timer);
   }
 
-  /** À l'expiration du délai, met le match en litige s'il attend toujours une validation, notifie les joueurs et prévient le tournoi le cas échéant. */
+  /** [Minor · Stats et historique] À l'expiration du délai, met le match en litige s'il attend toujours une validation, notifie les joueurs et prévient le tournoi le cas échéant. */
   private async handleValidationExpiry(matchId: string): Promise<void> {
     this.timers.delete(matchId);
     if (!(await this.matchesRepository.dispute(matchId))) {
@@ -586,7 +587,7 @@ export class MatchesService {
     }
   }
 
-  /** Annule et oublie le minuteur de validation d'un match, s'il existe. */
+  /** [Minor · Stats et historique] Annule et oublie le minuteur de validation d'un match, s'il existe. */
   private clearTimer(matchId: string): void {
     const timer = this.timers.get(matchId);
     if (timer) {

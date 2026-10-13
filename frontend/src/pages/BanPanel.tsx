@@ -17,7 +17,7 @@ import { getInitials, resolveAvatarUrl } from "@/lib/user";
 
 const PAGE_SIZE = 10;
 
-/** Modération (admin) : recherche d'utilisateurs, état de leur ban et ouverture de la fenêtre de gestion (bannir, débannir, historique). */
+/** [Major · Permissions avancées] Modération (admin) : recherche d'utilisateurs, état de leur ban et ouverture de la fenêtre de gestion (bannir, débannir, historique). */
 export const BanPanel = () => {
   const { t, i18n } = useTranslation();
   const [query, setQuery] = useState("");

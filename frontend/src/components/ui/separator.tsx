@@ -2,6 +2,7 @@ import { Separator as SeparatorPrimitive } from "@base-ui/react/separator"
 
 import { cn } from "@/lib/utils"
 
+/** [Minor · Design system] Trait de séparation horizontal ou vertical. */
 function Separator({
   className,
   orientation = "horizontal",

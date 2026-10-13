@@ -26,6 +26,7 @@ type ChessMovePayload = {
   promotion?: string;
 };
 
+/** [Major · Temps réel WebSockets] Passerelle WebSocket des parties d'échecs : namespace socket.io, authentification par access token et diffusion d'événements en temps réel. */
 @WebSocketGateway({
   cors: { origin: process.env.FRONTEND_URL },
   namespace: 'chess',
@@ -36,12 +37,14 @@ export class ChessGateway implements OnGatewayConnection {
   @WebSocketServer()
   private server!: Server;
 
+  /** [Major · Temps réel WebSockets] Injecte le service de jeu, le service utilisateurs (vérification du compte) et JwtService (vérification du token du socket). */
   constructor(
     private readonly chessService: ChessService,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
 
+  /** [Major · Temps réel WebSockets] À la connexion d'un client : vérifie l'access token fourni dans le handshake socket.io, charge l'utilisateur et le fait rejoindre sa room personnelle (son id) ; déconnecte tout client non authentifié. */
   async handleConnection(client: ChessSocket): Promise<void> {
     const accessToken = (client.handshake.auth as { access_token?: unknown })
       .access_token;
@@ -67,6 +70,7 @@ export class ChessGateway implements OnGatewayConnection {
     }
   }
 
+  /** [Major · Temps réel WebSockets] Événement `chess:resign` : le joueur abandonne ; la partie terminée est diffusée aux deux joueurs (`chess:state`) ou une erreur traduisible (`chess:error`) est renvoyée à l'émetteur seul. */
   @SubscribeMessage('chess:resign')
   async handleResign(
     @ConnectedSocket() client: ChessSocket,
@@ -91,6 +95,7 @@ export class ChessGateway implements OnGatewayConnection {
     }
   }
 
+  /** [Major · Temps réel WebSockets] Événement `chess:move` : valide et enregistre le coup via ChessService, diffuse le nouvel état aux deux joueurs en temps réel, puis fait répondre l'IA si l'adversaire est un bot ; en cas de coup refusé, renvoie `chess:error` avec un code stable. */
   @SubscribeMessage('chess:move')
   async handleMove(
     @ConnectedSocket() client: ChessSocket,

@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils";
 const CUSTOM = "custom";
 type DurationChoice = (typeof BAN_DURATIONS)[number]["id"] | typeof CUSTOM;
 
-/** Texte de durée d'un ban terminé ou en cours (« jusqu'au … » ou « permanent »). */
+/** [Major · Permissions avancées] Texte de durée d'un ban terminé ou en cours (« jusqu'au … » ou « permanent »). */
 function BanPeriod({ ban }: { ban: Ban }) {
   const { t, i18n } = useTranslation();
   return (
@@ -44,6 +44,7 @@ function BanPeriod({ ban }: { ban: Ban }) {
   );
 }
 
+/** [Major · Permissions avancées] Formulaire de bannissement : durée (préréglée ou personnalisée) et motif obligatoire. */
 function BanForm({ user }: { user: AdminUser }) {
   const { t } = useTranslation();
   const [banUser, { isLoading }] = useBanUserMutation();
@@ -66,6 +67,7 @@ function BanForm({ user }: { user: AdminUser }) {
       ? t("ban.permanent")
       : t("ban.form.hoursSummary", { count: hours });
 
+  /** [Major · Permissions avancées] Envoie le ban (durée en heures + motif) et confirme par un toast. */
   const handleBan = async () => {
     try {
       await banUser({
@@ -174,7 +176,7 @@ type Props = {
   onClose: () => void;
 };
 
-/** Fenêtre de modération d'un utilisateur : état du ban, formulaire de ban (durées prédéfinies + motif), levée du ban et historique. */
+/** [Major · Permissions avancées] Fenêtre de modération d'un utilisateur : état du ban, formulaire de ban (durées prédéfinies + motif), levée du ban et historique. */
 export function BanDialog({ user, onClose }: Props) {
   const { t } = useTranslation();
   const { data: active } = useGetActiveBanQuery(user.id);
@@ -185,6 +187,7 @@ export function BanDialog({ user, onClose }: Props) {
   const activeBan = active?.ban ?? null;
   const isAdmin = user.role === "ADMIN";
 
+  /** [Major · Permissions avancées] Lève le ban d'un utilisateur et confirme par un toast. */
   const handleUnban = async () => {
     try {
       await unbanUser(user.id).unwrap();

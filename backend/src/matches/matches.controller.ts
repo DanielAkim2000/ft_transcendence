@@ -21,13 +21,14 @@ import { RespondMatchDto } from './dtos/respond-match.dto';
 import { SubmitScoreDto } from './dtos/submit-score.dto';
 import { ValidateScoreDto } from './dtos/validate-score.dto';
 
+/** [Minor · Stats et historique] Contrôleur HTTP des matchs (défis, scores, Elo, historique) : routes REST protégées par les guards d'authentification. */
 @Controller('matches')
 @UseGuards(AccessTokenGuard)
 export class MatchesController {
   /** Injecte les dépendances : MatchesService. */
   constructor(private readonly matchesService: MatchesService) {}
 
-  /** GET /matches/me?page=&limit= : page des défis de ladder de l'utilisateur connecté (hors manches de tournoi et défis refusés). */
+  /** [Minor · Stats et historique] GET /matches/me?page=&limit= : page des défis de ladder de l'utilisateur connecté (hors manches de tournoi et défis refusés). */
   @Get('me')
   listMine(
     @Req() req: Request & { user: UserEntity },
@@ -36,7 +37,7 @@ export class MatchesController {
     return this.matchesService.listMine(req.user.id, query);
   }
 
-  /** GET /matches/me/history?page=&limit=&q=&result=&format=&source=&sort= : page filtrée et triée de l'historique des matchs terminés de l'utilisateur (ladder + tournois). */
+  /** [Minor · Stats et historique] GET /matches/me/history?page=&limit=&q=&result=&format=&source=&sort= : page filtrée et triée de l'historique des matchs terminés de l'utilisateur (ladder + tournois). */
   @Get('me/history')
   listHistory(
     @Req() req: Request & { user: UserEntity },
@@ -45,13 +46,13 @@ export class MatchesController {
     return this.matchesService.listHistory(req.user.id, query);
   }
 
-  /** GET /matches/me/pending-actions : nombre de défis qui attendent une action de l'utilisateur. */
+  /** [Minor · Stats et historique] GET /matches/me/pending-actions : nombre de défis qui attendent une action de l'utilisateur. */
   @Get('me/pending-actions')
   countPendingActions(@Req() req: Request & { user: UserEntity }) {
     return this.matchesService.countActionable(req.user.id);
   }
 
-  /** GET /matches/:matchId : détail d'un match, réservé à ses participants. */
+  /** [Minor · Stats et historique] GET /matches/:matchId : détail d'un match, réservé à ses participants. */
   @Get(':matchId')
   getOne(
     @Req() req: Request & { user: UserEntity },
@@ -60,7 +61,7 @@ export class MatchesController {
     return this.matchesService.getForUser(req.user.id, matchId);
   }
 
-  /** POST /matches : l'utilisateur connecté défie un adversaire (avec un coéquipier en 2v2). */
+  /** [Minor · Stats et historique] POST /matches : l'utilisateur connecté défie un adversaire (avec un coéquipier en 2v2). */
   @Post()
   propose(
     @Req() req: Request & { user: UserEntity },
@@ -74,7 +75,7 @@ export class MatchesController {
     );
   }
 
-  /** POST /matches/:matchId/respond : le joueur défié accepte ou refuse le défi. */
+  /** [Minor · Stats et historique] POST /matches/:matchId/respond : le joueur défié accepte ou refuse le défi. */
   @Post(':matchId/respond')
   respond(
     @Req() req: Request & { user: UserEntity },
@@ -89,7 +90,7 @@ export class MatchesController {
     );
   }
 
-  /** POST /matches/:matchId/score : un participant soumet le score, à valider par l'autre équipe. */
+  /** [Minor · Stats et historique] POST /matches/:matchId/score : un participant soumet le score, à valider par l'autre équipe. */
   @Post(':matchId/score')
   submitScore(
     @Req() req: Request & { user: UserEntity },
@@ -104,7 +105,7 @@ export class MatchesController {
     );
   }
 
-  /** POST /matches/:matchId/admin-score (admin) : saisit le score d'une manche de tournoi, qui est alors terminée (les joueurs ne peuvent pas saisir les scores de tournoi). */
+  /** [Minor · Tournois] POST /matches/:matchId/admin-score (admin) : saisit le score d'une manche de tournoi, qui est alors terminée (les joueurs ne peuvent pas saisir les scores de tournoi). */
   @Post(':matchId/admin-score')
   @AuthRoles(Role.ADMIN)
   submitTournamentScore(
@@ -120,7 +121,7 @@ export class MatchesController {
     );
   }
 
-  /** PATCH /matches/:matchId/admin-score (admin) : corrige le score d'une manche de tournoi déjà terminée ; le tournoi est recalculé (ou la correction refusée si le tour suivant a commencé). */
+  /** [Minor · Tournois] PATCH /matches/:matchId/admin-score (admin) : corrige le score d'une manche de tournoi déjà terminée ; le tournoi est recalculé (ou la correction refusée si le tour suivant a commencé). */
   @Patch(':matchId/admin-score')
   @AuthRoles(Role.ADMIN)
   correctTournamentScore(
@@ -134,7 +135,7 @@ export class MatchesController {
     );
   }
 
-  /** POST /matches/:matchId/validate : l'équipe adverse valide ou conteste le score soumis. */
+  /** [Minor · Stats et historique] POST /matches/:matchId/validate : l'équipe adverse valide ou conteste le score soumis. */
   @Post(':matchId/validate')
   validateScore(
     @Req() req: Request & { user: UserEntity },

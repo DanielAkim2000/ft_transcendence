@@ -16,6 +16,7 @@ interface PresenceBootstrapProps {
   children: React.ReactNode;
 }
 
+/** [Major · Temps réel WebSockets] Connecte le socket de présence (statut en ligne des amis, demandes d'ami en direct, ban en direct) et le déconnecte à la déconnexion. */
 const PresenceBootstrap: React.FC<PresenceBootstrapProps> = ({ children }) => {
   const accessToken = useAppSelector(selectAccessToken);
   const dispatch = useAppDispatch();
@@ -27,6 +28,7 @@ const PresenceBootstrap: React.FC<PresenceBootstrapProps> = ({ children }) => {
 
     const socket = connect(accessToken);
 
+    /** [Major · Temps réel WebSockets] Changement de statut d'un ami : met à jour les caches de listes. */
     const onUpdate = (_payload: { userId: string; status: Status }) => {
       applyPresenceToCache(dispatch, _payload.userId, _payload.status);
     };
@@ -39,12 +41,14 @@ const PresenceBootstrap: React.FC<PresenceBootstrapProps> = ({ children }) => {
       });
     };
 
+    /** [Major · Temps réel WebSockets] Invalide les caches des amis et utilisateurs pour les recharger. */
     const invalidateFriends = () => {
       dispatch(
         usersApi.util.invalidateTags([TAG_TYPES.FRIENDS, TAG_TYPES.USERS]),
       );
     };
 
+    /** [Minor · Notifications] Demande d'ami reçue en direct : rafraîchit les listes et affiche un toast avec le nom de l'expéditeur. */
     const onFriendRequest = async (payload: { userId: string }) => {
       invalidateFriends();
       const result = await dispatch(
@@ -61,6 +65,7 @@ const PresenceBootstrap: React.FC<PresenceBootstrapProps> = ({ children }) => {
       });
     };
 
+    /** [Major · Permissions avancées] L'utilisateur vient d'être banni : vide la session, prévient et redirige vers la page de connexion expliquant le ban. */
     const onBanned = (payload: { reason: string; endTime: string | null }) => {
       dispatch(clearCredentials());
       toast.add({ title: i18n.t("ban.notice.title"), type: "error" });

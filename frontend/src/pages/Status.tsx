@@ -19,7 +19,7 @@ const toneClass: Record<Tone, string> = {
   bad: "text-destructive",
 };
 
-/** 3661 -> « 1 h 1 min » ; en dessous d'une minute, en secondes. */
+/** [Minor · Health check et sauvegardes] 3661 -> « 1 h 1 min » ; en dessous d'une minute, en secondes. */
 function formatUptime(seconds: number): string {
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
@@ -30,12 +30,14 @@ function formatUptime(seconds: number): string {
   return `${seconds} s`;
 }
 
+/** [Minor · Health check et sauvegardes] Formate une taille en octets (KB ou MB) pour la sauvegarde. */
 function formatSize(bytes: number): string {
   return bytes < 1024 * 1024
     ? `${Math.max(1, Math.round(bytes / 1024))} KB`
     : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+/** [Minor · Health check et sauvegardes] Ligne d'un service (base, sauvegarde…) avec son état coloré et ses détails. */
 function ServiceRow({
   name,
   state,
@@ -69,7 +71,7 @@ function ServiceRow({
   );
 }
 
-/** Page publique d'état du système : API, base de données et sauvegardes, actualisée toutes les 15 s. */
+/** [Minor · Health check et sauvegardes] Page publique /status : interroge GET /health toutes les 15 s et affiche l'état de l'API, de la base et des sauvegardes. */
 export const Status = () => {
   const { t, i18n } = useTranslation();
   const isLoggedIn = useAppSelector((s) => Boolean(s.auth.accessToken));

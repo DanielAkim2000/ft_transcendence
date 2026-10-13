@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { MatchFormat } from '../../matches/entities/match.entity';
 
+/** [Socle produit babyfoot (hors module)] États d'un groupe de file (en attente, appelé, sur table, terminé…). */
 export enum QueueGroupStatus {
   INVITING = 'INVITING',
   WAITING = 'WAITING',
@@ -11,6 +12,7 @@ export enum QueueGroupStatus {
   CANCELLED = 'CANCELLED',
 }
 
+/** [Socle produit babyfoot (hors module)] Joueur d'un groupe de file. */
 export class QueuePlayer {
   @ApiProperty({ example: 'clx123456789' })
   id!: string;
@@ -26,6 +28,7 @@ export class QueuePlayer {
   accepted!: boolean;
 }
 
+/** [Socle produit babyfoot (hors module)] Groupe de joueurs dans la file d'une table, avec statut et délais. */
 export class QueueGroupEntity {
   @ApiProperty({ example: 'clx123456789' })
   id!: string;
@@ -50,7 +53,7 @@ export class QueueGroupEntity {
   })
   position!: number;
 
-  /** Copie dans l'instance les champs fournis. */
+  /** [Socle produit babyfoot (hors module)] Copie dans l'instance les champs fournis. */
   constructor(group: Partial<QueueGroupEntity>) {
     Object.assign(this, group);
   }

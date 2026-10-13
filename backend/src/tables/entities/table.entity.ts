@@ -1,11 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { MatchFormat } from '../../matches/entities/match.entity';
 
+/** [Socle produit babyfoot (hors module)] États d'une table (libre, occupée). */
 export enum TableStatus {
   FREE = 'FREE',
   BUSY = 'BUSY',
 }
 
+/** [Socle produit babyfoot (hors module)] Joueur à une table. */
 export class TablePlayer {
   @ApiProperty({ example: 'clx123456789' })
   id!: string;
@@ -15,6 +17,7 @@ export class TablePlayer {
   avatarUrl!: string | null;
 }
 
+/** [Socle produit babyfoot (hors module)] Groupe (camp) jouant à une table. */
 export class TableGroup {
   @ApiProperty({ example: 'clx123456789' })
   id!: string;
@@ -24,6 +27,7 @@ export class TableGroup {
   players!: TablePlayer[];
 }
 
+/** [Socle produit babyfoot (hors module)] Confrontation de tournoi en cours sur une table. */
 export class TableTournamentTie {
   id!: string;
   tournamentId!: string;
@@ -34,6 +38,7 @@ export class TableTournamentTie {
   entryBLabel!: string;
 }
 
+/** [Socle produit babyfoot (hors module)] Table de babyfoot avec son état, ses camps, sa file et son éventuel tournoi. */
 export class TableEntity {
   @ApiProperty({ description: 'The id of the table', example: 'table_a' })
   id!: string;
@@ -81,7 +86,7 @@ export class TableEntity {
   })
   currentTournamentTie!: TableTournamentTie | null;
 
-  /** Copie dans l'instance les champs fournis. */
+  /** [Socle produit babyfoot (hors module)] Copie dans l'instance les champs fournis. */
   constructor(table: Partial<TableEntity>) {
     Object.assign(this, table);
   }

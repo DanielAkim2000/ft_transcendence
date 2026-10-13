@@ -15,6 +15,7 @@ import { renderNotification } from "@/features/notifications/notificationRender"
 
 const NOTIFICATIONS_PAGE_SIZE = 10;
 
+/** [Minor · Notifications] Ligne de notification : icône, texte traduit, date, pastille « non lue » et lien vers l'élément concerné. */
 function NotificationRow({ notification }: { notification: AppNotification }) {
   const { t, i18n } = useTranslation();
   const { text, to, icon: Icon } = renderNotification(t, notification);
@@ -54,6 +55,7 @@ function NotificationRow({ notification }: { notification: AppNotification }) {
   );
 }
 
+/** [Minor · Notifications] Page des notifications : liste paginée et bouton « tout marquer comme lu ». */
 export const Notifications = () => {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);

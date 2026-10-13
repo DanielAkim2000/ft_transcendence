@@ -3,6 +3,7 @@ import { Avatar as AvatarPrimitive } from "@base-ui/react/avatar"
 
 import { cn } from "@/lib/utils"
 
+/** [Minor · Design system] Conteneur d'avatar rond (tailles sm/default/lg) : image avec repli sur les initiales. */
 function Avatar({
   className,
   size = "default",
@@ -23,6 +24,7 @@ function Avatar({
   )
 }
 
+/** [Minor · Design system] Image de l'avatar ; masquée si elle ne charge pas. */
 function AvatarImage({ className, ...props }: AvatarPrimitive.Image.Props) {
   return (
     <AvatarPrimitive.Image
@@ -36,6 +38,7 @@ function AvatarImage({ className, ...props }: AvatarPrimitive.Image.Props) {
   )
 }
 
+/** [Minor · Design system] Contenu de repli (initiales) tant que l'image n'est pas disponible. */
 function AvatarFallback({
   className,
   ...props
@@ -52,6 +55,7 @@ function AvatarFallback({
   )
 }
 
+/** [Minor · Design system] Pastille de statut posée sur le coin de l'avatar (ex. en ligne). */
 function AvatarBadge({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
@@ -68,6 +72,7 @@ function AvatarBadge({ className, ...props }: React.ComponentProps<"span">) {
   )
 }
 
+/** [Minor · Design system] Empile plusieurs avatars en se chevauchant. */
 function AvatarGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -81,6 +86,7 @@ function AvatarGroup({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/** [Minor · Design system] Pastille « +N » d'un groupe d'avatars. */
 function AvatarGroupCount({
   className,
   ...props

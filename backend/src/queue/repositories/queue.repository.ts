@@ -56,12 +56,13 @@ export type TableMatchInfo = {
   teamBPlayer1Id: string;
 };
 
+/** [Socle produit babyfoot (hors module)] Dépôt de données de la file d'attente des tables : requêtes Prisma et conversion en entités. */
 @Injectable()
 export class QueueRepository {
   /** Injecte les dépendances : PrismaService. */
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Format de la table, réservation par un tournoi et demande de fin de match, ou null si la table n'existe pas. */
+  /** [Socle produit babyfoot (hors module)] Format de la table, réservation par un tournoi et demande de fin de match, ou null si la table n'existe pas. */
   async getTable(tableId: string): Promise<TableQueueState | null> {
     const table = await this.prisma.table.findUnique({
       where: { id: tableId },
@@ -80,7 +81,7 @@ export class QueueRepository {
       : null;
   }
 
-  /** Liste les groupes en file (en attente ou appelés) d'une table, par ordre d'arrivée, avec leur position (à partir de 1). */
+  /** [Socle produit babyfoot (hors module)] Liste les groupes en file (en attente ou appelés) d'une table, par ordre d'arrivée, avec leur position (à partir de 1). */
   async listQueue(tableId: string): Promise<QueueGroupEntity[]> {
     const groups = await this.prisma.queueGroup.findMany({
       where: { tableId, status: { in: QUEUED_STATUSES } },
@@ -90,7 +91,7 @@ export class QueueRepository {
     return groups.map((group, index) => this.toEntity(group, index + 1));
   }
 
-  /** Retrouve un groupe par son id (avec sa position s'il est en file), ou null. */
+  /** [Socle produit babyfoot (hors module)] Retrouve un groupe par son id (avec sa position s'il est en file), ou null. */
   async findGroupById(id: string): Promise<QueueGroupEntity | null> {
     const group = await this.prisma.queueGroup.findUnique({
       where: { id },
@@ -99,7 +100,7 @@ export class QueueRepository {
     return group ? this.withPosition(group) : null;
   }
 
-  /** Groupe actif de l'utilisateur (invité, en file, appelé ou sur la table), ou null. */
+  /** [Socle produit babyfoot (hors module)] Groupe actif de l'utilisateur (invité, en file, appelé ou sur la table), ou null. */
   async findActiveGroupForUser(
     userId: string,
   ): Promise<QueueGroupEntity | null> {
@@ -110,7 +111,7 @@ export class QueueRepository {
     return member ? this.withPosition(member.group) : null;
   }
 
-  /** Retourne le plus ancien groupe en attente (statut WAITING) de la table, ou null. */
+  /** [Socle produit babyfoot (hors module)] Retourne le plus ancien groupe en attente (statut WAITING) de la table, ou null. */
   async findNextWaiting(tableId: string): Promise<QueueGroupEntity | null> {
     const group = await this.prisma.queueGroup.findFirst({
       where: { tableId, status: QueueGroupStatus.WAITING },
@@ -120,28 +121,28 @@ export class QueueRepository {
     return group ? this.toEntity(group, 0) : null;
   }
 
-  /** Nombre de groupes en file (en attente ou appelés). */
+  /** [Socle produit babyfoot (hors module)] Nombre de groupes en file (en attente ou appelés). */
   countWaiting(tableId: string): Promise<number> {
     return this.prisma.queueGroup.count({
       where: { tableId, status: { in: QUEUED_STATUSES } },
     });
   }
 
-  /** Nombre de groupes appelés qui n'ont pas encore confirmé leur présence. */
+  /** [Socle produit babyfoot (hors module)] Nombre de groupes appelés qui n'ont pas encore confirmé leur présence. */
   countCalled(tableId: string): Promise<number> {
     return this.prisma.queueGroup.count({
       where: { tableId, status: QueueGroupStatus.CALLED },
     });
   }
 
-  /** Nombre de groupes actuellement sur la table (0 à 2). */
+  /** [Socle produit babyfoot (hors module)] Nombre de groupes actuellement sur la table (0 à 2). */
   countOnTable(tableId: string): Promise<number> {
     return this.prisma.queueGroup.count({
       where: { tableId, status: QueueGroupStatus.ON_TABLE },
     });
   }
 
-  /** Groupes présents sur la table, avec leur côté et les ids de leurs joueurs. */
+  /** [Socle produit babyfoot (hors module)] Groupes présents sur la table, avec leur côté et les ids de leurs joueurs. */
   async listOnTable(tableId: string): Promise<OnTableGroup[]> {
     const groups = await this.prisma.queueGroup.findMany({
       where: { tableId, status: QueueGroupStatus.ON_TABLE },
@@ -159,7 +160,7 @@ export class QueueRepository {
     }));
   }
 
-  /** Crée un groupe (le demandeur, plus son coéquipier invité en 2v2) et fixe le format de la table s'il est encore libre ; null si la table joue déjà un autre format. */
+  /** [Socle produit babyfoot (hors module)] Crée un groupe (le demandeur, plus son coéquipier invité en 2v2) et fixe le format de la table s'il est encore libre ; null si la table joue déjà un autre format. */
   async createGroup(params: {
     tableId: string;
     format: MatchFormat;
@@ -195,7 +196,7 @@ export class QueueRepository {
     return groupId ? this.findGroupById(groupId) : null;
   }
 
-  /** Atomique : le coéquipier accepte l'invitation, le groupe passe en file d'attente. */
+  /** [Socle produit babyfoot (hors module)] Atomique : le coéquipier accepte l'invitation, le groupe passe en file d'attente. */
   async acceptInvite(groupId: string, userId: string): Promise<boolean> {
     return this.prisma.$transaction(async (tx) => {
       const { count } = await tx.queueGroup.updateMany({
@@ -213,7 +214,7 @@ export class QueueRepository {
     });
   }
 
-  /** Atomique : ne réussit que si le groupe est encore en attente. */
+  /** [Socle produit babyfoot (hors module)] Atomique : ne réussit que si le groupe est encore en attente. */
   async markCalled(id: string, expiresAt: Date): Promise<boolean> {
     const { count } = await this.prisma.queueGroup.updateMany({
       where: { id, status: QueueGroupStatus.WAITING },
@@ -226,7 +227,7 @@ export class QueueRepository {
     return count === 1;
   }
 
-  /** Atomique : termine un groupe (statut final, libère son côté de table et ses joueurs) s'il est encore dans l'un des statuts `from`. */
+  /** [Socle produit babyfoot (hors module)] Atomique : termine un groupe (statut final, libère son côté de table et ses joueurs) s'il est encore dans l'un des statuts `from`. */
   async finishGroup(
     id: string,
     status:
@@ -251,7 +252,7 @@ export class QueueRepository {
     });
   }
 
-  /** Atomique : place un groupe en attente ou appelé sur un côté libre de la table ; null s'il n'y a plus de place. */
+  /** [Socle produit babyfoot (hors module)] Atomique : place un groupe en attente ou appelé sur un côté libre de la table ; null s'il n'y a plus de place. */
   async placeOnTable(
     groupId: string,
   ): Promise<{ tableId: string; slot: number } | null> {
@@ -301,7 +302,7 @@ export class QueueRepository {
     }
   }
 
-  /** Si les 2 côtés sont occupés et qu'aucun match de table n'est en cours, crée le match (ACCEPTED) entre les deux groupes. */
+  /** [Socle produit babyfoot (hors module)] Si les 2 côtés sont occupés et qu'aucun match de table n'est en cours, crée le match (ACCEPTED) entre les deux groupes. */
   startMatchIfReady(tableId: string): Promise<StartedMatch | null> {
     return this.prisma.$transaction(async (tx) => {
       const groups = await tx.queueGroup.findMany({
@@ -350,7 +351,7 @@ export class QueueRepository {
     });
   }
 
-  /** Recale l'état de la table sur ses groupes : FREE/BUSY, heure d'occupation, format (libéré si plus aucun groupe actif) et demande de fin de match. Sans effet si un tournoi la réserve. */
+  /** [Socle produit babyfoot (hors module)] Recale l'état de la table sur ses groupes : FREE/BUSY, heure d'occupation, format (libéré si plus aucun groupe actif) et demande de fin de match. Sans effet si un tournoi la réserve. */
   async syncTableState(tableId: string): Promise<void> {
     const table = await this.prisma.table.findUnique({
       where: { id: tableId },
@@ -385,7 +386,7 @@ export class QueueRepository {
     ]);
   }
 
-  /** Ajoute ou retire le vote « libérer la table » de l'utilisateur et retourne les ids de tous les votants (n'importe qui peut voter, pas seulement les joueurs). */
+  /** [Socle produit babyfoot (hors module)] Ajoute ou retire le vote « libérer la table » de l'utilisateur et retourne les ids de tous les votants (n'importe qui peut voter, pas seulement les joueurs). */
   async toggleReleaseVote(tableId: string, userId: string): Promise<string[]> {
     const { count } = await this.prisma.tableReleaseVote.deleteMany({
       where: { tableId, userId },
@@ -400,7 +401,7 @@ export class QueueRepository {
     return votes.map((vote) => vote.userId);
   }
 
-  /** Atomique : marque la fin de match demandée ; false si elle l'était déjà. */
+  /** [Socle produit babyfoot (hors module)] Atomique : marque la fin de match demandée ; false si elle l'était déjà. */
   async markEndRequested(tableId: string): Promise<boolean> {
     const { count } = await this.prisma.table.updateMany({
       where: { id: tableId, endRequestedAt: null },
@@ -409,7 +410,7 @@ export class QueueRepository {
     return count === 1;
   }
 
-  /** Id du match de table en cours (ACCEPTED, hors tournoi), ou null. */
+  /** [Socle produit babyfoot (hors module)] Id du match de table en cours (ACCEPTED, hors tournoi), ou null. */
   async findCurrentMatchId(tableId: string): Promise<string | null> {
     const match = await this.prisma.match.findFirst({
       where: { tableId, status: 'ACCEPTED', tournamentTieId: null },
@@ -418,7 +419,7 @@ export class QueueRepository {
     return match?.id ?? null;
   }
 
-  /** Table, tournoi, score et capitaines d'un match, pour décider de la rotation. */
+  /** [Socle produit babyfoot (hors module)] Table, tournoi, score et capitaines d'un match, pour décider de la rotation. */
   async getMatchInfo(matchId: string): Promise<TableMatchInfo | null> {
     return this.prisma.match.findUnique({
       where: { id: matchId },
@@ -434,7 +435,7 @@ export class QueueRepository {
     });
   }
 
-  /** Atomique : annule (litige) un match de table qui n'a jamais reçu de score. */
+  /** [Socle produit babyfoot (hors module)] Atomique : annule (litige) un match de table qui n'a jamais reçu de score. */
   async cancelMatch(matchId: string): Promise<boolean> {
     const { count } = await this.prisma.match.updateMany({
       where: { id: matchId, status: 'ACCEPTED' },
@@ -443,7 +444,7 @@ export class QueueRepository {
     return count === 1;
   }
 
-  /** Annule tous les groupes actifs d'une table (ex: réquisition par un tournoi), annule son match en cours et la remet à zéro. Retourne les groupes annulés et s'ils étaient sur la table. */
+  /** [Socle produit babyfoot (hors module)] Annule tous les groupes actifs d'une table (ex: réquisition par un tournoi), annule son match en cours et la remet à zéro. Retourne les groupes annulés et s'ils étaient sur la table. */
   async cancelAllForTable(
     tableId: string,
   ): Promise<{ id: string; onTable: boolean; userIds: string[] }[]> {
@@ -510,7 +511,7 @@ export class QueueRepository {
     });
   }
 
-  /** Groupes dont le coéquipier n'a pas encore répondu (reprise des délais après un redémarrage). */
+  /** [Socle produit babyfoot (hors module)] Groupes dont le coéquipier n'a pas encore répondu (reprise des délais après un redémarrage). */
   async listInviting(): Promise<{ id: string; tableId: string }[]> {
     return this.prisma.queueGroup.findMany({
       where: { status: QueueGroupStatus.INVITING },
@@ -518,7 +519,7 @@ export class QueueRepository {
     });
   }
 
-  /** Tables dont la libération est actée mais dont le score n'est pas encore saisi. */
+  /** [Socle produit babyfoot (hors module)] Tables dont la libération est actée mais dont le score n'est pas encore saisi. */
   async listEndRequestedTableIds(): Promise<string[]> {
     const tables = await this.prisma.table.findMany({
       where: { endRequestedAt: { not: null } },
@@ -527,7 +528,7 @@ export class QueueRepository {
     return tables.map((table) => table.id);
   }
 
-  /** Ajoute la position (nombre de groupes en file arrivés avant ou en même temps) si le groupe est en file. */
+  /** [Socle produit babyfoot (hors module)] Ajoute la position (nombre de groupes en file arrivés avant ou en même temps) si le groupe est en file. */
   private async withPosition(
     group: QueueGroupWithMembers,
   ): Promise<QueueGroupEntity> {
@@ -544,7 +545,7 @@ export class QueueRepository {
     return this.toEntity(group, position);
   }
 
-  /** Convertit une ligne Prisma (avec ses membres) en QueueGroupEntity en y ajoutant la position. */
+  /** [Socle produit babyfoot (hors module)] Convertit une ligne Prisma (avec ses membres) en QueueGroupEntity en y ajoutant la position. */
   private toEntity(
     group: QueueGroupWithMembers,
     position: number,

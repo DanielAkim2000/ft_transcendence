@@ -9,6 +9,7 @@ import { navigate } from "@/lib/navigation";
 import { toast } from "@/components/ui/toast";
 import i18n from "@/i18n";
 
+/** [Minor · Tournois] Retrouve le nom d'un tournoi (cache ou requête) pour les toasts. */
 async function tournamentName(
   dispatch: ReturnType<typeof useAppDispatch>,
   tournamentId: string,
@@ -19,6 +20,7 @@ async function tournamentName(
   return result.data?.name ?? "?";
 }
 
+/** [Major · Temps réel WebSockets] Connecte le socket des tournois et affiche des toasts en direct (lancement, table reprise, match prêt, victoire, élimination, fin) en gardant le cache à jour. */
 export const TournamentsBootstrap = ({ children }: { children: React.ReactNode }) => {
   const accessToken = useAppSelector(selectAccessToken);
   const dispatch = useAppDispatch();
@@ -29,11 +31,15 @@ export const TournamentsBootstrap = ({ children }: { children: React.ReactNode }
       return;
     }
     const socket = connect(accessToken);
+    /** [Minor · Tournois] Navigue vers la liste des tournois. */
     const goToTournaments = () => navigate(ROUTES.TOURNAMENTS);
+    /** [Minor · Tournois] Navigue vers la page des tables. */
     const goToTables = () => navigate(ROUTES.TABLES);
 
+    /** [Major · Temps réel WebSockets] Tournoi créé ou modifié côté serveur : met à jour le cache. */
     const onSync = (tournament: Tournament) => applyTournamentToCache(dispatch, tournament);
 
+    /** [Minor · Notifications] Tournoi lancé : cache + toast. */
     const onLaunched = (tournament: Tournament) => {
       applyTournamentToCache(dispatch, tournament);
       toast.add({
@@ -43,6 +49,7 @@ export const TournamentsBootstrap = ({ children }: { children: React.ReactNode }
       });
     };
 
+    /** [Minor · Notifications] Une table réservée au tournoi a été reprise : toast d'erreur. */
     const onTableReclaimed = async (payload: { tableId: string; tournamentId: string }) => {
       const name = await tournamentName(dispatch, payload.tournamentId);
       toast.add({
@@ -52,6 +59,7 @@ export const TournamentsBootstrap = ({ children }: { children: React.ReactNode }
       });
     };
 
+    /** [Minor · Notifications] Un match de tournoi démarre pour l'utilisateur : toast avec lien vers les tables. */
     const onTieStarted = async (payload: { tournamentId: string }) => {
       const name = await tournamentName(dispatch, payload.tournamentId);
       toast.add({
@@ -61,16 +69,19 @@ export const TournamentsBootstrap = ({ children }: { children: React.ReactNode }
       });
     };
 
+    /** [Minor · Notifications] L'utilisateur a gagné sa confrontation : toast de succès. */
     const onTieWon = async (payload: { tournamentId: string }) => {
       const name = await tournamentName(dispatch, payload.tournamentId);
       toast.add({ title: i18n.t("tournaments.tieWonToast", { name }), type: "success" });
     };
 
+    /** [Minor · Notifications] L'utilisateur est éliminé : toast. */
     const onEliminated = async (payload: { tournamentId: string }) => {
       const name = await tournamentName(dispatch, payload.tournamentId);
       toast.add({ title: i18n.t("tournaments.eliminatedToast", { name }), type: "error" });
     };
 
+    /** [Minor · Notifications] Tournoi terminé : cache + toast. */
     const onCompleted = (tournament: Tournament) => {
       applyTournamentToCache(dispatch, tournament);
       toast.add({
@@ -80,6 +91,7 @@ export const TournamentsBootstrap = ({ children }: { children: React.ReactNode }
       });
     };
 
+    /** [Major · Temps réel WebSockets] Après une reconnexion : recharge les tournois. */
     const onReconnect = () =>
       dispatch(tournamentsApi.util.invalidateTags([TAG_TYPES.TOURNAMENTS]));
 

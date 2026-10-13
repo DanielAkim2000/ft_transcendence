@@ -12,6 +12,7 @@ type CodeInputProps = {
   className?: string
 }
 
+/** [Minor · Design system] Champ de saisie d'un code à 6 chiffres (une case par chiffre, collage et navigation clavier) utilisé pour la 2FA. */
 function CodeInput({
   id,
   name,

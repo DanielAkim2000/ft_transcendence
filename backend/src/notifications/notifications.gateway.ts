@@ -15,6 +15,7 @@ type NotificationsSocket = Socket<
   { userId?: string }
 >;
 
+/** [Major · Temps réel WebSockets] Passerelle WebSocket des notifications : namespace socket.io, authentification par access token et diffusion d'événements en temps réel. */
 @WebSocketGateway({
   cors: {
     origin: process.env.FRONTEND_URL,
@@ -26,14 +27,14 @@ export class NotificationsGateway implements OnGatewayConnection {
   @WebSocketServer()
   private server!: Server;
 
-  /** Injecte les dépendances : UsersService, JwtService. */
+  /** [Major · Temps réel WebSockets] Injecte les dépendances : UsersService, JwtService. */
   constructor(
     @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
 
-  /** Authentifie la connexion WebSocket via le JWT et fait rejoindre au client sa room personnelle (son userId) ; déconnecte si le token est absent ou invalide. */
+  /** [Major · Temps réel WebSockets] Authentifie la connexion WebSocket via le JWT et fait rejoindre au client sa room personnelle (son userId) ; déconnecte si le token est absent ou invalide. */
   async handleConnection(client: NotificationsSocket): Promise<void> {
     const accessToken = (client.handshake.auth as { access_token?: unknown })
       .access_token;
@@ -58,7 +59,7 @@ export class NotificationsGateway implements OnGatewayConnection {
     }
   }
 
-  /** Envoie un événement (nouvelle notification, tout lu) au seul utilisateur ciblé. */
+  /** [Major · Temps réel WebSockets] Envoie un événement (nouvelle notification, tout lu) au seul utilisateur ciblé. */
   emitToUser(userId: string, event: string, payload: unknown): void {
     this.server.to(userId).emit(event, payload);
   }

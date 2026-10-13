@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+/** [Major · Gestion des utilisateurs] Refresh token stocké (haché) avec son expiration. */
 export class RefreshToken {
   @ApiProperty({
     description: 'The id of the refresh token',
@@ -19,7 +20,7 @@ export class RefreshToken {
   })
   createdAt!: Date;
 
-  /** Copie dans l'instance les champs fournis. */
+  /** [Major · Gestion des utilisateurs] Copie dans l'instance les champs fournis. */
   constructor(refreshToken: Partial<RefreshToken>) {
     Object.assign(this, refreshToken);
   }

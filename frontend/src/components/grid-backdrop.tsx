@@ -1,4 +1,4 @@
-/** Fond décoratif (halo vert + grille en fondu) partagé par les écrans plein page. */
+/** [Minor · Design system] Fond décoratif quadrillé aux couleurs d'accent. */
 export function GridBackdrop() {
   return (
     <>

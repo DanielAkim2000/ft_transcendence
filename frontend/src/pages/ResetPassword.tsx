@@ -25,6 +25,7 @@ import { ROUTES } from "@/constants/routes";
 import { useResetPasswordMutation } from "@/features/auth/authApi";
 import { getErrorMessage } from "@/lib/get-error-message";
 
+/** [Major · Gestion des utilisateurs] Page de réinitialisation du mot de passe : lit le jeton dans l'URL, valide le nouveau mot de passe et l'envoie à l'API. */
 export const ResetPassword = () => {
     const { t, i18n } = useTranslation();
     const [searchParams] = useSearchParams();

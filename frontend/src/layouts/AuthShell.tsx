@@ -5,6 +5,7 @@ import { Logo } from "@/components/logo";
 import { setLanguage } from "@/features/settings/settingsSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
+/** [Minor · Multilingue] Cadre des pages d'authentification (login, inscription…) : fond, logo, sélecteur de langue EN/FR/ES et liens légaux. */
 export function AuthShell({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
   const language = useAppSelector((s) => s.settings.language);

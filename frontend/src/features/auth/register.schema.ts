@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 import * as z from "zod";
 
+/** [Major · Gestion des utilisateurs] Schéma zod du formulaire d'inscription (pseudo 3–32, email, mot de passe fort : minuscule, majuscule, chiffre, symbole). */
 export function createRegisterSchema(t: TFunction) {
   return z.object({
     username: z

@@ -25,7 +25,7 @@ type Props = {
   enteredIds: Set<string>;
 };
 
-/** Fenêtre (admin) pour remplacer un joueur d'une équipe, par exemple quand elle ne peut plus jouer sa demi-finale. */
+/** [Minor · Tournois] Fenêtre (admin) pour remplacer un joueur d'une équipe, par exemple quand elle ne peut plus jouer sa demi-finale. */
 export function ReplacePlayerDialog({ tournamentId, entry, enteredIds }: Props) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -50,6 +50,7 @@ export function ReplacePlayerDialog({ tournamentId, entry, enteredIds }: Props) 
   const outgoing = players.find((player) => player.id === playerId) ?? entry.player1;
   const candidates = (data?.items ?? []).filter((user) => !enteredIds.has(user.id));
 
+  /** [Minor · Tournois] Remet à zéro la recherche et la sélection du remplaçant. */
   const reset = () => {
     setQuery("");
     setPage(1);
@@ -57,6 +58,7 @@ export function ReplacePlayerDialog({ tournamentId, entry, enteredIds }: Props) 
     setPlayerId(entry.player1.id);
   };
 
+  /** [Minor · Tournois] Remplace un joueur d'une inscription par le remplaçant choisi (tournoi non lancé). */
   const handleConfirm = async () => {
     if (!replacement) return;
     try {

@@ -26,6 +26,7 @@ import { useForgotPasswordMutation } from "@/features/auth/authApi";
 import { getErrorMessage } from "@/lib/get-error-message";
 import { useAppSelector } from "@/store/hooks";
 
+/** [Major · Gestion des utilisateurs] Page « mot de passe oublié » : valide l'email puis demande l'envoi d'un lien de réinitialisation (réponse identique que le compte existe ou non). */
 export const ForgetPass = () => {
     const { t, i18n } = useTranslation();
     const accessToken = useAppSelector((state) => state.auth.accessToken);

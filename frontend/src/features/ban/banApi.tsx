@@ -19,6 +19,7 @@ export interface BanRequest {
   reason: string;
 }
 
+/** [Major · Permissions avancées] Endpoints RTK Query du domaine « ban » (requêtes/mutations typées, cache et invalidation par tags) : GET_ACTIVE_BAN, GET_BAN_HISTORY, BAN_USER, UNBAN_USER. */
 export const banApi = api.injectEndpoints({
   endpoints: (builder) => ({
     // `ban` vaut null quand l'utilisateur n'est pas banni.

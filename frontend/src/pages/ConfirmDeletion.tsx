@@ -11,7 +11,7 @@ import { useAppDispatch } from "@/store/hooks";
 
 const REDIRECT_DELAY_MS = 5000;
 
-/** Page ouverte depuis le lien de l'email : la suppression n'a lieu qu'au clic (pas au simple chargement de la page). */
+/** [Minor · RGPD] Page ouverte depuis le lien de l'email : la suppression n'a lieu qu'au clic (pas au simple chargement de la page). */
 export const ConfirmDeletion = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
@@ -36,6 +36,7 @@ export const ConfirmDeletion = () => {
     return () => clearTimeout(timer);
   }, [deleted, navigate]);
 
+  /** [Minor · RGPD] Confirme la suppression du compte avec le jeton signé du lien reçu par email, puis vide la session locale et le cache. */
   const handleConfirm = async () => {
     if (!token) return;
     setError(null);

@@ -1,4 +1,4 @@
-/** Lit une variable CSS du thème courant (déjà résolue : couleur d'accent + thème clair/sombre). */
+/** [Minor · Design system] Lit une variable CSS du thème courant (déjà résolue : couleur d'accent + thème clair/sombre). */
 function cssColor(name: string, fallback: string): string {
   const value = getComputedStyle(document.documentElement)
     .getPropertyValue(name)
@@ -6,7 +6,7 @@ function cssColor(name: string, fallback: string): string {
   return value || fallback;
 }
 
-/** Même dessin que public/favicon.svg (carré arrondi + « >_ »), aux couleurs du thème de l'utilisateur. */
+/** [Minor · Design system] Même dessin que public/favicon.svg (carré arrondi + « >_ »), aux couleurs du thème de l'utilisateur. */
 function buildFaviconSvg(background: string, foreground: string): string {
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">` +
@@ -17,7 +17,7 @@ function buildFaviconSvg(background: string, foreground: string): string {
   );
 }
 
-/** Remplace l'icône de l'onglet par un SVG à la couleur principale choisie (et adapté au thème clair/sombre). */
+/** [Minor · Design system] Remplace l'icône de l'onglet par un SVG à la couleur principale choisie (et adapté au thème clair/sombre). */
 export function syncFavicon(): void {
   const background = cssColor("--primary", "#3ddc84");
   const foreground = cssColor("--primary-foreground", "#07090a");

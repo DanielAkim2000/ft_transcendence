@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
+/** [Minor · 2FA] Corps validé d'un code de secours 2FA. */
 export class RecoveryCodeDto {
   @ApiProperty({
     description: 'A single-use 2FA recovery code',

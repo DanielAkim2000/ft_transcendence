@@ -41,6 +41,7 @@ const buttonVariants = cva(
   }
 )
 
+/** [Minor · Design system] Bouton du design system : variantes (default, outline, secondary, ghost, destructive, link), tailles (xs → lg, icônes) et prop `loading` qui affiche un spinner et désactive le bouton pendant une action. */
 function Button({
   className,
   variant = "default",

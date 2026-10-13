@@ -9,6 +9,7 @@ import { ChatController } from './chat.controller';
 import { ChatGateway } from './chat.gateway';
 
 /** Messagerie privée entre amis : conversations, messages, blocage et événements temps réel. Exporte ChatService. */
+/** [Major · Interaction entre utilisateurs] Module NestJS du chat (conversations, messages, blocages) : regroupe contrôleur, services et dépendances. */
 @Module({
   imports: [PrismaModule, forwardRef(() => UsersModule)],
   controllers: [ChatController],

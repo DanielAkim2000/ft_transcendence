@@ -12,7 +12,7 @@ import type { AppNotification } from "./notificationsApi";
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
-/** Icône et lien éventuel selon la famille de la notification. */
+/** [Minor · Notifications] Icône et lien éventuel selon la famille de la notification. */
 function categoryOf(type: AppNotification["type"]): { icon: LucideIcon; to?: string } {
   if (type === "FRIEND_REQUEST") return { icon: UsersIcon, to: ROUTES.FRIENDS };
   if (type.startsWith("CHESS_")) return { icon: CrownIcon, to: ROUTES.CHESS };
@@ -28,7 +28,7 @@ function categoryOf(type: AppNotification["type"]): { icon: LucideIcon; to?: str
   return { icon: MedalIcon, to: ROUTES.PROFILE_ME };
 }
 
-/** Texte (traduit) et lien vers la page concernée pour une notification. */
+/** [Minor · Notifications] Texte (traduit) et lien vers la page concernée pour une notification. */
 export function renderNotification(
   t: Translate,
   notification: AppNotification,

@@ -26,6 +26,7 @@ import { getErrorMessage } from "@/lib/get-error-message";
 import { useAppSelector } from "@/store/hooks";
 import { ROUTES } from "@/constants/routes";
 
+/** [Major · Gestion des utilisateurs] Page d'inscription : formulaire validé par zod (pseudo, email, mot de passe fort), puis connexion automatique. */
 export const Register = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();

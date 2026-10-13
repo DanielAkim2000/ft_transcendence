@@ -21,10 +21,12 @@ const QUEEN_DIRS = [...BISHOP_DIRS, ...ROOK_DIRS];
 
 
 
+/** [Major · Jeu web (Échecs)] Crée une pièce (type, couleur, premier coup non joué) pour le plateau local. */
 export function makePiece(type: PieceType, color: PieceColor, isFirstMove = true): Piece {
   return { type, color, isFirstMove, isSelected: false };
 }
 
+/** [Major · Jeu web (Échecs)] Construit la grille 8×8 du plateau à partir d'une position FEN (pièces, droits de roque). */
 export function boardFromFen(fen: string): (Piece | null)[][] {
   const fenFields = fen.split(" ");
   const rows = fenFields[0].split("/");
@@ -62,6 +64,7 @@ export function boardFromFen(fen: string): (Piece | null)[][] {
   });
 }
 
+/** [Major · Jeu web (Échecs)] Cases atteignables par une pièce à longue portée (tour, fou, dame) dans des directions données, jusqu'au premier obstacle. */
 function slide(piece: Piece, y: number, x: number, directions: [number, number][], board: (Piece | null)[][]): Position[] {
   const positions: Position[] = [];
 
@@ -89,6 +92,7 @@ function slide(piece: Piece, y: number, x: number, directions: [number, number][
 }
 
 
+/** [Major · Jeu web (Échecs)] Déplacements bruts d'une pièce (sans vérifier l'échec) : pas du pion, prise en passant, sauts du cavalier, roi, glissements. */
 function getRawMoves(
   piece: Piece,
   y: number,
@@ -165,6 +169,7 @@ function getRawMoves(
 }
 
 
+/** [Major · Jeu web (Échecs)] Vrai si une case est attaquée par une couleur (sert à interdire les roques et les coups qui laissent le roi en échec). */
 function isSquareAttacked(y: number, x: number, byColor: string, board: (Piece | null)[][]): boolean {
   for (let row = 0; row < 8; row++) {
     for (let col = 0; col < 8; col++) {
@@ -186,10 +191,12 @@ function isSquareAttacked(y: number, x: number, byColor: string, board: (Piece |
 }
 
 
+/** [Major · Jeu web (Échecs)] Couleur adverse. */
 function opponentColor(color: string): string {
   return color === "white" ? "black" : "white";
 }
 
+/** [Major · Jeu web (Échecs)] Coups légaux d'une pièce : coups bruts filtrés pour ne pas laisser son roi en échec, plus les roques ; sert à afficher les destinations. */
 export function canMoove(piece: Piece, board: (Piece | null)[][], enPassantTarget?: Position): Position[] {
   const y = board.findIndex(row => row.includes(piece));
   const x = board[y].findIndex(cell => cell === piece);

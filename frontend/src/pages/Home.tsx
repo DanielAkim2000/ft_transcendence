@@ -23,6 +23,7 @@ const SEARCH_RESULTS_LIMIT = 6;
 /** Laisse le temps à un clic sur un résultat d'être enregistré avant que le flou ne referme la liste. */
 const SEARCH_BLUR_DELAY_MS = 150;
 
+/** [Socle produit babyfoot (hors module)] Encadré de l'accueil : titre, compteur, lien « voir tout » et contenu. */
 function Panel({
   title,
   count,
@@ -53,10 +54,12 @@ function Panel({
   );
 }
 
+/** [Socle produit babyfoot (hors module)] Message affiché quand un encadré est vide. */
 function Empty({ children }: { children: ReactNode }) {
   return <p className="m-auto px-4 py-6 text-sm text-muted-foreground">{children}</p>;
 }
 
+/** [Socle produit babyfoot (hors module)] Ligne d'une conversation récente (interlocuteur, dernier message) qui ouvre le chat. */
 function RecentConversation({
   conversation,
   meId,
@@ -104,7 +107,7 @@ function RecentConversation({
   );
 }
 
-/** Barre de recherche de joueurs, à l'accueil : résultats en direct sous le champ, comme une invite de commande ("/"). */
+/** [Minor · Recherche avancée] Barre de recherche de joueurs, à l'accueil : résultats en direct sous le champ, comme une invite de commande ("/"). */
 function PlayerSearch() {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
@@ -189,6 +192,7 @@ function PlayerSearch() {
   );
 }
 
+/** [Socle produit babyfoot (hors module)] Tableau de bord d'accueil : tables en direct, amis en ligne, demandes en attente, conversations récentes et recherche de joueurs. */
 export const Home = () => {
   const { t, i18n } = useTranslation();
   const { data: me } = useMeQuery();

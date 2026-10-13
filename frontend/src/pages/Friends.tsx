@@ -22,6 +22,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ROUTES } from "@/constants/routes";
 import { ListSkeleton } from "@/components/skeletons";
 
+/** [Major · Interaction entre utilisateurs] Ligne d'un utilisateur (avatar, nom, présence pour les amis) avec ses boutons d'action. */
 function UserRow({
   user,
   actions,
@@ -87,6 +88,7 @@ const FRIENDS_PAGE_SIZE = 10;
 const PENDING_PAGE_SIZE = 5;
 const SEARCH_PAGE_SIZE = 10;
 
+/** [Major · Interaction entre utilisateurs] Page des amis : amis (avec statut en ligne), demandes reçues et envoyées, et recherche d'utilisateurs pour en ajouter. */
 export const Friends = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -118,6 +120,7 @@ export const Friends = () => {
   const [actionError, setActionError] = useState<string | null>(null);
   const [justSentIds, setJustSentIds] = useState<Set<string>>(new Set());
 
+  /** [Major · Interaction entre utilisateurs] Exécute une action sur une amitié (ajout, acceptation, suppression) et affiche l'erreur éventuelle. */
   const run = async (fn: () => Promise<unknown>) => {
     setActionError(null);
     try {

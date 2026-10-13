@@ -15,6 +15,7 @@ const TARGET_SCORE = 10;
 
 type Leg = TournamentTie["completedLegs"][number];
 
+/** [Minor · Tournois] Ligne d'une manche (leg) : score, statut et bouton de correction pour un administrateur. */
 function LegRow({
   leg,
   single,
@@ -45,12 +46,14 @@ function LegRow({
       (b === TARGET_SCORE && a < TARGET_SCORE));
   const unchanged = a === leg.scoreA && b === leg.scoreB;
 
+  /** [Minor · Tournois] Ouvre l'édition d'un score en pré-remplissant les champs. */
   const open = () => {
     setScoreA(String(leg.scoreA));
     setScoreB(String(leg.scoreB));
     setEditing(true);
   };
 
+  /** [Minor · Tournois] Envoie la correction du score (administrateur) et confirme ; le bracket est recalculé côté serveur. */
   const submit = async () => {
     try {
       await correct({ matchId: leg.id, scoreA: a, scoreB: b }).unwrap();
@@ -154,7 +157,7 @@ function LegRow({
   );
 }
 
-/** Admin : liste les manches terminées d'une rencontre et permet d'en corriger le score (le tableau est recalculé par le backend). */
+/** [Minor · Tournois] Admin : liste les manches terminées d'une rencontre et permet d'en corriger le score (le tableau est recalculé par le backend). */
 export function LegCorrection({ tie }: { tie: TournamentTie }) {
   const { t } = useTranslation();
   if (tie.completedLegs.length === 0) return null;

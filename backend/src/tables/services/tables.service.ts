@@ -7,27 +7,28 @@ import { TablesRepository } from '../repositories/tables.repository';
 import { TableEntity } from '../entities/table.entity';
 import { TablesGateway } from '../tables.gateway';
 
+/** [Socle produit babyfoot (hors module)] Service métier des tables de babyfoot. */
 @Injectable()
 export class TablesService {
-  /** Injecte les dépendances : TablesRepository, TablesGateway. */
+  /** [Socle produit babyfoot (hors module)] Injecte les dépendances : TablesRepository, TablesGateway. */
   constructor(
     private readonly tablesRepository: TablesRepository,
     private readonly tablesGateway: TablesGateway,
   ) {}
 
-  /** Liste toutes les tables, triées par nom. */
+  /** [Socle produit babyfoot (hors module)] Liste toutes les tables, triées par nom. */
   list(): Promise<TableEntity[]> {
     return this.tablesRepository.list();
   }
 
-  /** Relit la table, la diffuse via la gateway et la retourne (appelé par la file après chaque changement d'état). */
+  /** [Socle produit babyfoot (hors module)] Relit la table, la diffuse via la gateway et la retourne (appelé par la file après chaque changement d'état). */
   async publish(tableId: string): Promise<TableEntity> {
     const table = await this.getById(tableId);
     this.tablesGateway.emitTableUpdate(table);
     return table;
   }
 
-  /** Retrouve une table par id sans la diffuser (usage interne, ex. libellé pour une notification). */
+  /** [Socle produit babyfoot (hors module)] Retrouve une table par id sans la diffuser (usage interne, ex. libellé pour une notification). */
   async getById(tableId: string): Promise<TableEntity> {
     const table = await this.tablesRepository.findById(tableId);
     if (!table) {
@@ -39,7 +40,7 @@ export class TablesService {
     return table;
   }
 
-  /** Crée une table (nom unique) et la diffuse à tous les clients. */
+  /** [Socle produit babyfoot (hors module)] Crée une table (nom unique) et la diffuse à tous les clients. */
   async create(name: string): Promise<TableEntity> {
     await this.assertNameAvailable(name);
     const table = await this.tablesRepository.create(name);
@@ -47,7 +48,7 @@ export class TablesService {
     return table;
   }
 
-  /** Renomme une table (nom unique) et diffuse la mise à jour. */
+  /** [Socle produit babyfoot (hors module)] Renomme une table (nom unique) et diffuse la mise à jour. */
   async rename(tableId: string, name: string): Promise<TableEntity> {
     const current = await this.getById(tableId);
     if (current.name !== name) {
@@ -58,7 +59,7 @@ export class TablesService {
     return table;
   }
 
-  /** Supprime une table inutilisée (libre, sans file ni tournoi) et prévient les clients ; lève une ConflictException sinon. */
+  /** [Socle produit babyfoot (hors module)] Supprime une table inutilisée (libre, sans file ni tournoi) et prévient les clients ; lève une ConflictException sinon. */
   async remove(tableId: string): Promise<void> {
     await this.getById(tableId);
     if (await this.tablesRepository.isInUse(tableId)) {
@@ -72,7 +73,7 @@ export class TablesService {
     this.tablesGateway.emitTableRemoved(tableId);
   }
 
-  /** Lève une ConflictException si une autre table porte déjà ce nom. */
+  /** [Socle produit babyfoot (hors module)] Lève une ConflictException si une autre table porte déjà ce nom. */
   private async assertNameAvailable(name: string): Promise<void> {
     if (await this.tablesRepository.findIdByName(name)) {
       throw new ConflictException({
@@ -82,7 +83,7 @@ export class TablesService {
     }
   }
 
-  /** Réserve une table libre pour une rencontre de tournoi (moteur uniquement). */
+  /** [Socle produit babyfoot (hors module)] Réserve une table libre pour une rencontre de tournoi (moteur uniquement). */
   async claimForTournament(tableId: string, tieId: string): Promise<boolean> {
     const claimed = await this.tablesRepository.claimForTournament(
       tableId,
@@ -94,13 +95,13 @@ export class TablesService {
     return claimed;
   }
 
-  /** Libère une table réclamée par un tournoi une fois la manche terminée. */
+  /** [Socle produit babyfoot (hors module)] Libère une table réclamée par un tournoi une fois la manche terminée. */
   async releaseTournamentClaim(tableId: string, tieId: string): Promise<void> {
     await this.tablesRepository.releaseTournamentClaim(tieId);
     await this.publish(tableId);
   }
 
-  /** Libère toutes les tables réservées par un tournoi (annulation) et diffuse leur nouvel état. */
+  /** [Socle produit babyfoot (hors module)] Libère toutes les tables réservées par un tournoi (annulation) et diffuse leur nouvel état. */
   async releaseClaimsForTournament(tournamentId: string): Promise<void> {
     const tableIds =
       await this.tablesRepository.releaseClaimsForTournament(tournamentId);
@@ -109,7 +110,7 @@ export class TablesService {
     }
   }
 
-  /** Retourne les ids des tables libres et non réclamées par un tournoi, dans un ordre aléatoire. */
+  /** [Socle produit babyfoot (hors module)] Retourne les ids des tables libres et non réclamées par un tournoi, dans un ordre aléatoire. */
   listFreeUnclaimed(): Promise<string[]> {
     return this.tablesRepository.listFreeUnclaimed();
   }

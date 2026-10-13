@@ -39,22 +39,27 @@ const settingsSlice = createSlice({
   name: "settings",
   initialState,
   reducers: {
+    /** [Minor · Design system] Change le thème (clair, sombre, système). */
     setTheme: (state, action: PayloadAction<{ theme: ThemePreference }>) => {
       state.theme = action.payload.theme;
     },
+    /** [Minor · Multilingue] Change la langue de l'interface (en, fr, es). */
     setLanguage: (
       state,
       action: PayloadAction<{ language: LanguagePreference }>,
     ) => {
       state.language = action.payload.language;
     },
+    /** [Minor · Design system] Change la couleur d'accent. */
     setAccent: (state, action: PayloadAction<{ accent: AccentPreference }>) => {
       state.accent = action.payload.accent;
     },
+    /** [Minor · Design system] Change l'arrondi des composants. */
     setRadius: (state, action: PayloadAction<{ radius: RadiusPreference }>) => {
       state.radius = action.payload.radius;
     },
     /** Hydrate depuis l'API / BDD plus tard. */
+    /** [Minor · Design system] Charge les réglages enregistrés en base pour l'utilisateur connecté (source de vérité). */
     hydrateSettings: (state, action: PayloadAction<Partial<SettingsState>>) => {
       if (action.payload.theme !== undefined) {
         state.theme = action.payload.theme;

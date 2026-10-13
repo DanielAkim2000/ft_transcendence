@@ -7,6 +7,7 @@ import { ChessController } from './chess.controller';
 import { ChessGateway } from './chess.gateway';
 import { ChessService } from './services/chess.service';
 
+/** [Major · Jeu web (Échecs)] Module NestJS des parties d'échecs : regroupe contrôleur, services et dépendances. */
 @Module({
   imports: [
     PrismaModule,

@@ -41,15 +41,16 @@ type SwitchResult =
       twoFactorEnabled: true;
     };
 
+/** [Major · Gestion des utilisateurs] Contrôleur HTTP de l'authentification (inscription, connexion, tokens, mot de passe) : routes REST protégées par les guards d'authentification. */
 @Controller('auth')
 export class AuthController {
-  /** Injecte les dépendances : AuthService, ConfigService. */
+  /** [Major · Gestion des utilisateurs] Injecte les dépendances : AuthService, ConfigService. */
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
   ) {}
 
-  /** POST /auth/register : crée un compte (email, nom, mot de passe), pose le cookie de refresh token et retourne l'utilisateur avec son access token. */
+  /** [Major · Gestion des utilisateurs] POST /auth/register : crée un compte (email, nom, mot de passe), pose le cookie de refresh token et retourne l'utilisateur avec son access token. */
   @Post('register')
   async register(
     @Body() registerDto: RegisterDto,
@@ -66,7 +67,7 @@ export class AuthController {
     };
   }
 
-  /** POST /auth/login : vérifie email/mot de passe ; sans 2FA renvoie les tokens, avec 2FA pose un cookie de pré-authentification et attend le code. */
+  /** [Major · Gestion des utilisateurs] POST /auth/login : vérifie email/mot de passe ; sans 2FA renvoie les tokens, avec 2FA pose un cookie de pré-authentification et attend le code. */
   @Post('login')
   async loginFromCredentials(
     @Body() loginDto: LoginDto,
@@ -94,7 +95,7 @@ export class AuthController {
   @UseGuards(AuthGuard(FOURTY_TWO_STRATEGY))
   loginFrom42Profile() {}
 
-  /** GET /auth/42/callback : retour de l'OAuth 42 ; pose le cookie de refresh (ou de pré-authentification si 2FA) puis redirige vers le frontend. */
+  /** [Minor · OAuth 42] GET /auth/42/callback : retour de l'OAuth 42 ; pose le cookie de refresh (ou de pré-authentification si 2FA) puis redirige vers le frontend. */
   @Get('42/callback')
   @UseGuards(AuthGuard(FOURTY_TWO_STRATEGY))
   async callback(
@@ -138,7 +139,7 @@ export class AuthController {
     res.redirect(callbackUrl.toString());
   }
 
-  /** POST /auth/refresh : fait tourner le refresh token du cookie et retourne un nouvel access token. */
+  /** [Major · Gestion des utilisateurs] POST /auth/refresh : fait tourner le refresh token du cookie et retourne un nouvel access token. */
   @Post('refresh')
   @UseGuards(RefreshTokenGuard)
   async refresh(
@@ -165,7 +166,7 @@ export class AuthController {
     };
   }
 
-  /** POST /auth/logout : révoque le refresh token courant et efface les cookies d'authentification. */
+  /** [Major · Gestion des utilisateurs] POST /auth/logout : révoque le refresh token courant et efface les cookies d'authentification. */
   @Post('logout')
   @UseGuards(RefreshTokenGuard)
   async logout(
@@ -189,7 +190,7 @@ export class AuthController {
     });
   }
 
-  /** POST /auth/forgot-password : public ; envoie un lien de réinitialisation si un compte correspond (réponse identique sinon, pour ne pas révéler les emails inscrits). */
+  /** [Major · Gestion des utilisateurs] POST /auth/forgot-password : public ; envoie un lien de réinitialisation si un compte correspond (réponse identique sinon, pour ne pas révéler les emails inscrits). */
   @Post('forgot-password')
   @HttpCode(HttpStatus.ACCEPTED)
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
@@ -197,7 +198,7 @@ export class AuthController {
     return { message: 'If an account exists, an email has been sent' };
   }
 
-  /** POST /auth/reset-password : public (le jeton reçu par email fait foi) ; définit le nouveau mot de passe et déconnecte toutes les sessions. */
+  /** [Major · Gestion des utilisateurs] POST /auth/reset-password : public (le jeton reçu par email fait foi) ; définit le nouveau mot de passe et déconnecte toutes les sessions. */
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() dto: ResetPasswordDto) {
@@ -205,14 +206,14 @@ export class AuthController {
     return { message: 'Password updated' };
   }
 
-  /** GET /auth/me : retourne l'utilisateur authentifié. */
+  /** [Major · Gestion des utilisateurs] GET /auth/me : retourne l'utilisateur authentifié. */
   @Get('me')
   @UseGuards(AccessTokenGuard)
   me(@Req() req: Request & { user: UserEntity }): UserEntity {
     return req.user;
   }
 
-  /** GET /auth/admin : route de test réservée aux administrateurs. */
+  /** [Major · Permissions avancées] GET /auth/admin : route de test réservée aux administrateurs. */
   @Get('admin')
   @AuthRoles(Role.ADMIN)
   adminOnly(@Req() req: Request & { user: UserEntity }): {
@@ -222,7 +223,7 @@ export class AuthController {
     return { ok: true, role: req.user.role };
   }
 
-  /** POST /auth/2fa/verify : valide le code 2FA de la pré-authentification et ouvre la session (tokens et cookie de refresh). */
+  /** [Minor · 2FA] POST /auth/2fa/verify : valide le code 2FA de la pré-authentification et ouvre la session (tokens et cookie de refresh). */
   @Post('2fa/verify')
   @UseGuards(PreAuthTokenGuard)
   async verify2fa(
@@ -243,14 +244,14 @@ export class AuthController {
     };
   }
 
-  /** GET /auth/2fa/pending : confirme qu'une pré-authentification 2FA valide est en cours. */
+  /** [Minor · 2FA] GET /auth/2fa/pending : confirme qu'une pré-authentification 2FA valide est en cours. */
   @Get('2fa/pending')
   @UseGuards(PreAuthTokenGuard)
   pending2fa(): { pending: true } {
     return { pending: true };
   }
 
-  /** POST /auth/2fa/setup : génère un secret 2FA en attente et l'URL otpauth pour le QR code. */
+  /** [Minor · 2FA] POST /auth/2fa/setup : génère un secret 2FA en attente et l'URL otpauth pour le QR code. */
   @Post('2fa/setup')
   @UseGuards(AccessTokenGuard)
   async setup2fa(@Req() req: Request & { user: UserEntity }): Promise<{
@@ -260,7 +261,7 @@ export class AuthController {
     return await this.authService.generate2faSecret(req.user);
   }
 
-  /** POST /auth/2fa/toggle : active ou désactive la 2FA après vérification d'un code (ou d'un code de secours pour désactiver) ; retourne le nouvel état et, à l'activation, les codes de secours. */
+  /** [Minor · 2FA] POST /auth/2fa/toggle : active ou désactive la 2FA après vérification d'un code (ou d'un code de secours pour désactiver) ; retourne le nouvel état et, à l'activation, les codes de secours. */
   @Post('2fa/toggle')
   @UseGuards(AccessTokenGuard)
   async toggle2fa(
@@ -270,7 +271,7 @@ export class AuthController {
     return await this.authService.toggle2fa(req.user, dto);
   }
 
-  /** POST /auth/2fa/use-recovery-code : comme 2fa/verify mais avec un code de secours à usage unique (appli d'authentification perdue). */
+  /** [Minor · 2FA] POST /auth/2fa/use-recovery-code : comme 2fa/verify mais avec un code de secours à usage unique (appli d'authentification perdue). */
   @Post('2fa/use-recovery-code')
   @UseGuards(PreAuthTokenGuard)
   async useRecoveryCode(
@@ -296,7 +297,7 @@ export class AuthController {
     };
   }
 
-  /** GET /auth/2fa/recovery-codes : nombre de codes de secours encore utilisables (les codes eux-mêmes ne sont jamais relisibles). */
+  /** [Minor · 2FA] GET /auth/2fa/recovery-codes : nombre de codes de secours encore utilisables (les codes eux-mêmes ne sont jamais relisibles). */
   @Get('2fa/recovery-codes')
   @UseGuards(AccessTokenGuard)
   async recoveryCodesStatus(
@@ -305,7 +306,7 @@ export class AuthController {
     return { remaining: await this.authService.countRecoveryCodes(req.user) };
   }
 
-  /** POST /auth/2fa/recovery-codes/regenerate : après re-confirmation (code TOTP ou mot de passe), remplace les codes de secours et retourne le nouveau lot, visible une seule fois. */
+  /** [Minor · 2FA] POST /auth/2fa/recovery-codes/regenerate : après re-confirmation (code TOTP ou mot de passe), remplace les codes de secours et retourne le nouveau lot, visible une seule fois. */
   @Post('2fa/recovery-codes/regenerate')
   @UseGuards(AccessTokenGuard)
   async regenerateRecoveryCodes(
@@ -320,12 +321,12 @@ export class AuthController {
     };
   }
 
-  /** Chemin des cookies d'auth. `/auth` par défaut ; derrière un proxy qui préfixe l'API (ex. `/api`), il faut le chemin vu par le navigateur (`AUTH_COOKIE_PATH=/api/auth`), sinon le cookie n'est jamais renvoyé. */
+  /** [Major · Gestion des utilisateurs] Chemin des cookies d'auth. `/auth` par défaut ; derrière un proxy qui préfixe l'API (ex. `/api`), il faut le chemin vu par le navigateur (`AUTH_COOKIE_PATH=/api/auth`), sinon le cookie n'est jamais renvoyé. */
   private cookiePath(): string {
     return this.configService.get<string>('AUTH_COOKIE_PATH') || '/auth';
   }
 
-  /** Indique si les cookies doivent être « secure » (production ou frontend en https). */
+  /** [Major · Gestion des utilisateurs] Indique si les cookies doivent être « secure » (production ou frontend en https). */
   private useSecureCookies(): boolean {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') ?? '';
     return (
@@ -334,7 +335,7 @@ export class AuthController {
     );
   }
 
-  /** Pose le cookie httpOnly du refresh token (durée depuis la config) et efface le cookie de pré-authentification. */
+  /** [Major · Gestion des utilisateurs] Pose le cookie httpOnly du refresh token (durée depuis la config) et efface le cookie de pré-authentification. */
   private async setRefreshCookie(
     user: UserEntity,
     res: Response,
@@ -362,7 +363,7 @@ export class AuthController {
     });
   }
 
-  /** Pose le cookie httpOnly du token de pré-authentification 2FA (durée depuis la config). */
+  /** [Minor · 2FA] Pose le cookie httpOnly du token de pré-authentification 2FA (durée depuis la config). */
   private setPreAuthCookie(res: Response, preAuthToken: string): void {
     const expirationTime = this.configService.get<msStringValue>(
       'JWT_PRE_AUTH_TOKEN_EXPIRATION_TIME',

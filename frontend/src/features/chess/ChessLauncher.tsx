@@ -11,7 +11,7 @@ import { ROUTES } from "@/constants/routes";
 
 const PERKS = ["live", "board3d", "resume"] as const;
 
-/** Bouton flottant (bas droite des pages connectées) qui ouvre une invitation à jouer aux échecs ; masqué sur la page des échecs et sur le chat, où il recouvre le bouton d'envoi. */
+/** [Major · Jeu web (Échecs)] Bouton flottant (bas droite des pages connectées) qui ouvre une invitation à jouer aux échecs ; masqué sur la page des échecs et sur le chat, où il recouvre le bouton d'envoi. */
 export function ChessLauncher() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -32,6 +32,7 @@ export function ChessLauncher() {
 
   if (pathname.startsWith(ROUTES.CHESS) || pathname.startsWith(ROUTES.CHAT)) return null;
 
+  /** [Major · Jeu web (Échecs)] Ferme le bouton flottant et ouvre la page des échecs. */
   const play = () => {
     setOpen(false);
     navigate(ROUTES.CHESS);

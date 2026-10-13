@@ -7,6 +7,7 @@ import { NotificationsRepository } from './repositories/notifications.repository
 import { NotificationsService } from './services/notifications.service';
 
 /** Historique persistant des notifications personnelles (hors chat). Exporte NotificationsService, appelé par les autres modules à chaque événement qui concerne un utilisateur précis. */
+/** [Minor · Notifications] Module NestJS des notifications : regroupe contrôleur, services et dépendances. */
 @Module({
   imports: [PrismaModule, forwardRef(() => UsersModule)],
   controllers: [NotificationsController],

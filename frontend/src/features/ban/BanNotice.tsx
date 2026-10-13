@@ -7,7 +7,7 @@ type Props = {
   until: string | null;
 };
 
-/** Bandeau (page de connexion) qui explique à un utilisateur banni pourquoi il ne peut pas se connecter et jusqu'à quand. */
+/** [Major · Permissions avancées] Bandeau (page de connexion) qui explique à un utilisateur banni pourquoi il ne peut pas se connecter et jusqu'à quand. */
 export function BanNotice({ reason, until }: Props) {
   const { t, i18n } = useTranslation();
   return (

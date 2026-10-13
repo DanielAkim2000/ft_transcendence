@@ -17,7 +17,7 @@ export interface ChallengeOpponent {
   displayname: string;
 }
 
-/** Bouton + dialogue pour défier un joueur au babyfoot (1v1 ou 2v2) : utilisé depuis le classement et depuis le chat. */
+/** [Minor · Stats et historique] Bouton + dialogue pour défier un joueur au babyfoot (1v1 ou 2v2) : utilisé depuis le classement et depuis le chat. */
 export function ChallengeDialog({
   opponent,
   children,
@@ -31,6 +31,7 @@ export function ChallengeDialog({
   const [teammateId, setTeammateId] = useState("");
   const [propose, { isLoading }] = useProposeMatchMutation();
 
+  /** [Minor · Stats et historique] Envoie le défi (1v1 ou 2v2 avec coéquipier) à l'adversaire, ferme la boîte et confirme par un toast. */
   const submit = async () => {
     if (format === "TWO_V_TWO" && !teammateId) return;
     try {

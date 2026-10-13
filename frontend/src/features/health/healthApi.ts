@@ -21,6 +21,7 @@ export interface HealthReport {
   };
 }
 
+/** [Minor · Health check et sauvegardes] Endpoints RTK Query du domaine « health » (requêtes/mutations typées, cache et invalidation par tags) : GET_HEALTH. */
 export const healthApi = api.injectEndpoints({
   endpoints: (builder) => ({
     [HEALTH_ENDPOINTS.GET_HEALTH]: builder.query<HealthReport, void>({

@@ -3,6 +3,7 @@ import { useAppSelector } from "@/store/hooks";
 import type { ThemePreference } from "./settingsSlice";
 import { syncFavicon } from "./favicon";
 
+/** [Minor · Design system] Résout le thème « system » en clair/sombre selon la préférence du système. */
 function resolveTheme(theme: ThemePreference): "light" | "dark" {
   if (theme === "system") {
     return window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -12,11 +13,13 @@ function resolveTheme(theme: ThemePreference): "light" | "dark" {
   return theme;
 }
 
+/** [Minor · Design system] Applique la classe `dark` sur <html> selon le thème résolu. */
 function applyTheme(theme: ThemePreference) {
   const resolved = resolveTheme(theme);
   document.documentElement.classList.toggle("dark", resolved === "dark");
 }
 
+/** [Minor · Design system] Synchronise thème, couleur d'accent, arrondi et favicon avec le store et le DOM. */
 export function ThemeSync({ children }: { children: React.ReactNode }) {
   const theme = useAppSelector((s) => s.settings.theme);
   const accent = useAppSelector((s) => s.settings.accent);

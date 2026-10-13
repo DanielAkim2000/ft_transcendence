@@ -75,12 +75,13 @@ type TournamentWithAll = Prisma.TournamentGetPayload<{
 type TieWithDetails = TournamentWithAll['ties'][number];
 type EntryWithPlayers = TournamentWithAll['entries'][number];
 
+/** [Minor · Tournois] Dépôt de données des tournois : requêtes Prisma et conversion en entités. */
 @Injectable()
 export class TournamentsRepository {
   /** Injecte les dépendances : PrismaService. */
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Crée un tournoi en brouillon avec ses entrées initiales (seed attribué dans l'ordre). */
+  /** [Minor · Tournois] Crée un tournoi en brouillon avec ses entrées initiales (seed attribué dans l'ordre). */
   async create(
     name: string,
     format: MatchFormat,
@@ -107,7 +108,7 @@ export class TournamentsRepository {
     return this.toEntity(tournament);
   }
 
-  /** Ajoute une entrée au tournoi avec le seed suivant (dernier seed + 1). */
+  /** [Minor · Tournois] Ajoute une entrée au tournoi avec le seed suivant (dernier seed + 1). */
   async addEntry(
     tournamentId: string,
     player1Id: string,
@@ -128,7 +129,7 @@ export class TournamentsRepository {
     });
   }
 
-  /** Supprime une entrée du tournoi ; retourne false si elle n'existe pas. */
+  /** [Minor · Tournois] Supprime une entrée du tournoi ; retourne false si elle n'existe pas. */
   async removeEntry(tournamentId: string, entryId: string): Promise<boolean> {
     const { count } = await this.prisma.tournamentEntry.deleteMany({
       where: { id: entryId, tournamentId },
@@ -136,7 +137,7 @@ export class TournamentsRepository {
     return count > 0;
   }
 
-  /** Remplace un joueur d'une entrée par un autre, y compris dans les manches en cours (acceptées ou en attente de validation) de ses rencontres ; les manches terminées gardent le joueur qui les a jouées. Une seule transaction. */
+  /** [Minor · Tournois] Remplace un joueur d'une entrée par un autre, y compris dans les manches en cours (acceptées ou en attente de validation) de ses rencontres ; les manches terminées gardent le joueur qui les a jouées. Une seule transaction. */
   async replaceEntryPlayer(
     tournamentId: string,
     entryId: string,
@@ -184,7 +185,7 @@ export class TournamentsRepository {
     });
   }
 
-  /** Retrouve un tournoi complet (entrées, rencontres) par id, ou null. */
+  /** [Minor · Tournois] Retrouve un tournoi complet (entrées, rencontres) par id, ou null. */
   async findById(id: string): Promise<TournamentEntity | null> {
     const tournament = await this.prisma.tournament.findUnique({
       where: { id },
@@ -193,7 +194,7 @@ export class TournamentsRepository {
     return tournament ? this.toEntity(tournament) : null;
   }
 
-  /** Liste une page de tournois (les plus récents d'abord) avec leurs détails, plus le total. */
+  /** [Minor · Tournois] Liste une page de tournois (les plus récents d'abord) avec leurs détails, plus le total. */
   async listPage(
     page: PageQueryDto,
   ): Promise<{ tournaments: TournamentEntity[]; total: number }> {
@@ -212,7 +213,7 @@ export class TournamentsRepository {
     };
   }
 
-  /** Nombre de manches (dans un tournoi en cours) que l'utilisateur doit jouer ou valider. */
+  /** [Minor · Tournois] Nombre de manches (dans un tournoi en cours) que l'utilisateur doit jouer ou valider. */
   countActiveLegsForUser(userId: string): Promise<number> {
     return this.prisma.match.count({
       where: {
@@ -231,7 +232,7 @@ export class TournamentsRepository {
     });
   }
 
-  /** Statut DRAFT requis pour être lancé (vérifié par le service). */
+  /** [Minor · Tournois] Statut DRAFT requis pour être lancé (vérifié par le service). */
   async launch(
     tournamentId: string,
     totalRounds: number,
@@ -268,7 +269,7 @@ export class TournamentsRepository {
     ]);
   }
 
-  /** Passe le tournoi en statut CANCELLED et clôt ses manches en cours (en litige) pour qu'aucun joueur n'ait plus de score à saisir ou valider. */
+  /** [Minor · Tournois] Passe le tournoi en statut CANCELLED et clôt ses manches en cours (en litige) pour qu'aucun joueur n'ait plus de score à saisir ou valider. */
   async cancel(tournamentId: string): Promise<void> {
     await this.prisma.$transaction([
       this.prisma.tournament.update({
@@ -287,7 +288,7 @@ export class TournamentsRepository {
     ]);
   }
 
-  /** Met le tournoi en file d'attente (un autre tournoi est en cours). */
+  /** [Minor · Tournois] Met le tournoi en file d'attente (un autre tournoi est en cours). */
   async markQueued(tournamentId: string): Promise<void> {
     await this.prisma.tournament.update({
       where: { id: tournamentId },
@@ -295,14 +296,14 @@ export class TournamentsRepository {
     });
   }
 
-  /** Nombre de tournois en cours (au plus un en régime normal). */
+  /** [Minor · Tournois] Nombre de tournois en cours (au plus un en régime normal). */
   countInProgress(): Promise<number> {
     return this.prisma.tournament.count({
       where: { status: TournamentStatus.IN_PROGRESS },
     });
   }
 
-  /** Ids des tournois en cours, du plus ancien au plus récent. */
+  /** [Minor · Tournois] Ids des tournois en cours, du plus ancien au plus récent. */
   async listInProgressIds(): Promise<string[]> {
     const rows = await this.prisma.tournament.findMany({
       where: { status: TournamentStatus.IN_PROGRESS },
@@ -312,7 +313,7 @@ export class TournamentsRepository {
     return rows.map((row) => row.id);
   }
 
-  /** Id du tournoi en file d'attente depuis le plus longtemps, ou null. */
+  /** [Minor · Tournois] Id du tournoi en file d'attente depuis le plus longtemps, ou null. */
   async findNextQueuedId(): Promise<string | null> {
     const next = await this.prisma.tournament.findFirst({
       where: { status: TournamentStatus.QUEUED },
@@ -322,7 +323,7 @@ export class TournamentsRepository {
     return next?.id ?? null;
   }
 
-  /** Passe le tournoi en COMPLETED et enregistre la date de fin. */
+  /** [Minor · Tournois] Passe le tournoi en COMPLETED et enregistre la date de fin. */
   async complete(tournamentId: string): Promise<void> {
     await this.prisma.tournament.update({
       where: { id: tournamentId },
@@ -330,7 +331,7 @@ export class TournamentsRepository {
     });
   }
 
-  /** Rencontres READY (les deux entrées connues, aucune manche en cours) d'un tournoi. */
+  /** [Minor · Tournois] Rencontres READY (les deux entrées connues, aucune manche en cours) d'un tournoi. */
   async findReadyTies(tournamentId: string) {
     return this.prisma.tournamentTie.findMany({
       where: { tournamentId, status: TournamentTieStatus.READY },
@@ -342,7 +343,7 @@ export class TournamentsRepository {
     });
   }
 
-  /** Retrouve une rencontre avec ses deux entrées, ses manches (triées) et son tournoi. */
+  /** [Minor · Tournois] Retrouve une rencontre avec ses deux entrées, ses manches (triées) et son tournoi. */
   async findTieById(tieId: string) {
     return this.prisma.tournamentTie.findUnique({
       where: { id: tieId },
@@ -355,7 +356,7 @@ export class TournamentsRepository {
     });
   }
 
-  /** Retrouve la rencontre d'un tournoi à partir de son tour et de son emplacement dans le tableau. */
+  /** [Minor · Tournois] Retrouve la rencontre d'un tournoi à partir de son tour et de son emplacement dans le tableau. */
   async findTieByRoundSlot(tournamentId: string, round: number, slot: number) {
     return this.prisma.tournamentTie.findUnique({
       where: { tournamentId_round_slot: { tournamentId, round, slot } },
@@ -369,7 +370,7 @@ export class TournamentsRepository {
     });
   }
 
-  /** Remplace le score d'une manche de tournoi déjà terminée ; false si la manche n'existe pas ou n'est pas terminée. */
+  /** [Minor · Tournois] Remplace le score d'une manche de tournoi déjà terminée ; false si la manche n'existe pas ou n'est pas terminée. */
   async updateLegScore(
     matchId: string,
     scoreA: number,
@@ -386,7 +387,7 @@ export class TournamentsRepository {
     return count === 1;
   }
 
-  /** Supprime une manche de tournoi créée mais jamais jouée (acceptée, sans aucun score) ; false si elle a reçu un score entre-temps. */
+  /** [Minor · Tournois] Supprime une manche de tournoi créée mais jamais jouée (acceptée, sans aucun score) ; false si elle a reçu un score entre-temps. */
   async deleteUnplayedLeg(matchId: string): Promise<boolean> {
     const { count } = await this.prisma.match.deleteMany({
       where: {
@@ -399,7 +400,7 @@ export class TournamentsRepository {
     return count === 1;
   }
 
-  /** Efface l'historique des points de tournoi gagnés enregistré sur une manche. */
+  /** [Minor · Tournois] Efface l'historique des points de tournoi gagnés enregistré sur une manche. */
   async clearLegRatingDeltas(matchId: string): Promise<void> {
     await this.prisma.match.update({
       where: { id: matchId },
@@ -407,7 +408,7 @@ export class TournamentsRepository {
     });
   }
 
-  /** Rouvre une rencontre décidée : prête à être (re)jouée, sans vainqueur ni points. */
+  /** [Minor · Tournois] Rouvre une rencontre décidée : prête à être (re)jouée, sans vainqueur ni points. */
   async reopenTie(tieId: string): Promise<void> {
     await this.prisma.tournamentTie.update({
       where: { id: tieId },
@@ -419,7 +420,7 @@ export class TournamentsRepository {
     });
   }
 
-  /** Vide un côté de la rencontre du tour suivant (le vainqueur qui y avait avancé change) ; la rencontre redevient en attente d'un adversaire. */
+  /** [Minor · Tournois] Vide un côté de la rencontre du tour suivant (le vainqueur qui y avait avancé change) ; la rencontre redevient en attente d'un adversaire. */
   async clearAdvancedEntry(
     tournamentId: string,
     nextRound: number,
@@ -441,7 +442,7 @@ export class TournamentsRepository {
     });
   }
 
-  /** Retourne l'id de la rencontre et de la table d'une manche, ou null si le match n'appartient pas à un tournoi. */
+  /** [Minor · Tournois] Retourne l'id de la rencontre et de la table d'une manche, ou null si le match n'appartient pas à un tournoi. */
   async findLegMeta(
     matchId: string,
   ): Promise<{ tieId: string; tableId: string | null } | null> {
@@ -455,7 +456,7 @@ export class TournamentsRepository {
     return { tieId: match.tournamentTieId, tableId: match.tableId };
   }
 
-  /** Crée la manche (Match) suivante d'une rencontre et la lie à la table réservée. */
+  /** [Minor · Tournois] Crée la manche (Match) suivante d'une rencontre et la lie à la table réservée. */
   async createLeg(
     tieId: string,
     legNumber: number,
@@ -485,7 +486,7 @@ export class TournamentsRepository {
     return match.id;
   }
 
-  /** Remet une rencontre au statut READY (prête à être jouée sur une table). */
+  /** [Minor · Tournois] Remet une rencontre au statut READY (prête à être jouée sur une table). */
   markTieReady(tieId: string): Promise<unknown> {
     return this.prisma.tournamentTie.update({
       where: { id: tieId },
@@ -493,7 +494,7 @@ export class TournamentsRepository {
     });
   }
 
-  /** Clôt une rencontre : statut DONE, entrée gagnante et points attribués. */
+  /** [Minor · Tournois] Clôt une rencontre : statut DONE, entrée gagnante et points attribués. */
   async markTieDone(
     tieId: string,
     winnerEntryId: string,
@@ -505,7 +506,7 @@ export class TournamentsRepository {
     });
   }
 
-  /** Fait avancer le vainqueur dans la rencontre du tour suivant ; renvoie true si les 2 côtés de celle-ci sont désormais connus. */
+  /** [Minor · Tournois] Fait avancer le vainqueur dans la rencontre du tour suivant ; renvoie true si les 2 côtés de celle-ci sont désormais connus. */
   async advanceWinner(
     tournamentId: string,
     nextRound: number,
@@ -535,7 +536,7 @@ export class TournamentsRepository {
     return false;
   }
 
-  /** Ajoute les points de tournoi à la note de chaque joueur gagnant. */
+  /** [Minor · Tournois] Ajoute les points de tournoi à la note de chaque joueur gagnant. */
   async awardRatingBonus(userIds: string[], points: number): Promise<void> {
     await this.prisma.user.updateMany({
       where: { id: { in: userIds } },
@@ -543,7 +544,7 @@ export class TournamentsRepository {
     });
   }
 
-  /** Enregistre sur la manche décisive les points de tournoi gagnés, pour l'historique. */
+  /** [Minor · Tournois] Enregistre sur la manche décisive les points de tournoi gagnés, pour l'historique. */
   async setLegRatingDeltas(
     matchId: string,
     userIds: string[],
@@ -557,7 +558,7 @@ export class TournamentsRepository {
     });
   }
 
-  /** Score + composition de la manche qui vient d'être jouée (pour les badges : victoire/défaite de CETTE manche). */
+  /** [Minor · Tournois] Score + composition de la manche qui vient d'être jouée (pour les badges : victoire/défaite de CETTE manche). */
   async getLegOutcome(matchId: string): Promise<{
     scoreA: number | null;
     scoreB: number | null;
@@ -579,7 +580,7 @@ export class TournamentsRepository {
     });
   }
 
-  /** Rencontres encore actives (manche en cours) d'un tournoi, pour libérer leurs tables à l'annulation. */
+  /** [Minor · Tournois] Rencontres encore actives (manche en cours) d'un tournoi, pour libérer leurs tables à l'annulation. */
   async findInProgressTies(tournamentId: string) {
     return this.prisma.tournamentTie.findMany({
       where: { tournamentId, status: TournamentTieStatus.IN_PROGRESS },
@@ -595,7 +596,7 @@ export class TournamentsRepository {
     });
   }
 
-  /** Convertit un tournoi Prisma en TournamentEntity (rencontres converties ; le champion est le vainqueur de la finale une fois le tournoi terminé). */
+  /** [Minor · Tournois] Convertit un tournoi Prisma en TournamentEntity (rencontres converties ; le champion est le vainqueur de la finale une fois le tournoi terminé). */
   private toEntity(tournament: TournamentWithAll): TournamentEntity {
     const totalRounds = tournament.totalRounds ?? 0;
     // Une équipe est éliminée au tour où elle perd une rencontre terminée (dérivé des rencontres, jamais stocké : reste juste après une correction de score).
@@ -637,7 +638,7 @@ export class TournamentsRepository {
     });
   }
 
-  /** Convertit une entrée Prisma en TournamentEntryEntity. */
+  /** [Minor · Tournois] Convertit une entrée Prisma en TournamentEntryEntity. */
   private entryToEntity(
     entry: EntryWithPlayers,
     eliminatedRounds: Map<string, number>,
@@ -651,7 +652,7 @@ export class TournamentsRepository {
     });
   }
 
-  /** Convertit une rencontre Prisma en TournamentTieEntity : libellé du tour, manche active, manches jouées/nécessaires et score cumulé. */
+  /** [Minor · Tournois] Convertit une rencontre Prisma en TournamentTieEntity : libellé du tour, manche active, manches jouées/nécessaires et score cumulé. */
   private tieToEntity(
     tie: TieWithDetails,
     totalRounds: number,

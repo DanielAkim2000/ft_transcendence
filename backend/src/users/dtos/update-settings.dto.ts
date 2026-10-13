@@ -8,6 +8,7 @@ import type {
   RadiusPreference,
 } from '../entities/user.entity';
 
+/** [Major · Gestion des utilisateurs] Corps validé des préférences (thème, langue, accent, arrondi). */
 export class UpdateSettingsDto {
   @IsIn(['light', 'dark', 'system'])
   theme!: 'light' | 'dark' | 'system';

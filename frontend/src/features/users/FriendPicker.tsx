@@ -15,7 +15,7 @@ type FriendPickerProps = {
   excludeIds?: string[];
 };
 
-/** Liste paginée (côté backend) d'amis à choisir, un seul à la fois. */
+/** [Major · Interaction entre utilisateurs] Liste paginée (côté backend) d'amis à choisir, un seul à la fois. */
 export function FriendPicker({
   value,
   onChange,

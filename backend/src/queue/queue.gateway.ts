@@ -16,6 +16,7 @@ type QueueSocket = Socket<
   { userId?: string }
 >;
 
+/** [Major · Temps réel WebSockets] Passerelle WebSocket de la file d'attente des tables : namespace socket.io, authentification par access token et diffusion d'événements en temps réel. */
 @WebSocketGateway({
   cors: {
     origin: process.env.FRONTEND_URL,
@@ -27,13 +28,13 @@ export class QueueGateway implements OnGatewayConnection {
   @WebSocketServer()
   private server!: Server;
 
-  /** Injecte les dépendances : UsersService, JwtService. */
+  /** [Major · Temps réel WebSockets] Injecte les dépendances : UsersService, JwtService. */
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
 
-  /** Authentifie la connexion WebSocket via le JWT et fait rejoindre au client sa room personnelle (son userId) ; déconnecte si le token est invalide. */
+  /** [Major · Temps réel WebSockets] Authentifie la connexion WebSocket via le JWT et fait rejoindre au client sa room personnelle (son userId) ; déconnecte si le token est invalide. */
   async handleConnection(client: QueueSocket): Promise<void> {
     const accessToken = (client.handshake.auth as { access_token?: unknown })
       .access_token;
@@ -58,17 +59,17 @@ export class QueueGateway implements OnGatewayConnection {
     }
   }
 
-  /** Liste à jour pour tout le monde (page Tables/Queue). */
+  /** [Major · Temps réel WebSockets] Liste à jour pour tout le monde (page Tables/Queue). */
   emitQueueUpdate(tableId: string, groups: QueueGroupEntity[]) {
     this.server.emit('queue:update', { tableId, groups });
   }
 
-  /** Notification personnelle (c'est ton tour / tu as perdu ta place). */
+  /** [Major · Temps réel WebSockets] Notification personnelle (c'est ton tour / tu as perdu ta place). */
   emitToUser(userId: string, event: string, payload: unknown) {
     this.server.to(userId).emit(event, payload);
   }
 
-  /** Notification personnelle envoyée à plusieurs utilisateurs à la fois. */
+  /** [Major · Temps réel WebSockets] Notification personnelle envoyée à plusieurs utilisateurs à la fois. */
   emitToUsers(userIds: string[], event: string, payload: unknown) {
     if (userIds.length === 0) return;
     this.server.to(userIds).emit(event, payload);

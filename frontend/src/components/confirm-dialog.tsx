@@ -17,6 +17,7 @@ type ConfirmDialogProps = {
   onConfirm: () => void | Promise<void>;
 };
 
+/** [Minor · Design system] Boîte de confirmation réutilisable (titre, description, corps, variante destructive) : déclenchée par son enfant, attend la confirmation et gère l'état de chargement. */
 export function ConfirmDialog({
   children,
   title,
@@ -32,6 +33,7 @@ export function ConfirmDialog({
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
 
+  /** [Minor · Design system] Exécute l'action confirmée, affiche l'attente puis ferme la boîte. */
   const handleConfirm = async () => {
     setPending(true);
     try {

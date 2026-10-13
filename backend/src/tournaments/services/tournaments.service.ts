@@ -33,11 +33,12 @@ import { NotificationType } from '../../notifications/entities/notification.enti
 
 const MIN_ENTRIES = 4;
 
+/** [Minor · Tournois] Service métier des tournois. */
 @Injectable()
 export class TournamentsService {
   private readonly logger = new Logger(TournamentsService.name);
 
-  /** Injecte les dépendances : TournamentsRepository, TournamentsGateway, UsersService, TablesService, QueueService, BadgesService, NotificationsService. */
+  /** [Minor · Tournois] Injecte les dépendances : TournamentsRepository, TournamentsGateway, UsersService, TablesService, QueueService, BadgesService, NotificationsService. */
   constructor(
     private readonly tournamentsRepository: TournamentsRepository,
     private readonly tournamentsGateway: TournamentsGateway,
@@ -48,21 +49,21 @@ export class TournamentsService {
     private readonly notificationsService: NotificationsService,
   ) {}
 
-  /** Liste une page de tournois. */
+  /** [Minor · Tournois] Liste une page de tournois. */
   async listPage(page: PageQueryDto): Promise<Paginated<TournamentEntity>> {
     const { tournaments, total } =
       await this.tournamentsRepository.listPage(page);
     return toPaginated(tournaments, total, page);
   }
 
-  /** Nombre de manches de tournoi que l'utilisateur doit jouer ou valider (pastille de la barre latérale). */
+  /** [Minor · Tournois] Nombre de manches de tournoi que l'utilisateur doit jouer ou valider (pastille de la barre latérale). */
   async countPendingActions(userId: string): Promise<{ count: number }> {
     return {
       count: await this.tournamentsRepository.countActiveLegsForUser(userId),
     };
   }
 
-  /** Retrouve un tournoi par id ou lève une NotFoundException. */
+  /** [Minor · Tournois] Retrouve un tournoi par id ou lève une NotFoundException. */
   async getById(id: string): Promise<TournamentEntity> {
     const tournament = await this.tournamentsRepository.findById(id);
     if (!tournament) {
@@ -74,7 +75,7 @@ export class TournamentsService {
     return tournament;
   }
 
-  /** Crée un tournoi en brouillon après validation des entrées, puis le diffuse à tous les clients. */
+  /** [Minor · Tournois] Crée un tournoi en brouillon après validation des entrées, puis le diffuse à tous les clients. */
   async create(
     createdById: string,
     name: string,
@@ -94,7 +95,7 @@ export class TournamentsService {
     return tournament;
   }
 
-  /** Ajoute une entrée à un tournoi encore en brouillon, après validation de l'ensemble des entrées, puis diffuse la mise à jour. */
+  /** [Minor · Tournois] Ajoute une entrée à un tournoi encore en brouillon, après validation de l'ensemble des entrées, puis diffuse la mise à jour. */
   async addEntry(
     tournamentId: string,
     player1Id: string,
@@ -124,7 +125,7 @@ export class TournamentsService {
     return updated;
   }
 
-  /** Retire une entrée d'un tournoi encore en brouillon puis diffuse la mise à jour. */
+  /** [Minor · Tournois] Retire une entrée d'un tournoi encore en brouillon puis diffuse la mise à jour. */
   async removeEntry(
     tournamentId: string,
     entryId: string,
@@ -149,7 +150,7 @@ export class TournamentsService {
     return updated;
   }
 
-  /** Remplace un joueur d'une équipe (brouillon, en file ou en cours) : par exemple quand un joueur ne peut plus jouer. Le remplaçant doit exister et ne pas déjà participer ; les manches en cours passent à son nom, les manches terminées restent inchangées. Diffuse la mise à jour. */
+  /** [Minor · Tournois] Remplace un joueur d'une équipe (brouillon, en file ou en cours) : par exemple quand un joueur ne peut plus jouer. Le remplaçant doit exister et ne pas déjà participer ; les manches en cours passent à son nom, les manches terminées restent inchangées. Diffuse la mise à jour. */
   async replacePlayer(
     tournamentId: string,
     entryId: string,
@@ -222,6 +223,7 @@ export class TournamentsService {
   }
 
   /**
+   * [Minor · Tournois]
    * Lance le tournoi. Exige un nombre d'entrées puissance de 2 (au moins 4).
    * Les 2 tables sont réservées par un seul tournoi à la fois : si un autre est
    * déjà en cours, celui-ci est mis en file d'attente (entrées figées) et démarrera
@@ -258,7 +260,7 @@ export class TournamentsService {
     return this.start(tournamentId);
   }
 
-  /** Démarre réellement un tournoi (tirage au sort, réservation des tables, notifications, premières rencontres). Aucun autre tournoi ne doit être en cours. */
+  /** [Minor · Tournois] Démarre réellement un tournoi (tirage au sort, réservation des tables, notifications, premières rencontres). Aucun autre tournoi ne doit être en cours. */
   private async start(tournamentId: string): Promise<TournamentEntity> {
     const tournament = await this.getById(tournamentId);
     const count = tournament.entries.length;
@@ -333,7 +335,7 @@ export class TournamentsService {
     return this.getById(tournamentId);
   }
 
-  /** Annule un tournoi non terminé (brouillon, en file ou en cours) : libère ses tables, clôt ses manches en cours, diffuse la mise à jour puis fait démarrer le tournoi suivant de la file. */
+  /** [Minor · Tournois] Annule un tournoi non terminé (brouillon, en file ou en cours) : libère ses tables, clôt ses manches en cours, diffuse la mise à jour puis fait démarrer le tournoi suivant de la file. */
   async cancel(tournamentId: string): Promise<TournamentEntity> {
     const tournament = await this.getById(tournamentId);
     if (
@@ -357,7 +359,7 @@ export class TournamentsService {
     return updated;
   }
 
-  /** Quand plus aucun tournoi n'est en cours, démarre celui qui attend depuis le plus longtemps dans la file (sans effet sinon). Une erreur de démarrage est loggée, jamais propagée à l'appelant. */
+  /** [Minor · Tournois] Quand plus aucun tournoi n'est en cours, démarre celui qui attend depuis le plus longtemps dans la file (sans effet sinon). Une erreur de démarrage est loggée, jamais propagée à l'appelant. */
   private async startNextQueued(): Promise<void> {
     try {
       if ((await this.tournamentsRepository.countInProgress()) > 0) return;
@@ -370,14 +372,14 @@ export class TournamentsService {
     }
   }
 
-  /** Distribue les tables libres aux rencontres prêtes de tous les tournois en cours, le plus ancien d'abord. */
+  /** [Minor · Tournois] Distribue les tables libres aux rencontres prêtes de tous les tournois en cours, le plus ancien d'abord. */
   private async scheduleAllRunning(): Promise<void> {
     for (const id of await this.tournamentsRepository.listInProgressIds()) {
       await this.scheduleFreeTables(id);
     }
   }
 
-  /** Appelé par MatchesService quand une manche de tournoi vient d'être validée. */
+  /** [Minor · Tournois] Appelé par MatchesService quand une manche de tournoi vient d'être validée. */
   async handleLegCompleted(matchId: string): Promise<void> {
     const meta = await this.findLegMeta(matchId);
     if (!meta) return;
@@ -435,7 +437,7 @@ export class TournamentsService {
     await this.finishTie(tie, resolution.winnerSide, matchId);
   }
 
-  /** Clôt une rencontre décidée : vainqueur et points, bonus de note, badges, avancée dans le tableau (ou fin du tournoi si c'est la finale), notifications, puis distribution des tables. `decisiveMatchId` est la manche qui porte l'historique des points gagnés. */
+  /** [Minor · Tournois] Clôt une rencontre décidée : vainqueur et points, bonus de note, badges, avancée dans le tableau (ou fin du tournoi si c'est la finale), notifications, puis distribution des tables. `decisiveMatchId` est la manche qui porte l'historique des points gagnés. */
   private async finishTie(
     tie: NonNullable<Awaited<ReturnType<TournamentsRepository['findTieById']>>>,
     winnerSide: 'A' | 'B' | null,
@@ -551,6 +553,7 @@ export class TournamentsService {
   }
 
   /**
+   * [Minor · Tournois]
    * Corrige le score d'une manche de tournoi déjà terminée (erreur de saisie, équipes inversées…).
    * Les garde-fous passent d'abord, rien n'est modifié sinon : tournoi en cours ou terminé,
    * pas de changement de vainqueur dans un tournoi terminé, le tour suivant ne doit pas avoir
@@ -604,6 +607,7 @@ export class TournamentsService {
       });
     }
 
+    /** [Minor · Tournois] Convertit les manches (legs) de la confrontation au format attendu par planLegCorrection (numéro, statut, scores). */
     const toTieLegs = (): TieLeg[] =>
       tie.legs.map((leg) => ({
         legNumber: leg.legNumber ?? 1,
@@ -750,7 +754,7 @@ export class TournamentsService {
     return { tournamentId: tournament.id, tournamentName: updated.name };
   }
 
-  /** Annule les matchs du tour suivant qui ont été créés mais jamais joués (table libérée, match supprimé) parce que l'équipe qui y avait avancé change ; prévient les joueurs de la rencontre. */
+  /** [Minor · Tournois] Annule les matchs du tour suivant qui ont été créés mais jamais joués (table libérée, match supprimé) parce que l'équipe qui y avait avancé change ; prévient les joueurs de la rencontre. */
   private async cancelUnplayedLegs(
     nextTie: Awaited<ReturnType<TournamentsRepository['findTieByRoundSlot']>>,
     tournament: { id: string; name: string },
@@ -785,7 +789,7 @@ export class TournamentsService {
     );
   }
 
-  /** Appelé par MatchesService quand une manche de tournoi part en litige (ou expire) : on la rejoue. */
+  /** [Minor · Tournois] Appelé par MatchesService quand une manche de tournoi part en litige (ou expire) : on la rejoue. */
   async handleLegDisputed(matchId: string): Promise<void> {
     const meta = await this.findLegMeta(matchId);
     if (!meta) return;
@@ -797,14 +801,14 @@ export class TournamentsService {
     await this.scheduleAllRunning();
   }
 
-  /** Retourne la rencontre et la table liées à une manche (match) de tournoi, ou null si le match n'en est pas une. */
+  /** [Minor · Tournois] Retourne la rencontre et la table liées à une manche (match) de tournoi, ou null si le match n'en est pas une. */
   private async findLegMeta(
     matchId: string,
   ): Promise<{ tieId: string; tableId: string | null } | null> {
     return this.tournamentsRepository.findLegMeta(matchId);
   }
 
-  /** Distribue les rencontres prêtes sur les tables libres, une table libre <-> une rencontre au hasard. */
+  /** [Minor · Tournois] Distribue les rencontres prêtes sur les tables libres, une table libre <-> une rencontre au hasard. */
   private async scheduleFreeTables(tournamentId: string): Promise<void> {
     const freeTableIds = await this.tablesService.listFreeUnclaimed();
     if (freeTableIds.length === 0) return;
@@ -871,7 +875,7 @@ export class TournamentsService {
     this.tournamentsGateway.broadcast('tournament:updated', updated);
   }
 
-  /** Vérifie les entrées : joueur 2 requis en 2v2 et interdit en 1v1, pas de paire avec soi-même, aucun joueur en double, tous les joueurs existent. */
+  /** [Minor · Tournois] Vérifie les entrées : joueur 2 requis en 2v2 et interdit en 1v1, pas de paire avec soi-même, aucun joueur en double, tous les joueurs existent. */
   private async validateEntries(
     format: MatchFormat,
     entries: { player1Id: string; player2Id?: string }[],

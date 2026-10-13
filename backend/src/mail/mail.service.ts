@@ -8,12 +8,13 @@ import { createTransport, type Transporter } from 'nodemailer';
 const DEFAULT_SMTP_PORT = 1025;
 const DEFAULT_FROM = '42 Baby <no-reply@ft.local>';
 
+/** [Major · Gestion des utilisateurs] Service métier des emails transactionnels. */
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
   private readonly transporter: Transporter | null;
 
-  /** Crée le transport SMTP si SMTP_HOST est défini ; sinon les emails sont simplement écrits dans les logs (dev sans serveur mail). */
+  /** [Major · Gestion des utilisateurs] Crée le transport SMTP si SMTP_HOST est défini ; sinon les emails sont simplement écrits dans les logs (dev sans serveur mail). */
   constructor() {
     const host = process.env.SMTP_HOST;
     this.transporter = host
@@ -28,7 +29,7 @@ export class MailService {
       : null;
   }
 
-  /** Envoie un email texte ; lève une ServiceUnavailableException si l'envoi échoue. */
+  /** [Major · Gestion des utilisateurs] Envoie un email texte ; lève une ServiceUnavailableException si l'envoi échoue. */
   async send(to: string, subject: string, text: string): Promise<void> {
     if (!this.transporter) {
       this.logger.warn(
@@ -52,7 +53,7 @@ export class MailService {
     }
   }
 
-  /** Comme send, mais n'échoue jamais : pour les emails de simple information (l'opération a déjà eu lieu). */
+  /** [Major · Gestion des utilisateurs] Comme send, mais n'échoue jamais : pour les emails de simple information (l'opération a déjà eu lieu). */
   async sendQuietly(to: string, subject: string, text: string): Promise<void> {
     try {
       await this.send(to, subject, text);

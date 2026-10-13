@@ -7,6 +7,7 @@ import {
   MaxLength,
 } from 'class-validator';
 
+/** [Major · Gestion des utilisateurs] Corps validé de la connexion (email, mot de passe). */
 export class LoginDto {
   @ApiProperty({
     description: 'The email of the user',

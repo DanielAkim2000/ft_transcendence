@@ -47,6 +47,7 @@ export interface UpdateAdminUserRequest {
   password?: string;
 }
 
+/** [Major · Permissions avancées] Endpoints RTK Query du domaine « admin » (requêtes/mutations typées, cache et invalidation par tags) : LIST_USERS, CREATE_USER, UPDATE_USER, DELETE_USER. */
 export const adminApi = api.injectEndpoints({
   endpoints: (builder) => ({
     [ADMIN_ENDPOINTS.LIST_USERS]: builder.query<

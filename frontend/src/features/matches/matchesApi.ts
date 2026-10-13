@@ -51,6 +51,7 @@ export interface HistoryArgs extends PageArgs {
   sort?: "newest" | "oldest" | "score";
 }
 
+/** [Minor · Stats et historique] Endpoints RTK Query du domaine « matches » (requêtes/mutations typées, cache et invalidation par tags) : LIST_MATCHES, LIST_MATCH_HISTORY, COUNT_MATCH_ACTIONS, PROPOSE_MATCH, RESPOND_MATCH, SUBMIT_SCORE, SUBMIT_TOURNAMENT_SCORE, CORRECT_TOURNAMENT_SCORE, VALIDATE_SCORE. */
 export const matchesApi = api.injectEndpoints({
   endpoints: (builder) => ({
     [MATCHES_ENDPOINTS.LIST_MATCHES]: builder.query<Paginated<Match>, PageArgs | void>({
@@ -143,7 +144,7 @@ export const matchesApi = api.injectEndpoints({
 
 type Dispatch = (action: unknown) => unknown;
 
-/** Un match a changé (websocket) : les listes sont paginées côté backend, on les recharge au lieu de les patcher. */
+/** [Minor · Stats et historique] Un match a changé (websocket) : les listes sont paginées côté backend, on les recharge au lieu de les patcher. */
 export function applyMatchToCache(dispatch: Dispatch, match: Match) {
   dispatch(matchesApi.util.invalidateTags([TAG_TYPES.MATCHES]));
   // Manche de tournoi : l'adversaire voit le score soumis sans recharger la page.

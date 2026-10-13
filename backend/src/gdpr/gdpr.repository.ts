@@ -6,12 +6,13 @@ const names = { select: { id: true, displayname: true } } as const;
 /** Nom affiché à la place d'un joueur dont le compte a été supprimé. */
 export const ANONYMOUS_NAME = 'Deleted user';
 
+/** [Minor · RGPD] Dépôt de données RGPD (export des données et suppression du compte) : requêtes Prisma et conversion en entités. */
 @Injectable()
 export class GdprRepository {
   /** Injecte les dépendances : PrismaService. */
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Toutes les données personnelles d'un utilisateur, sans secrets (hash du mot de passe, secrets 2FA, jetons) ni contenu d'autres personnes (seuls les messages qu'il a écrits). */
+  /** [Minor · RGPD] Toutes les données personnelles d'un utilisateur, sans secrets (hash du mot de passe, secrets 2FA, jetons) ni contenu d'autres personnes (seuls les messages qu'il a écrits). */
   async collectUserData(userId: string) {
     const involved = [
       { teamAPlayer1Id: userId },
@@ -130,7 +131,7 @@ export class GdprRepository {
     };
   }
 
-  /** Raisons qui empêchent de supprimer le compte : tournois créés encore ouverts, participation à un tournoi non terminé (le tableau serait cassé) ou partie de babyfoot en cours. */
+  /** [Minor · RGPD] Raisons qui empêchent de supprimer le compte : tournois créés encore ouverts, participation à un tournoi non terminé (le tableau serait cassé) ou partie de babyfoot en cours. */
   async findDeletionBlockers(userId: string): Promise<{
     openTournamentsCreated: number;
     openTournamentsJoined: number;
@@ -158,6 +159,7 @@ export class GdprRepository {
   }
 
   /**
+   * [Minor · RGPD]
    * Efface les données personnelles et anonymise le compte, en une transaction.
    * La ligne User est conservée (sous un nom neutre, sans email ni identifiant)
    * pour que les matchs terminés, les notes Elo et les tournois des autres

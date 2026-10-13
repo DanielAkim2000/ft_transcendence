@@ -38,6 +38,7 @@ const AdminUsers = lazyPage(() => import("@/pages/AdminUsers"), "AdminUsers");
 const AdminTables = lazyPage(() => import("@/pages/AdminTables"), "AdminTables");
 const BanPanel = lazyPage(() => import("@/pages/BanPanel"), "BanPanel");
 
+/** [Major · Frameworks React + NestJS] Composant racine : déclare toutes les routes React Router (pages publiques, puis pages protégées derrière ProtectedLayout/DashboardLayout, puis pages admin derrière RequireAdmin) avec un Suspense pour le chargement paresseux des pages. */
 function App() {
   return (
     <Suspense fallback={<PageFallback fullscreen />}>

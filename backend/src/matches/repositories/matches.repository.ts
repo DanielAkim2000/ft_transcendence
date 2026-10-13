@@ -49,7 +49,7 @@ type MatchWithPlayers = Prisma.MatchGetPayload<{
   } | null;
 };
 
-/** Filtre Prisma : matchs où l'utilisateur est l'un des (jusqu'à 4) joueurs. */
+/** [Minor · Stats et historique] Filtre Prisma : matchs où l'utilisateur est l'un des (jusqu'à 4) joueurs. */
 const involvesUser = (userId: string): Prisma.MatchWhereInput => ({
   OR: [
     { teamAPlayer1Id: userId },
@@ -59,12 +59,13 @@ const involvesUser = (userId: string): Prisma.MatchWhereInput => ({
   ],
 });
 
+/** [Minor · Stats et historique] Dépôt de données des matchs (défis, scores, Elo, historique) : requêtes Prisma et conversion en entités. */
 @Injectable()
 export class MatchesRepository {
   /** Injecte les dépendances : PrismaService. */
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Crée un match PENDING avec le challenger (et son coéquipier en 2v2) en équipe A et l'adversaire en équipe B. */
+  /** [Minor · Stats et historique] Crée un match PENDING avec le challenger (et son coéquipier en 2v2) en équipe A et l'adversaire en équipe B. */
   async create(
     format: MatchFormat,
     challengerId: string,
@@ -83,7 +84,7 @@ export class MatchesRepository {
     return this.toEntity(match);
   }
 
-  /** Retrouve un match par son id avec ses joueurs, ou null. */
+  /** [Minor · Stats et historique] Retrouve un match par son id avec ses joueurs, ou null. */
   async findById(id: string): Promise<MatchEntity | null> {
     const match = await this.prisma.match.findUnique({
       where: { id },
@@ -92,7 +93,7 @@ export class MatchesRepository {
     return match ? this.toEntity(match) : null;
   }
 
-  /** Défis de la ladder (hors manches de tournoi, qui ont leur propre page) et hors défis refusés : une page, les plus récemment modifiés d'abord, plus le total. */
+  /** [Minor · Stats et historique] Défis de la ladder (hors manches de tournoi, qui ont leur propre page) et hors défis refusés : une page, les plus récemment modifiés d'abord, plus le total. */
   async listForUser(
     userId: string,
     page: PageQueryDto,
@@ -115,7 +116,7 @@ export class MatchesRepository {
     return { matches: matches.map((match) => this.toEntity(match)), total };
   }
 
-  /** Historique : matchs terminés (ladder + manches de tournoi) filtrés par nom de joueur, résultat, format et origine, triés, une page plus le total. */
+  /** [Minor · Recherche avancée] Historique : matchs terminés (ladder + manches de tournoi) filtrés par nom de joueur, résultat, format et origine, triés, une page plus le total. */
   async listHistoryForUser(
     userId: string,
     query: HistoryQueryDto,
@@ -180,6 +181,7 @@ export class MatchesRepository {
         this.prisma.match.findMany({ where, include: withTournament }),
         this.prisma.match.count({ where }),
       ]);
+      /** [Minor · Recherche avancée] Écart de points entre les deux équipes : clé de tri « écart de score » de l'historique. */
       const gap = (m: { scoreA: number | null; scoreB: number | null }) =>
         Math.abs((m.scoreA ?? 0) - (m.scoreB ?? 0));
       all.sort(
@@ -203,7 +205,7 @@ export class MatchesRepository {
     return { matches: matches.map((match) => this.toEntity(match)), total };
   }
 
-  /** Nombre de défis de la ladder qui attendent une action de l'utilisateur : répondre à un défi reçu, jouer un match accepté, ou valider un score soumis par l'équipe adverse. */
+  /** [Minor · Stats et historique] Nombre de défis de la ladder qui attendent une action de l'utilisateur : répondre à un défi reçu, jouer un match accepté, ou valider un score soumis par l'équipe adverse. */
   async countActionableForUser(userId: string): Promise<number> {
     const matches = await this.prisma.match.findMany({
       where: {
@@ -241,7 +243,7 @@ export class MatchesRepository {
     }).length;
   }
 
-  /** Atomique : seul le destinataire du défi peut le refuser, tant qu'il est en attente. */
+  /** [Minor · Stats et historique] Atomique : seul le destinataire du défi peut le refuser, tant qu'il est en attente. */
   async decline(id: string, userId: string): Promise<boolean> {
     const { count } = await this.prisma.match.updateMany({
       where: { id, teamBPlayer1Id: userId, status: MatchStatus.PENDING },
@@ -250,7 +252,7 @@ export class MatchesRepository {
     return count === 1;
   }
 
-  /** Atomique : seul le destinataire peut accepter (et fournir son coéquipier en 2v2). */
+  /** [Minor · Stats et historique] Atomique : seul le destinataire peut accepter (et fournir son coéquipier en 2v2). */
   async accept(
     id: string,
     userId: string,
@@ -267,7 +269,7 @@ export class MatchesRepository {
     return count === 1;
   }
 
-  /** Atomique : ne réussit que si le match est encore accepté (pas déjà soumis). */
+  /** [Minor · Stats et historique] Atomique : ne réussit que si le match est encore accepté (pas déjà soumis). */
   async submitScore(
     id: string,
     userId: string,
@@ -289,7 +291,7 @@ export class MatchesRepository {
     return count === 1;
   }
 
-  /** Atomique : ne réussit que si le score est encore en attente de validation. */
+  /** [Minor · Stats et historique] Atomique : ne réussit que si le score est encore en attente de validation. */
   async completeWithValidation(id: string, userId: string): Promise<boolean> {
     const { count } = await this.prisma.match.updateMany({
       where: { id, status: MatchStatus.PENDING_VALIDATION },
@@ -298,7 +300,7 @@ export class MatchesRepository {
     return count === 1;
   }
 
-  /** Atomique : un administrateur saisit le score d'une manche de tournoi acceptée ; le match est terminé d'un coup (pas de validation par l'adversaire). */
+  /** [Minor · Stats et historique] Atomique : un administrateur saisit le score d'une manche de tournoi acceptée ; le match est terminé d'un coup (pas de validation par l'adversaire). */
   async completeByAdmin(
     id: string,
     adminId: string,
@@ -324,7 +326,7 @@ export class MatchesRepository {
     return count === 1;
   }
 
-  /** Atomique : litige, manuel ou après expiration du délai de validation. */
+  /** [Minor · Stats et historique] Atomique : litige, manuel ou après expiration du délai de validation. */
   async dispute(id: string, userId?: string): Promise<boolean> {
     const { count } = await this.prisma.match.updateMany({
       where: { id, status: MatchStatus.PENDING_VALIDATION },
@@ -333,7 +335,7 @@ export class MatchesRepository {
     return count === 1;
   }
 
-  /** Notes + nb de matchs des 4 joueurs, pour le calcul Elo côté service. */
+  /** [Minor · Stats et historique] Notes + nb de matchs des 4 joueurs, pour le calcul Elo côté service. */
   async getTeamsForElo(
     id: string,
   ): Promise<{ teamA: EloPlayerInput[]; teamB: EloPlayerInput[] } | null> {
@@ -350,7 +352,7 @@ export class MatchesRepository {
     if (!match) {
       return null;
     }
-    /** Type guard : écarte les joueurs absents (null), par exemple l'équipier d'un 1v1. */
+    /** [Minor · Stats et historique] Type guard : écarte les joueurs absents (null), par exemple l'équipier d'un 1v1. */
     const notNull = (player: EloPlayerInput | null): player is EloPlayerInput =>
       player !== null;
     return {
@@ -362,6 +364,7 @@ export class MatchesRepository {
   /** Enregistre en base les nouvelles notes Elo de chaque joueur, en une seule transaction. */
   // matchesPlayed/xp sont gérés exclusivement par BadgesService (recordGameResult) :
   // ne pas les incrémenter ici pour éviter un double comptage.
+  /** [Minor · Stats et historique] Applique les nouvelles notes Elo (utilisateurs + deltas du match) en une transaction ; matchesPlayed/xp restent gérés par BadgesService. */
   async applyEloUpdates(
     matchId: string,
     results: EloPlayerResult[],
@@ -386,9 +389,9 @@ export class MatchesRepository {
     ]);
   }
 
-  /** Convertit une ligne Prisma en MatchEntity (équipes, scores, infos publiques des joueurs, infos de tournoi). */
+  /** [Minor · Stats et historique] Convertit une ligne Prisma en MatchEntity (équipes, scores, infos publiques des joueurs, infos de tournoi). */
   private toEntity(match: MatchWithPlayers): MatchEntity {
-    /** Réduit un joueur Prisma à ses champs publics (id, nom, avatar, note), ou null. */
+    /** [Minor · Stats et historique] Réduit un joueur Prisma à ses champs publics (id, nom, avatar, note), ou null. */
     const publicPlayer = (
       player: {
         id: string;

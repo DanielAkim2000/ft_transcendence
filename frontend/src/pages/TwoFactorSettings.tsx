@@ -32,6 +32,7 @@ import { getErrorMessage } from "@/lib/get-error-message";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { PageFallback } from "@/components/page-fallback";
 
+/** [Minor · 2FA] Page de gestion de la 2FA : activation (QR code + code de confirmation), désactivation et codes de secours. */
 export const TwoFactorSettings = () => {
   const { t } = useTranslation();
   const { data: user, isLoading: isLoadingUser } = useMeQuery();
@@ -51,6 +52,7 @@ export const TwoFactorSettings = () => {
 
   const twoFactorSchema = useMemo(() => createTwoFactorSchema(t), [t]);
 
+  /** [Minor · 2FA] Efface le QR code et le secret affichés pendant l'activation. */
   const clearSetupPreview = () => {
     setQrDataUrl(null);
     setSecret(null);
@@ -84,6 +86,7 @@ export const TwoFactorSettings = () => {
     },
   });
 
+  /** [Minor · 2FA] Demande au backend un nouveau secret TOTP et affiche son QR code pour l'application d'authentification. */
   const handleSetup = async () => {
     setServerError(null);
     setSuccessMessage(null);
@@ -103,7 +106,7 @@ export const TwoFactorSettings = () => {
     }
   };
 
-  /** Désactivation avec un code de secours (appli perdue) ; sinon passe par le formulaire du code de l'appli. */
+  /** [Minor · 2FA] Désactivation avec un code de secours (appli perdue) ; sinon passe par le formulaire du code de l'appli. */
   const handleDisable = async () => {
     if (!recoveryMode) {
       await form.handleSubmit();

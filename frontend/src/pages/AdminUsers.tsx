@@ -23,7 +23,7 @@ import { getInitials, resolveAvatarUrl } from "@/lib/user";
 
 const PAGE_SIZE = 10;
 
-/** Gestion des comptes par un administrateur : recherche, création, modification et suppression. */
+/** [Major · Permissions avancées] Gestion des comptes par un administrateur : recherche, création, modification et suppression. */
 export const AdminUsers = () => {
   const { t } = useTranslation();
   const { data: me } = useMeQuery();
@@ -40,6 +40,7 @@ export const AdminUsers = () => {
   const [deleteUser] = useAdminDeleteUserMutation();
   useClampedPage(page, data?.totalPages, setPage);
 
+  /** [Major · Permissions avancées] Supprime un utilisateur (confirmation préalable) et affiche un toast. */
   const handleDelete = async (user: AdminUser) => {
     try {
       await deleteUser(user.id).unwrap();

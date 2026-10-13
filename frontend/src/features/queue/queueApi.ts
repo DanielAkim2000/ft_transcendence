@@ -40,6 +40,7 @@ export interface JoinQueueArgs {
   teammateId?: string;
 }
 
+/** [Socle produit babyfoot (hors module)] Endpoints RTK Query du domaine « queue » (requêtes/mutations typées, cache et invalidation par tags) : LIST_QUEUE, GET_MY_QUEUE_GROUP, JOIN_QUEUE, RESPOND_INVITE, CONFIRM_GROUP, LEAVE_GROUP. */
 export const queueApi = api.injectEndpoints({
   endpoints: (builder) => ({
     [QUEUE_ENDPOINTS.LIST_QUEUE]: builder.query<QueueGroup[], string>({
@@ -89,7 +90,7 @@ export const queueApi = api.injectEndpoints({
 
 type Dispatch = (action: unknown) => unknown;
 
-/** Remplace la file d'attente d'une table dans le cache (réponse websocket). */
+/** [Socle produit babyfoot (hors module)] Remplace la file d'attente d'une table dans le cache (réponse websocket). */
 export function applyQueueUpdateToCache(
   dispatch: Dispatch,
   tableId: string,

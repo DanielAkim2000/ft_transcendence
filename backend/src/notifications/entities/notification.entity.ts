@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+/** [Minor · Notifications] Types de notifications émises par l'application. */
 export enum NotificationType {
   FRIEND_REQUEST = 'FRIEND_REQUEST',
   MATCH_PROPOSED = 'MATCH_PROPOSED',
@@ -146,6 +147,7 @@ export interface NotificationDataMap {
   };
 }
 
+/** [Minor · Notifications] Notification d'un utilisateur (type, charge utile, lue ou non). */
 export class NotificationEntity {
   @ApiProperty({ example: 'clx123456789' })
   id!: string;
@@ -164,7 +166,7 @@ export class NotificationEntity {
   @ApiProperty({ example: '2026-01-01T12:00:00.000Z' })
   createdAt!: Date;
 
-  /** Copie dans l'instance les champs fournis. */
+  /** [Minor · Notifications] Copie dans l'instance les champs fournis. */
   constructor(notification: Partial<NotificationEntity>) {
     Object.assign(this, notification);
   }

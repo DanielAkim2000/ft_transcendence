@@ -24,10 +24,12 @@ import { PageFallback } from "@/components/page-fallback";
 
 const PLAYER_SEARCH_PAGE_SIZE = 8;
 
+/** [Minor · Tournois] Vrai si le nombre d'inscriptions est une puissance de deux d'au moins 4 (condition pour lancer un tournoi). */
 function isPowerOfTwo(n: number): boolean {
   return n >= 4 && (n & (n - 1)) === 0;
 }
 
+/** [Minor · Tournois] Page d'un tournoi : inscriptions, bracket par tours, lancement, annulation, remplacement de joueur et corrections de score. */
 export const TournamentDetail = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
@@ -54,6 +56,7 @@ export const TournamentDetail = () => {
       ? [me, ...searchResults]
       : searchResults;
 
+  /** [Minor · Tournois] Exécute une action sur le tournoi avec toast d'erreur. */
   const run = async (action: () => Promise<unknown>) => {
     try {
       await action();
@@ -71,6 +74,7 @@ export const TournamentDetail = () => {
     tournament.entries.flatMap((entry) => [entry.player1.id, entry.player2?.id].filter((v): v is string => !!v)),
   );
 
+  /** [Minor · Tournois] Ajoute un joueur choisi (en solo ou comme 2e joueur d'une paire en 2v2) aux inscriptions. */
   const pickUser = (user: { id: string; displayname: string }) => {
     if (!id) return;
     if (tournament.format === "ONE_V_ONE") {

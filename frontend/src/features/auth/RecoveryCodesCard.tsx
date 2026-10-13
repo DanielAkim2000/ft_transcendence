@@ -26,7 +26,7 @@ type Props = {
   onCodesChange: (codes: string[] | null) => void;
 };
 
-/** Affiche les codes de secours 2FA une seule fois (avec consigne de les noter), puis permet de les régénérer après re-confirmation. */
+/** [Minor · 2FA] Affiche les codes de secours 2FA une seule fois (avec consigne de les noter), puis permet de les régénérer après re-confirmation. */
 export function RecoveryCodesCard({ codes, onCodesChange }: Props) {
   const { t } = useTranslation();
   const { data: status } = useGetRecoveryCodesStatusQuery();
@@ -38,6 +38,7 @@ export function RecoveryCodesCard({ codes, onCodesChange }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  /** [Minor · 2FA] Réinitialise le formulaire de régénération (mode, code, mot de passe, erreur). */
   const resetForm = () => {
     setConfirming(false);
     setMode("code");
@@ -46,6 +47,7 @@ export function RecoveryCodesCard({ codes, onCodesChange }: Props) {
     setError(null);
   };
 
+  /** [Minor · 2FA] Régénère les codes de secours après confirmation par un code TOTP ou le mot de passe, puis remonte les nouveaux codes. */
   const handleRegenerate = async () => {
     setError(null);
     try {
@@ -59,6 +61,7 @@ export function RecoveryCodesCard({ codes, onCodesChange }: Props) {
     }
   };
 
+  /** [Minor · 2FA] Copie les codes de secours dans le presse-papiers. */
   const handleCopy = async () => {
     if (!codes) return;
     try {
@@ -69,6 +72,7 @@ export function RecoveryCodesCard({ codes, onCodesChange }: Props) {
     }
   };
 
+  /** [Minor · 2FA] Télécharge les codes de secours dans un fichier texte. */
   const handleDownload = () => {
     if (!codes) return;
     const url = URL.createObjectURL(

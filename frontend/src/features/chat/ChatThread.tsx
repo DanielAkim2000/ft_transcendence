@@ -40,11 +40,13 @@ import { formatTime, otherUserId } from "@/features/chat/chatHelpers";
 const TYPING_STOP_DELAY_MS = 1500;
 const TYPING_EXPIRE_MS = 3000;
 
+/** [Minor · Chat avancé] Vrai si le message a été lu par l'interlocuteur (accusé de lecture : son dernier horodatage de lecture dépasse celui du message). */
 const isReadByPeer = (message: Message, conversation: Conversation) =>
   Boolean(conversation.peerLastReadAt) &&
   new Date(message.createdAt).getTime() <=
     new Date(conversation.peerLastReadAt as string).getTime();
 
+/** [Major · Interaction entre utilisateurs] Avatar de l'interlocuteur chargé depuis son profil. */
 export function PeerAvatar({
   userId,
   className,
@@ -68,7 +70,7 @@ export function PeerAvatar({
   );
 }
 
-/** Fil de discussion d'une conversation. `embedded` : version compacte (sans retour ni défi), pour l'afficher à côté d'une partie. */
+/** [Major · Interaction entre utilisateurs] Fil de discussion d'une conversation. `embedded` : version compacte (sans retour ni défi), pour l'afficher à côté d'une partie. */
 export function ChatThread({
   conversation,
   meId,
@@ -143,6 +145,7 @@ export function ChatThread({
     };
   }, [conversation.id, peerId]);
 
+  /** [Minor · Chat avancé] À chaque frappe : met à jour le brouillon, signale « écrit » à l'interlocuteur et programme le signal « a arrêté » après un court délai. */
   const handleDraftChange = (value: string) => {
     setDraft(value);
     emitTyping(conversation.id, true);
@@ -177,11 +180,13 @@ export function ChatThread({
     }
   }, [isFetching, cursor, messages.length]);
 
+  /** [Minor · Chat avancé] Charge les messages plus anciens (pagination par curseur) en conservant la position de défilement. */
   const loadOlder = () => {
     lengthBeforeLoadMore.current = messages.length;
     setCursor(messages[messages.length - 1]?.id);
   };
 
+  /** [Major · Interaction entre utilisateurs] Envoie le message (trim, ignore le vide), signale la fin de saisie et efface le brouillon. */
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     const content = draft.trim();
@@ -200,6 +205,7 @@ export function ChatThread({
     }
   };
 
+  /** [Minor · Chat avancé] Bloque ou débloque l'interlocuteur selon l'état courant et confirme par un toast. */
   const toggleBlock = async () => {
     try {
       if (isBlockedByMe) {

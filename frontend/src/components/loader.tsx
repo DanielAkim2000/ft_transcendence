@@ -8,7 +8,7 @@ type LoaderProps = {
   className?: string;
 };
 
-/** Indicateur de chargement aux couleurs de l'app : invite de terminal, barre indéterminée et libellé. N'apparaît qu'après un court délai pour éviter tout clignotement sur les chargements rapides. */
+/** [Minor · Design system] Indicateur de chargement aux couleurs de l'app : invite de terminal, barre indéterminée et libellé. N'apparaît qu'après un court délai pour éviter tout clignotement sur les chargements rapides. */
 export function Loader({ label, className }: LoaderProps) {
   const { t } = useTranslation();
   return (

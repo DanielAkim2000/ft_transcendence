@@ -11,6 +11,7 @@ import { MatchesRepository } from './repositories/matches.repository';
 import { MatchesService } from './services/matches.service';
 
 /** Défis et matchs : proposition, acceptation, score, validation/litige et calcul Elo. */
+/** [Minor · Stats et historique] Module NestJS des matchs (défis, scores, Elo, historique) : regroupe contrôleur, services et dépendances. */
 @Module({
   imports: [
     PrismaModule,

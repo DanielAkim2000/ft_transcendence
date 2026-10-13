@@ -1,10 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+/** [Minor · Stats et historique] Formats de match : 1v1 ou 2v2. */
 export enum MatchFormat {
   ONE_V_ONE = 'ONE_V_ONE',
   TWO_V_TWO = 'TWO_V_TWO',
 }
 
+/** [Minor · Stats et historique] États du cycle de vie d'un match (proposé, accepté, score soumis, terminé, contesté…). */
 export enum MatchStatus {
   PENDING = 'PENDING',
   DECLINED = 'DECLINED',
@@ -14,6 +16,7 @@ export enum MatchStatus {
   DISPUTED = 'DISPUTED',
 }
 
+/** [Minor · Stats et historique] Joueur d'un match (id, nom, avatar, note Elo). */
 export class MatchPlayer {
   @ApiProperty({ example: 'clx123456789' })
   id!: string;
@@ -25,6 +28,7 @@ export class MatchPlayer {
   rating!: number;
 }
 
+/** [Minor · Stats et historique] Match avec ses équipes, scores, deltas Elo et infos de tournoi. */
 export class MatchEntity {
   @ApiProperty({ example: 'clx123456789' })
   id!: string;
@@ -79,7 +83,7 @@ export class MatchEntity {
   })
   tableId!: string | null;
 
-  /** Copie dans l'instance les champs fournis. */
+  /** [Minor · Stats et historique] Copie dans l'instance les champs fournis. */
   constructor(match: Partial<MatchEntity>) {
     Object.assign(this, match);
   }

@@ -10,12 +10,13 @@ import { Role, UserEntity } from '../../users/entities/users.entity';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import type { Request } from 'express';
 
+/** [Major · Permissions avancées] Guard de rôles : n'autorise la route que si l'utilisateur possède l'un des rôles déclarés par @Roles / @AuthRoles (403 sinon). */
 @Injectable()
 export class RolesGuard implements CanActivate {
   /** Injecte les dépendances : Reflector. */
   constructor(private readonly reflector: Reflector) {}
 
-  /** Autorise la requête si la route n'exige aucun rôle ou si l'utilisateur authentifié possède l'un des rôles requis ; 401 sans utilisateur, 403 sinon. */
+  /** [Major · Permissions avancées] Autorise la requête si la route n'exige aucun rôle ou si l'utilisateur authentifié possède l'un des rôles requis ; 401 sans utilisateur, 403 sinon. */
   canActivate(context: ExecutionContext): boolean {
     const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
       context.getHandler(),

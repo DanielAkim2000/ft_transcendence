@@ -17,6 +17,7 @@ type PresenceSocket = Socket<
   { userId?: string }
 >;
 
+/** [Major · Temps réel WebSockets] Passerelle WebSocket de la présence en ligne : namespace socket.io, authentification par access token et diffusion d'événements en temps réel. */
 @WebSocketGateway({
   cors: {
     origin: process.env.FRONTEND_URL,
@@ -30,14 +31,14 @@ export class PresenceGateway
   private onlineUsers: Map<string, Set<string>> = new Map();
   @WebSocketServer()
   private server!: Server;
-  /** Injecte les dépendances : UsersService, JwtService. */
+  /** [Major · Temps réel WebSockets] Injecte les dépendances : UsersService, JwtService. */
   constructor(
     @Inject(forwardRef(() => UsersService))
     private readonly userService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
 
-  /** Authentifie la connexion WebSocket via le JWT, enregistre la session, envoie au client la présence de ses amis et passe l'utilisateur en ligne à sa première session. */
+  /** [Major · Temps réel WebSockets] Authentifie la connexion WebSocket via le JWT, enregistre la session, envoie au client la présence de ses amis et passe l'utilisateur en ligne à sa première session. */
   async handleConnection(client: PresenceSocket): Promise<void> {
     const accessToken = (client.handshake.auth as { access_token?: unknown })
       .access_token;
@@ -72,7 +73,7 @@ export class PresenceGateway
     }
   }
 
-  /** Retire la session fermée ; quand la dernière session de l'utilisateur se ferme, il passe hors ligne. */
+  /** [Major · Temps réel WebSockets] Retire la session fermée ; quand la dernière session de l'utilisateur se ferme, il passe hors ligne. */
   async handleDisconnect(client: PresenceSocket): Promise<void> {
     const userId = client.data.userId;
     if (typeof userId !== 'string' || !userId) {
@@ -90,7 +91,7 @@ export class PresenceGateway
     this.onlineUsers.delete(userId);
   }
 
-  /** Prévient tous les amis de l'utilisateur de son changement de statut (presence:update). */
+  /** [Major · Temps réel WebSockets] Prévient tous les amis de l'utilisateur de son changement de statut (presence:update). */
   private async notifyFriends(
     userId: string,
     status: Status.ONLINE | Status.OFFLINE,
@@ -105,7 +106,7 @@ export class PresenceGateway
     }
   }
 
-  /** Envoie au client la liste de ses amis actuellement en ligne (presence:sync). */
+  /** [Major · Temps réel WebSockets] Envoie au client la liste de ses amis actuellement en ligne (presence:sync). */
   private async syncPresence(
     client: PresenceSocket,
     userId: string,
@@ -122,12 +123,12 @@ export class PresenceGateway
     client.emit('presence:sync', { onlineFriends });
   }
 
-  /** Envoie un événement à toutes les sessions ouvertes d'un utilisateur. */
+  /** [Major · Temps réel WebSockets] Envoie un événement à toutes les sessions ouvertes d'un utilisateur. */
   emitToUser(userId: string, event: string, payload: unknown): void {
     this.server.to(userId).emit(event, payload);
   }
 
-  /** Prévient un utilisateur qu'il vient d'être banni (auth:banned, avec motif et date de fin) puis ferme toutes ses sessions WebSocket : il passe hors ligne. */
+  /** [Major · Temps réel WebSockets] Prévient un utilisateur qu'il vient d'être banni (auth:banned, avec motif et date de fin) puis ferme toutes ses sessions WebSocket : il passe hors ligne. */
   kickBannedUser(
     userId: string,
     payload: { reason: string; endTime: Date | null },
@@ -136,7 +137,7 @@ export class PresenceGateway
     this.server.in(userId).disconnectSockets(true);
   }
 
-  /** Enregistre le statut en ligne/hors ligne en base puis prévient les amis. */
+  /** [Major · Temps réel WebSockets] Enregistre le statut en ligne/hors ligne en base puis prévient les amis. */
   private async setUserPresence(
     userId: string,
     status: Status.ONLINE | Status.OFFLINE,

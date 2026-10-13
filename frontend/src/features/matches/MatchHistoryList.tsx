@@ -19,7 +19,7 @@ const selectClass =
 
 type Filters = Pick<HistoryArgs, "result" | "format" | "source" | "sort">;
 
-/** Barre de recherche avancée : nom d'un joueur, résultat, format, origine et tri. */
+/** [Minor · Recherche avancée] Barre de recherche avancée : nom d'un joueur, résultat, format, origine et tri. */
 function HistoryFilters({
   search,
   onSearch,
@@ -103,6 +103,7 @@ function HistoryFilters({
   );
 }
 
+/** [Minor · Stats et historique] Ligne de l'historique : victoire/défaite, adversaires, score, format, origine (ladder/tournoi) et date. */
 function HistoryRow({ match, meId }: { match: Match; meId: string }) {
   const { t, i18n } = useTranslation();
   const myTeam = teamOf(match, meId);
@@ -112,6 +113,7 @@ function HistoryRow({ match, meId }: { match: Match; meId: string }) {
   const mine = myTeam === "A" ? match.teamA : match.teamB;
   const theirs = myTeam === "A" ? match.teamB : match.teamA;
   const delta = match.ratingDeltas?.[meId] ?? null;
+  /** [Minor · Stats et historique] Noms d'une équipe joints par « & ». */
   const names = (team: Match["teamA"]) => team.map((p) => p.displayname).join(" & ");
 
   return (
@@ -169,6 +171,7 @@ function HistoryRow({ match, meId }: { match: Match; meId: string }) {
   );
 }
 
+/** [Minor · Recherche avancée] Historique des matchs avec recherche par joueur, filtres (résultat, format, origine), tri (date, écart de score) et pagination côté serveur. */
 export function MatchHistoryList({ meId }: { meId: string }) {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);

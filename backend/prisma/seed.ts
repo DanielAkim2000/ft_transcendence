@@ -26,14 +26,14 @@ const SEED_PASSWORD = 'Test1234!';
 const SEED_ID_PREFIX = 'seed_';
 
 const now = new Date();
-/** Date située il y a `days` jours à l'heure donnée (minutes variables pour éviter des horaires identiques). */
+/** [Major · Gestion des utilisateurs] Date située il y a `days` jours à l'heure donnée (minutes variables pour éviter des horaires identiques). */
 function daysAgo(days: number, hour = 12) {
   const d = new Date(now);
   d.setDate(d.getDate() - days);
   d.setHours(hour, (days * 7) % 60, 0, 0);
   return d;
 }
-/** Date située il y a `minutes` minutes. */
+/** [Major · Gestion des utilisateurs] Date située il y a `minutes` minutes. */
 function minutesAgo(minutes: number) {
   return new Date(now.getTime() - minutes * 60_000);
 }
@@ -72,9 +72,9 @@ const seedUsers: SeedUser[] = [
   { slug: 'antoine', displayname: 'Antoine Muller' },
 ];
 
-/** Identifiant stable d'un compte de démo à partir de son slug. */
+/** [Major · Gestion des utilisateurs] Identifiant stable d'un compte de démo à partir de son slug. */
 const idOf = (slug: string) => `${SEED_ID_PREFIX}${slug}`;
-/** Adresse e-mail d'un compte de démo : prenom.nom@ft.local (l'admin garde admin@ft.local). */
+/** [Major · Gestion des utilisateurs] Adresse e-mail d'un compte de démo : prenom.nom@ft.local (l'admin garde admin@ft.local). */
 const emailOf = (user: SeedUser) =>
   user.slug === 'admin'
     ? 'admin@ft.local'
@@ -242,7 +242,7 @@ const conversations: SeedConversation[] = [
   },
 ];
 
-/** Reconstruit en une transaction les comptes de démo (utilisateurs, amis, conversations) et remet les deux tables de baby-foot à vide. */
+/** [Major · Gestion des utilisateurs] Reconstruit en une transaction les comptes de démo (utilisateurs, amis, conversations) et remet les deux tables de baby-foot à vide. */
 async function main() {
   const prisma = new PrismaClient({
     adapter: new PrismaPg({ connectionString: databaseUrl }),
@@ -361,7 +361,7 @@ async function main() {
   console.log('  Tables libres, aucun match ni tournoi.');
 }
 
-/** Hash entier déterministe d'une chaîne, pour produire des valeurs pseudo-aléatoires reproductibles. */
+/** [Major · Gestion des utilisateurs] Hash entier déterministe d'une chaîne, pour produire des valeurs pseudo-aléatoires reproductibles. */
 function hashCode(str: string) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {

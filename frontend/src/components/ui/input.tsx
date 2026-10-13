@@ -3,6 +3,7 @@ import { Input as InputPrimitive } from "@base-ui/react/input"
 
 import { cn } from "@/lib/utils"
 
+/** [Minor · Design system] Champ de saisie texte stylé aux couleurs du design system. */
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
     <InputPrimitive

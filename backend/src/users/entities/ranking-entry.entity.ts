@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+/** [Major · Gestion des utilisateurs] Ligne du classement (rang, joueur, note, matchs). */
 export class RankingEntry {
   @ApiProperty({ example: 'clx123456789' })
   id!: string;
@@ -17,7 +18,7 @@ export class RankingEntry {
   @ApiProperty({ example: 5 })
   matchesPlayed!: number;
 
-  /** Copie dans l'instance les champs fournis. */
+  /** [Minor · Stats et historique] Copie dans l'instance les champs fournis. */
   constructor(entry: RankingEntry) {
     Object.assign(this, entry);
   }

@@ -10,6 +10,7 @@ import {
 } from 'class-validator';
 import { Role } from '../../users/entities/users.entity';
 
+/** [Major · Permissions avancées] Corps validé de création d'un utilisateur par un administrateur. */
 export class CreateAdminUserDto {
   @IsString()
   @IsNotEmpty()

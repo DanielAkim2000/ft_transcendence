@@ -4,6 +4,7 @@ import { hydrateSettings } from "@/features/settings/settingsSlice";
 import { useAppDispatch } from "@/store/hooks";
 
 /**
+ * [Minor · Multilingue]
  * Quand l'utilisateur est connecté, la BDD est la source de vérité :
  * on hydrate Redux (+ persist local) depuis /auth/me.
  */

@@ -4,6 +4,7 @@ import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip"
 
 import { cn } from "@/lib/utils"
 
+/** [Minor · Design system] Fournit le délai d'affichage commun des info-bulles. */
 function TooltipProvider({
   delay = 0,
   ...props
@@ -17,14 +18,17 @@ function TooltipProvider({
   )
 }
 
+/** [Minor · Design system] Info-bulle (racine). */
 function Tooltip({ ...props }: TooltipPrimitive.Root.Props) {
   return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
 }
 
+/** [Minor · Design system] Élément qui déclenche l'info-bulle. */
 function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props) {
   return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
 }
 
+/** [Minor · Design system] Contenu positionné de l'info-bulle. */
 function TooltipContent({
   className,
   side = "top",

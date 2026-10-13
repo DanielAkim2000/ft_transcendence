@@ -30,12 +30,13 @@ export const SCORE_ENTRY_TIMEOUT_MS = 10 * 60 * 1000;
 /** Nombre de votes distincts (d'une même catégorie) nécessaires pour agir sur « libérer la table ». */
 export const RELEASE_VOTES_REQUIRED = 2;
 
+/** [Socle produit babyfoot (hors module)] Service métier de la file d'attente des tables. */
 @Injectable()
 export class QueueService implements OnModuleInit {
   private readonly logger = new Logger(QueueService.name);
   private readonly timers = new Map<string, NodeJS.Timeout>();
 
-  /** Injecte les dépendances : QueueRepository, QueueGateway, TablesService, UsersService, NotificationsService. */
+  /** [Socle produit babyfoot (hors module)] Injecte les dépendances : QueueRepository, QueueGateway, TablesService, UsersService, NotificationsService. */
   constructor(
     private readonly queueRepository: QueueRepository,
     private readonly queueGateway: QueueGateway,
@@ -44,7 +45,7 @@ export class QueueService implements OnModuleInit {
     private readonly notificationsService: NotificationsService,
   ) {}
 
-  /** Réarme les délais (appel, invitation, saisie du score) qui étaient en cours avant un redémarrage. */
+  /** [Socle produit babyfoot (hors module)] Réarme les délais (appel, invitation, saisie du score) qui étaient en cours avant un redémarrage. */
   async onModuleInit(): Promise<void> {
     try {
       for (const group of await this.queueRepository.listCalled()) {
@@ -64,17 +65,17 @@ export class QueueService implements OnModuleInit {
     }
   }
 
-  /** Liste les groupes en file (en attente ou appelés) d'une table, dans l'ordre d'arrivée. */
+  /** [Socle produit babyfoot (hors module)] Liste les groupes en file (en attente ou appelés) d'une table, dans l'ordre d'arrivée. */
   listForTable(tableId: string): Promise<QueueGroupEntity[]> {
     return this.queueRepository.listQueue(tableId);
   }
 
-  /** Retourne le groupe actif de l'utilisateur (invité, en file, appelé ou sur la table), ou null. */
+  /** [Socle produit babyfoot (hors module)] Retourne le groupe actif de l'utilisateur (invité, en file, appelé ou sur la table), ou null. */
   getMyGroup(userId: string): Promise<QueueGroupEntity | null> {
     return this.queueRepository.findActiveGroupForUser(userId);
   }
 
-  /** Crée un groupe pour l'utilisateur sur une table : le premier groupe d'une table vide fixe le format, les suivants le suivent ; en 2v2 l'ami choisi reçoit une invitation, sinon le groupe entre directement en file. */
+  /** [Socle produit babyfoot (hors module)] Crée un groupe pour l'utilisateur sur une table : le premier groupe d'une table vide fixe le format, les suivants le suivent ; en 2v2 l'ami choisi reçoit une invitation, sinon le groupe entre directement en file. */
   async join(
     userId: string,
     tableId: string,
@@ -174,7 +175,7 @@ export class QueueService implements OnModuleInit {
     return (await this.queueRepository.findGroupById(group.id)) ?? group;
   }
 
-  /** Le coéquipier invité accepte (le groupe entre en file) ou refuse (le groupe est annulé et le demandeur prévenu). */
+  /** [Socle produit babyfoot (hors module)] Le coéquipier invité accepte (le groupe entre en file) ou refuse (le groupe est annulé et le demandeur prévenu). */
   async respondToInvite(
     userId: string,
     groupId: string,
@@ -238,7 +239,7 @@ export class QueueService implements OnModuleInit {
     return this.queueRepository.findGroupById(groupId);
   }
 
-  /** Un groupe appelé confirme sa présence : il prend sa place sur la table (et le match démarre si l'autre côté est occupé). */
+  /** [Socle produit babyfoot (hors module)] Un groupe appelé confirme sa présence : il prend sa place sur la table (et le match démarre si l'autre côté est occupé). */
   async confirm(userId: string, groupId: string): Promise<QueueGroupEntity> {
     const group = await this.getGroup(groupId);
     this.assertMember(group, userId);
@@ -258,7 +259,7 @@ export class QueueService implements OnModuleInit {
     return (await this.queueRepository.findGroupById(groupId)) ?? group;
   }
 
-  /** Un membre quitte : invitation ou file annulée (le suivant est appelé si le groupe l'était), ou sortie d'un groupe seul sur la table. Impossible en plein match : il faut libérer la table. */
+  /** [Socle produit babyfoot (hors module)] Un membre quitte : invitation ou file annulée (le suivant est appelé si le groupe l'était), ou sortie d'un groupe seul sur la table. Impossible en plein match : il faut libérer la table. */
   async leave(userId: string, groupId: string): Promise<void> {
     const group = await this.getGroup(groupId);
     this.assertMember(group, userId);
@@ -310,7 +311,7 @@ export class QueueService implements OnModuleInit {
     await this.advance(group.tableId);
   }
 
-  /** Vote « libérer la table », ouvert à n'importe quel utilisateur connecté (un second appel retire son propre vote) : à 2 joueurs du match distincts, le score est demandé ; à 2 utilisateurs distincts extérieurs au match (spectateurs, file d'attente…), la table est jugée abandonnée et le match est annulé sur-le-champ, sans score. */
+  /** [Socle produit babyfoot (hors module)] Vote « libérer la table », ouvert à n'importe quel utilisateur connecté (un second appel retire son propre vote) : à 2 joueurs du match distincts, le score est demandé ; à 2 utilisateurs distincts extérieurs au match (spectateurs, file d'attente…), la table est jugée abandonnée et le match est annulé sur-le-champ, sans score. */
   async toggleReleaseVote(
     userId: string,
     tableId: string,
@@ -368,7 +369,7 @@ export class QueueService implements OnModuleInit {
     return this.tablesService.publish(tableId);
   }
 
-  /** Appelé par MatchesService quand le score d'un match de table est soumis : le groupe perdant sort ; le gagnant reste si un groupe attend (il est alors appelé), sinon la table est libérée. */
+  /** [Socle produit babyfoot (hors module)] Appelé par MatchesService quand le score d'un match de table est soumis : le groupe perdant sort ; le gagnant reste si un groupe attend (il est alors appelé), sinon la table est libérée. */
   async onMatchScored(matchId: string): Promise<void> {
     const match = await this.queueRepository.getMatchInfo(matchId);
     if (
@@ -426,7 +427,7 @@ export class QueueService implements OnModuleInit {
     await this.advance(tableId);
   }
 
-  /** Libération forcée par un administrateur : le match en cours est annulé sans score (ou le groupe seul installé sur la table sort), les joueurs en sont informés et la file d'attente avance. Refusée si une rencontre de tournoi occupe la table (il faut en saisir le score) ou si la table est déjà libre. */
+  /** [Socle produit babyfoot (hors module)] Libération forcée par un administrateur : le match en cours est annulé sans score (ou le groupe seul installé sur la table sort), les joueurs en sont informés et la file d'attente avance. Refusée si une rencontre de tournoi occupe la table (il faut en saisir le score) ou si la table est déjà libre. */
   async adminReleaseTable(tableId: string): Promise<TableEntity> {
     const table = await this.queueRepository.getTable(tableId);
     if (!table) {
@@ -486,7 +487,7 @@ export class QueueService implements OnModuleInit {
     return this.tablesService.publish(tableId);
   }
 
-  /** Vide une table qu'un tournoi vient de réquisitionner (file, groupes sur la table, match en cours) et retourne les joueurs qui étaient sur la table. */
+  /** [Socle produit babyfoot (hors module)] Vide une table qu'un tournoi vient de réquisitionner (file, groupes sur la table, match en cours) et retourne les joueurs qui étaient sur la table. */
   async clearForTable(tableId: string): Promise<string[]> {
     const cancelled = await this.queueRepository.cancelAllForTable(tableId);
     this.clearTimer(`score:${tableId}`);
@@ -513,7 +514,7 @@ export class QueueService implements OnModuleInit {
       .flatMap((group) => group.userIds);
   }
 
-  /** Vérifie l'ami invité : présent, différent du demandeur, existant, ami confirmé, et libre (pas déjà dans un groupe). */
+  /** [Socle produit babyfoot (hors module)] Vérifie l'ami invité : présent, différent du demandeur, existant, ami confirmé, et libre (pas déjà dans un groupe). */
   private async assertValidTeammate(
     userId: string,
     teammateId: string | undefined,
@@ -553,7 +554,7 @@ export class QueueService implements OnModuleInit {
     }
   }
 
-  /** Place le groupe sur la table, lance le match si les 2 côtés sont occupés et diffuse la table ; false s'il n'y a plus de place. */
+  /** [Socle produit babyfoot (hors module)] Place le groupe sur la table, lance le match si les 2 côtés sont occupés et diffuse la table ; false s'il n'y a plus de place. */
   private async placeOnTable(groupId: string): Promise<boolean> {
     const placed = await this.queueRepository.placeOnTable(groupId);
     if (!placed) {
@@ -582,7 +583,7 @@ export class QueueService implements OnModuleInit {
     return true;
   }
 
-  /** Fait avancer la file : place directement le groupe `directGroupId` s'il est en tête et qu'un côté est libre sans personne d'appelé, puis appelle autant de groupes en attente qu'il y a de côtés libres. */
+  /** [Socle produit babyfoot (hors module)] Fait avancer la file : place directement le groupe `directGroupId` s'il est en tête et qu'un côté est libre sans personne d'appelé, puis appelle autant de groupes en attente qu'il y a de côtés libres. */
   private async advance(
     tableId: string,
     directGroupId?: string,
@@ -633,7 +634,7 @@ export class QueueService implements OnModuleInit {
     await this.tablesService.publish(tableId);
   }
 
-  /** Programme l'expiration d'un groupe appelé. */
+  /** [Socle produit babyfoot (hors module)] Programme l'expiration d'un groupe appelé. */
   private scheduleCallExpiry(
     groupId: string,
     tableId: string,
@@ -644,21 +645,21 @@ export class QueueService implements OnModuleInit {
     );
   }
 
-  /** Programme l'annulation d'une invitation restée sans réponse. */
+  /** [Socle produit babyfoot (hors module)] Programme l'annulation d'une invitation restée sans réponse. */
   private scheduleInviteExpiry(groupId: string, tableId: string): void {
     this.setTimer(`invite:${groupId}`, INVITE_TIMEOUT_MS, () =>
       this.handleInviteExpiry(groupId, tableId),
     );
   }
 
-  /** Programme l'annulation du match si le score n'est pas saisi après la libération de la table. */
+  /** [Socle produit babyfoot (hors module)] Programme l'annulation du match si le score n'est pas saisi après la libération de la table. */
   private scheduleScoreTimeout(tableId: string): void {
     this.setTimer(`score:${tableId}`, SCORE_ENTRY_TIMEOUT_MS, () =>
       this.handleScoreTimeout(tableId),
     );
   }
 
-  /** Marque le groupe comme expiré s'il est toujours appelé, prévient ses joueurs et appelle le suivant. */
+  /** [Socle produit babyfoot (hors module)] Marque le groupe comme expiré s'il est toujours appelé, prévient ses joueurs et appelle le suivant. */
   private async handleCallExpiry(
     groupId: string,
     tableId: string,
@@ -687,7 +688,7 @@ export class QueueService implements OnModuleInit {
     await this.advance(tableId);
   }
 
-  /** Annule le groupe dont le coéquipier n'a pas répondu à temps et prévient les deux joueurs. */
+  /** [Socle produit babyfoot (hors module)] Annule le groupe dont le coéquipier n'a pas répondu à temps et prévient les deux joueurs. */
   private async handleInviteExpiry(
     groupId: string,
     tableId: string,
@@ -719,7 +720,7 @@ export class QueueService implements OnModuleInit {
     await this.tablesService.publish(tableId);
   }
 
-  /** Score jamais saisi dans le délai : le match est annulé et la table repart à zéro. */
+  /** [Socle produit babyfoot (hors module)] Score jamais saisi dans le délai : le match est annulé et la table repart à zéro. */
   private async handleScoreTimeout(tableId: string): Promise<void> {
     const table = await this.queueRepository.getTable(tableId);
     if (!table?.endRequestedAt) {
@@ -732,7 +733,7 @@ export class QueueService implements OnModuleInit {
     await this.forceCancelMatch(tableId, matchId, 'timeout');
   }
 
-  /** Annule un match de table sans score (délai de saisie écoulé, ou table jugée abandonnée par des tiers) : les deux groupes sortent, la table est remise à zéro et la file avance. */
+  /** [Socle produit babyfoot (hors module)] Annule un match de table sans score (délai de saisie écoulé, ou table jugée abandonnée par des tiers) : les deux groupes sortent, la table est remise à zéro et la file avance. */
   private async forceCancelMatch(
     tableId: string,
     matchId: string,
@@ -762,7 +763,7 @@ export class QueueService implements OnModuleInit {
     await this.advance(tableId);
   }
 
-  /** Retrouve un groupe par id ou lève une NotFoundException. */
+  /** [Socle produit babyfoot (hors module)] Retrouve un groupe par id ou lève une NotFoundException. */
   private async getGroup(groupId: string): Promise<QueueGroupEntity> {
     const group = await this.queueRepository.findGroupById(groupId);
     if (!group) {
@@ -774,7 +775,7 @@ export class QueueService implements OnModuleInit {
     return group;
   }
 
-  /** Lève une ForbiddenException si l'utilisateur ne fait pas partie du groupe. */
+  /** [Socle produit babyfoot (hors module)] Lève une ForbiddenException si l'utilisateur ne fait pas partie du groupe. */
   private assertMember(group: QueueGroupEntity, userId: string): void {
     if (!group.players.some((player) => player.id === userId)) {
       throw new ForbiddenException({
@@ -784,13 +785,13 @@ export class QueueService implements OnModuleInit {
     }
   }
 
-  /** Diffuse en temps réel la liste à jour de la file d'une table à tous les clients. */
+  /** [Socle produit babyfoot (hors module)] Diffuse en temps réel la liste à jour de la file d'une table à tous les clients. */
   private async publishQueue(tableId: string): Promise<void> {
     const groups = await this.queueRepository.listQueue(tableId);
     this.queueGateway.emitQueueUpdate(tableId, groups);
   }
 
-  /** Arme (en remplaçant l'éventuel précédent) un minuteur dont les erreurs sont journalisées au lieu de faire tomber le process. */
+  /** [Socle produit babyfoot (hors module)] Arme (en remplaçant l'éventuel précédent) un minuteur dont les erreurs sont journalisées au lieu de faire tomber le process. */
   private setTimer(
     key: string,
     delayMs: number,
@@ -806,7 +807,7 @@ export class QueueService implements OnModuleInit {
     this.timers.set(key, timer);
   }
 
-  /** Annule et oublie un minuteur, s'il existe. */
+  /** [Socle produit babyfoot (hors module)] Annule et oublie un minuteur, s'il existe. */
   private clearTimer(key: string): void {
     const timer = this.timers.get(key);
     if (timer) {

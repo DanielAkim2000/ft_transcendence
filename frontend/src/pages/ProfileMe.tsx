@@ -33,6 +33,7 @@ import { getErrorMessage } from "@/lib/get-error-message";
 import { getInitials, resolveAvatarUrl } from "@/lib/user";
 import { PageFallback } from "@/components/page-fallback";
 
+/** [Major · Gestion des utilisateurs] Page « mon profil » : charge l'utilisateur connecté puis affiche son formulaire. */
 export const ProfileMe = () => {
   const { data: user, isLoading } = useMeQuery();
 
@@ -43,6 +44,7 @@ export const ProfileMe = () => {
   return <ProfileMeForm user={user} />;
 };
 
+/** [Major · Gestion des utilisateurs] Formulaire du profil : modification du nom d'affichage, envoi de l'avatar (JPEG/PNG/WebP) et aperçu. */
 function ProfileMeForm({
   user,
 }: {

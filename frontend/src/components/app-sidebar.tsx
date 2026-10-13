@@ -41,6 +41,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Logo } from "@/components/logo";
 import { ROUTES } from "@/constants/routes";
 
+/** [Minor · Design system] Barre latérale de navigation : liens (accueil, chat, amis, tables, tournois…), pastilles de notification (messages non lus, demandes, tour à jouer), profil, thème et déconnexion. */
 export function AppSidebar() {
   const { t } = useTranslation();
   const location = useLocation();
@@ -113,6 +114,7 @@ export function AppSidebar() {
     }] : []),
   ] as const;
 
+  /** [Minor · Design system] Texte d'accessibilité de la pastille d'un lien selon l'événement en attente (messages, amis, tour, invitation, défi). */
   const dotLabel = (url: string): string | null => {
     if (url === ROUTES.CHAT && hasUnread) return t("chat.newMessages");
     if (url === ROUTES.FRIENDS && hasPendingFriends)
@@ -128,6 +130,7 @@ export function AppSidebar() {
     return null;
   };
 
+  /** [Minor · Design system] Déconnecte l'utilisateur (même si la session est déjà invalide) puis redirige vers /login. */
   const handleLogout = async () => {
     try {
       await logout().unwrap();

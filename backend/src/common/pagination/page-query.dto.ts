@@ -19,7 +19,7 @@ export class PageQueryDto {
   limit: number = DEFAULT_PAGE_SIZE;
 }
 
-/** Nombre d'éléments à sauter pour atteindre la page demandée. */
+/** [Minor · Recherche avancée] Nombre d'éléments à sauter pour atteindre la page demandée. */
 export function pageOffset({ page, limit }: PageQueryDto): number {
   return (page - 1) * limit;
 }

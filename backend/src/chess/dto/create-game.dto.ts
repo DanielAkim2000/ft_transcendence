@@ -7,6 +7,7 @@ import {
   Min,
 } from 'class-validator';
 
+/** [Major · Jeu web (Échecs)] Corps validé d'un défi d'échecs (adversaire, couleur, pendule, incrément, classée). */
 export class CreateGameDto {
   @IsString()
   opponentId: string;

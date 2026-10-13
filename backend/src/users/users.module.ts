@@ -8,6 +8,7 @@ import { UsersService } from './services/users.services';
 import { UsersController } from './users.controller';
 
 /** Utilisateurs : profils, paramètres, avatar, amis et classement. Exporte UsersService. */
+/** [Major · Gestion des utilisateurs] Module NestJS des utilisateurs (profil, amis, classement) : regroupe contrôleur, services et dépendances. */
 @Module({
   imports: [
     PrismaModule,

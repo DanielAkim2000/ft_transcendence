@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 
+/** [Minor · Design system] Liens vers la politique de confidentialité, les conditions et la page de statut. */
 export function LegalLinks({ className }: { className?: string }) {
   const { t } = useTranslation();
   return (

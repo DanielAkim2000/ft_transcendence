@@ -42,6 +42,7 @@ export interface BabyTable {
   currentTournamentTie: TableTournamentTie | null;
 }
 
+/** [Socle produit babyfoot (hors module)] Endpoints RTK Query du domaine « tables » (requêtes/mutations typées, cache et invalidation par tags) : LIST_TABLES, VOTE_RELEASE_TABLE, CREATE_TABLE, RENAME_TABLE, ADMIN_RELEASE_TABLE, DELETE_TABLE. */
 export const tablesApi = api.injectEndpoints({
   endpoints: (builder) => ({
     [TABLES_ENDPOINTS.LIST_TABLES]: builder.query<BabyTable[], void>({
@@ -53,6 +54,7 @@ export const tablesApi = api.injectEndpoints({
         url: API_ROUTES.queueReleaseVote(tableId),
         method: "POST",
       }),
+      /** [Socle produit babyfoot (hors module)] Après une action sur une table : applique la table renvoyée dans le cache ; en cas de conflit (409) le WebSocket apporte la mise à jour. */
       async onQueryStarted(_id, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
@@ -92,7 +94,7 @@ export const tablesApi = api.injectEndpoints({
 
 type Dispatch = (action: unknown) => unknown;
 
-/** Remplace / insère une table dans le cache (réponse HTTP ou websocket). */
+/** [Socle produit babyfoot (hors module)] Remplace / insère une table dans le cache (réponse HTTP ou websocket). */
 export function applyTableToCache(dispatch: Dispatch, table: BabyTable) {
   dispatch(
     tablesApi.util.updateQueryData(
@@ -108,7 +110,7 @@ export function applyTableToCache(dispatch: Dispatch, table: BabyTable) {
   );
 }
 
-/** Retire une table du cache (supprimée par un admin, via websocket). */
+/** [Socle produit babyfoot (hors module)] Retire une table du cache (supprimée par un admin, via websocket). */
 export function removeTableFromCache(dispatch: Dispatch, tableId: string) {
   dispatch(
     tablesApi.util.updateQueryData(

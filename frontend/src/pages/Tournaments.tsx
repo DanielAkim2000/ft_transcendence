@@ -20,6 +20,7 @@ const STATUS_STYLES: Record<string, string> = {
   CANCELLED: "text-destructive",
 };
 
+/** [Minor · Tournois] Page des tournois : liste paginée avec statut et accès à la création pour les administrateurs. */
 export const Tournaments = () => {
   const { t } = useTranslation();
   const { data: me } = useMeQuery();

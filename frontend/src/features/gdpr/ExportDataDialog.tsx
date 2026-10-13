@@ -11,7 +11,7 @@ const MIME: Record<ExportFormat, string> = {
   json: "application/json;charset=utf-8",
 };
 
-/** Bouton « Télécharger mes données » : ouvre un choix de format (CSV ou JSON), puis télécharge le fichier. */
+/** [Minor · RGPD] Bouton « Télécharger mes données » : ouvre un choix de format (CSV ou JSON), puis télécharge le fichier. */
 export function ExportDataDialog({
   children,
 }: {
@@ -21,6 +21,7 @@ export function ExportDataDialog({
   const [open, setOpen] = useState(false);
   const [exportData, { isLoading }] = useExportMyDataMutation();
 
+  /** [Minor · RGPD] Demande l'export des données personnelles dans le format choisi (CSV ou JSON) et déclenche le téléchargement du fichier. */
   const download = async (format: ExportFormat) => {
     try {
       const content = await exportData(format).unwrap();

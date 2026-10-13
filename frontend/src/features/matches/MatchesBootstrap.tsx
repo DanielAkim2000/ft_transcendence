@@ -10,6 +10,7 @@ import { navigate } from "@/lib/navigation";
 import { toast } from "@/components/ui/toast";
 import i18n from "@/i18n";
 
+/** [Major · Temps réel WebSockets] Connecte le socket des matchs et affiche des toasts en temps réel à chaque événement (défi reçu, réponse, score, résultat, correction, contestation) en mettant le cache à jour. */
 export const MatchesBootstrap = ({ children }: { children: React.ReactNode }) => {
   const accessToken = useAppSelector(selectAccessToken);
   const { data: me } = useMeQuery();
@@ -21,8 +22,10 @@ export const MatchesBootstrap = ({ children }: { children: React.ReactNode }) =>
       return;
     }
     const socket = connect(accessToken);
+    /** [Minor · Notifications] Navigue vers la page des défis (action des toasts). */
     const goToChallenges = () => navigate(ROUTES.CHALLENGES);
 
+    /** [Minor · Notifications] Défi reçu : met à jour le cache et affiche un toast avec lien vers les défis. */
     const onProposed = (match: Match) => {
       applyMatchToCache(dispatch, match);
       const challenger = match.teamA[0];
@@ -33,6 +36,7 @@ export const MatchesBootstrap = ({ children }: { children: React.ReactNode }) =>
       });
     };
 
+    /** [Minor · Notifications] Réponse à un défi : met à jour le cache ; si refusé, prévient le challenger. */
     const onResponded = (match: Match) => {
       applyMatchToCache(dispatch, match);
       if (match.status === "DECLINED") {
@@ -51,6 +55,7 @@ export const MatchesBootstrap = ({ children }: { children: React.ReactNode }) =>
       });
     };
 
+    /** [Minor · Notifications] Score soumis par l'adversaire : prévient l'équipe qui doit le valider. */
     const onScoreSubmitted = (match: Match) => {
       applyMatchToCache(dispatch, match);
       if (match.submittedBy?.id === me.id) return;
@@ -72,6 +77,7 @@ export const MatchesBootstrap = ({ children }: { children: React.ReactNode }) =>
       });
     };
 
+    /** [Minor · Notifications] Match terminé : toast victoire ou défaite selon le score de l'utilisateur. */
     const onCompleted = (match: Match) => {
       applyMatchToCache(dispatch, match);
       const myTeam = teamOf(match, me.id);
@@ -88,6 +94,7 @@ export const MatchesBootstrap = ({ children }: { children: React.ReactNode }) =>
     };
 
     // Un admin a corrigé le score d'une manche de tournoi terminée.
+    /** [Minor · Notifications] Score corrigé par un administrateur : toast d'information. */
     const onCorrected = (match: Match) => {
       applyMatchToCache(dispatch, match);
       toast.add({
@@ -99,6 +106,7 @@ export const MatchesBootstrap = ({ children }: { children: React.ReactNode }) =>
       });
     };
 
+    /** [Minor · Notifications] Score contesté : toast d'erreur. */
     const onDisputed = (match: Match) => {
       applyMatchToCache(dispatch, match);
       toast.add({ title: i18n.t("matches.disputedToast"), type: "error" });

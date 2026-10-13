@@ -1,6 +1,6 @@
 import i18n from "@/i18n";
 
-/** Traduit un code d'erreur du backend (`errors.<CODE>`) dans la langue active ; null si le code est absent ou sans traduction. */
+/** [Major · Frameworks React + NestJS] Traduit un code d'erreur du backend (`errors.<CODE>`) dans la langue active ; null si le code est absent ou sans traduction. */
 export function translateErrorCode(
   code: unknown,
   params?: unknown,
@@ -12,6 +12,7 @@ export function translateErrorCode(
 }
 
 /**
+ * [Major · Frameworks React + NestJS]
  * Message d'erreur à afficher pour une réponse du backend : traduit dans la langue
  * de l'interface grâce au `code` stable de l'erreur. Le texte brut du backend
  * (anglais, destiné aux logs) n'est jamais affiché : sans code connu, on

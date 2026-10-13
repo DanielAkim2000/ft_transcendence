@@ -10,7 +10,7 @@ import cookieParser from 'cookie-parser';
 import { join } from 'node:path';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
-/** Démarre l'application Nest : logger, filtre d'exceptions global, validation stricte des DTO, cookies, sérialisation des entités, fichiers statiques /uploads, CORS, puis écoute sur le port configuré. */
+/** [Major · Frameworks React + NestJS] Démarre l'application Nest : logger, filtre d'exceptions global, validation stricte des DTO, cookies, sérialisation des entités, fichiers statiques /uploads, CORS, puis écoute sur le port configuré. */
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: new ConsoleLogger({

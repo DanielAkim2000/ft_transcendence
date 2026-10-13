@@ -9,7 +9,7 @@ type Props = {
   className?: string;
 };
 
-/** Historique des coups en notation algébrique, rangé par numéro de coup (« 1. e4 e5 »). Le dernier coup est mis en avant et la liste suit la partie. */
+/** [Major · Jeu web (Échecs)] Historique des coups en notation algébrique, rangé par numéro de coup (« 1. e4 e5 »). Le dernier coup est mis en avant et la liste suit la partie. */
 export function ChessMoveList({ moves, className }: Props) {
   const { t } = useTranslation();
   const endRef = useRef<HTMLLIElement>(null);
@@ -31,6 +31,7 @@ export function ChessMoveList({ moves, className }: Props) {
   }
   const lastPly = moves[moves.length - 1]?.ply;
 
+  /** [Major · Jeu web (Échecs)] Cellule d'un coup (notation SAN), le dernier coup joué étant mis en évidence. */
   const cell = (move?: ChessMoveEntry) => (
     <span
       className={cn(

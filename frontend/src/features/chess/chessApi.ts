@@ -69,6 +69,7 @@ export interface CreateChessAiGameRequest {
     color?: ChessColor;
 }
 
+/** [Major · Jeu web (Échecs)] Endpoints RTK Query du domaine « chess » (requêtes/mutations typées, cache et invalidation par tags) : LIST_GAMES, LIST_HISTORY, GET_GAME, GET_MOVES, CREATE_GAME, CREATE_AI_GAME, ACCEPT_GAME, DECLINE_GAME. */
 export const chessApi = api.injectEndpoints({
     endpoints: (builder) => ({
         [CHESS_ENDPOINTS.LIST_GAMES]: builder.query<ChessGame[], void>({

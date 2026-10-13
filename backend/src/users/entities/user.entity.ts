@@ -2,11 +2,13 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { RefreshToken } from './refresh-token.entity';
 
+/** [Major · Gestion des utilisateurs] Rôles : ADMIN ou USER. */
 export enum Role {
   ADMIN = 'ADMIN',
   USER = 'USER',
 }
 
+/** [Major · Gestion des utilisateurs] Statuts de présence : en ligne, hors ligne, en partie. */
 export enum Status {
   ONLINE = 'ONLINE',
   OFFLINE = 'OFFLINE',
@@ -29,6 +31,7 @@ export type AccentPreference = (typeof ACCENT_PREFERENCES)[number];
 export const RADIUS_PREFERENCES = ['none', 'medium', 'large'] as const;
 export type RadiusPreference = (typeof RADIUS_PREFERENCES)[number];
 
+/** [Major · Gestion des utilisateurs] Utilisateur exposé par l'API (champs sensibles exclus à la sérialisation). */
 export class UserEntity {
   @ApiProperty({
     description: 'The id of the user',
@@ -90,7 +93,7 @@ export class UserEntity {
   })
   updatedAt!: Date;
 
-  /** Copie dans l'instance les champs fournis. */
+  /** [Major · Gestion des utilisateurs] Copie dans l'instance les champs fournis. */
   constructor(user: Partial<UserEntity>) {
     Object.assign(this, user);
   }

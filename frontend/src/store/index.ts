@@ -30,6 +30,7 @@ const rootReducer = combineReducers({
   [api.reducerPath]: api.reducer,
 });
 
+/** [Major · Frameworks React + NestJS] Store Redux : réducteurs auth / réglages (persistés) / cache RTK Query, et middleware RTK Query. */
 export const store = configureStore({
   reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>

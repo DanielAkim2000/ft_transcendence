@@ -9,7 +9,7 @@ const PODIUM: Record<number, string> = {
   3: "text-[#cd7f32]",
 };
 
-/** Coupe du podium : or (1er), argent (2e), bronze (3e). */
+/** [Minor · Stats et historique] Coupe du podium : or (1er), argent (2e), bronze (3e). */
 export function RankTrophy({
   rank,
   className,

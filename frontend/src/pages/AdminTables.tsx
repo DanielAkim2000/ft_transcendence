@@ -18,7 +18,7 @@ import { getErrorMessage } from "@/lib/get-error-message";
 
 const MAX_NAME_LENGTH = 32;
 
-/** Gestion des tables par un administrateur : création, renommage et suppression (uniquement si la table n'est pas utilisée). */
+/** [Major · Permissions avancées] Gestion des tables par un administrateur : création, renommage et suppression (uniquement si la table n'est pas utilisée). */
 export const AdminTables = () => {
   const { t } = useTranslation();
   const { data: tables, isLoading } = useListTablesQuery();
@@ -29,6 +29,7 @@ export const AdminTables = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
 
+  /** [Major · Permissions avancées] Exécute une action d'administration sur les tables avec toast de succès ou d'erreur ; renvoie vrai si elle a réussi. */
   const run = async (action: () => Promise<unknown>, success: string) => {
     try {
       await action();
@@ -43,6 +44,7 @@ export const AdminTables = () => {
     }
   };
 
+  /** [Major · Permissions avancées] Crée une table avec le nom saisi (non vide) et vide le champ. */
   const handleCreate = async () => {
     const name = newName.trim();
     if (!name) return;
@@ -51,11 +53,13 @@ export const AdminTables = () => {
     }
   };
 
+  /** [Major · Permissions avancées] Passe une table en mode renommage en pré-remplissant son nom. */
   const startEditing = (table: BabyTable) => {
     setEditingId(table.id);
     setDraftName(table.name);
   };
 
+  /** [Major · Permissions avancées] Enregistre le nouveau nom de la table (ignore un nom vide ou inchangé). */
   const handleRename = async (table: BabyTable) => {
     const name = draftName.trim();
     if (!name || name === table.name) {

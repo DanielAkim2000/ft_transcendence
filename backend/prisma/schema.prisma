@@ -8,22 +8,26 @@ datasource db {
   provider = "postgresql"
 }
 
+// [Major · Permissions avancées] Rôles ADMIN / USER : pilotent les vues et actions autorisées.
 enum Role {
   ADMIN
   USER
 }
 
+// [Major · Temps réel WebSockets] Statut de présence (en ligne, hors ligne, en partie).
 enum Status {
   ONLINE
   OFFLINE
   IN_GAME
 }
 
+// [Socle produit babyfoot (hors module)] État d'une table (libre/occupée).
 enum TableStatus {
   FREE
   BUSY
 }
 
+// [Socle produit babyfoot (hors module)] Cycle de vie d'un groupe en file d'attente.
 enum QueueGroupStatus {
   INVITING
   WAITING
@@ -34,11 +38,13 @@ enum QueueGroupStatus {
   CANCELLED
 }
 
+// [Minor · Stats et historique] Format d'un match : 1v1 ou 2v2.
 enum MatchFormat {
   ONE_V_ONE
   TWO_V_TWO
 }
 
+// [Minor · Stats et historique] Cycle de vie d'un match.
 enum MatchStatus {
   PENDING
   DECLINED
@@ -48,6 +54,7 @@ enum MatchStatus {
   DISPUTED
 }
 
+// [Minor · Tournois] États d'un tournoi.
 enum TournamentStatus {
   DRAFT
   // Lancé par l'admin alors qu'un autre tournoi est en cours : démarre tout seul à la fin (ou à l'annulation) du précédent.
@@ -57,6 +64,7 @@ enum TournamentStatus {
   CANCELLED
 }
 
+// [Minor · Tournois] États d'une confrontation du bracket.
 enum TournamentTieStatus {
   PENDING
   READY
@@ -64,6 +72,7 @@ enum TournamentTieStatus {
   DONE
 }
 
+// [Minor · Gamification] Badges attribuables.
 enum BadgeCode {
   FIRST_WIN
   TEN_WINS
@@ -74,6 +83,7 @@ enum BadgeCode {
   GIANT_SLAYER
 }
 
+// [Major · Interaction entre utilisateurs] États d'une relation d'amitié (en attente, acceptée).
 enum FriendshipStatus {
   PENDING
   ACCEPTED
@@ -83,6 +93,7 @@ enum FriendshipStatus {
 // son propre système de non-lus). Un événement temps réel qui concerne un
 // utilisateur précis crée aussi une ligne ici ; `data` porte tout ce qu'il
 // faut pour l'afficher sans requête supplémentaire (noms déjà résolus).
+// [Minor · Notifications] Types de notifications.
 enum NotificationType {
   FRIEND_REQUEST
   MATCH_PROPOSED
@@ -114,12 +125,14 @@ enum NotificationType {
   TOURNAMENT_TIE_RESET
 }
 
+// [Minor · Design system] Préférence de thème (clair, sombre, système).
 enum ThemePreference {
   light
   dark
   system
 }
 
+// [Minor · Multilingue] Langues disponibles (en, fr, es), mémorisées par utilisateur.
 enum LanguagePreference {
   en
   fr
@@ -127,6 +140,7 @@ enum LanguagePreference {
 }
 
 // Couleur principale de l'interface choisie par l'utilisateur (green = celle d'origine).
+// [Minor · Design system] Couleur d'accent du design system.
 enum AccentPreference {
   green
   blue
@@ -139,17 +153,20 @@ enum AccentPreference {
 }
 
 // Arrondi des bordures : none = angles droits (défaut), medium, large.
+// [Minor · Design system] Arrondi des composants.
 enum RadiusPreference {
   none
   medium
   large
 }
 
+// [Major · Jeu web (Échecs)] Camp d'un joueur (blancs ou noirs).
 enum ChessColor {
   WHITE
   BLACK
 }
 
+// [Major · Jeu web (Échecs)] Cycle de vie d'une partie d'échecs.
 enum ChessGameStatus {
   PENDING   // défi envoyé, pas encore accepté
   DECLINED
@@ -157,6 +174,7 @@ enum ChessGameStatus {
   FINISHED  // terminée (voir result + endReason)
 }
 
+// [Major · Jeu web (Échecs)] Résultat d'une partie.
 enum ChessResult {
   WHITE_WIN
   BLACK_WIN
@@ -164,6 +182,7 @@ enum ChessResult {
   ABORTED
 }
 
+// [Major · Jeu web (Échecs)] Raison de fin de partie (mat, pat, abandon, répétition, matériel…).
 enum ChessEndReason {
   CHECKMATE
   RESIGNATION
@@ -177,6 +196,7 @@ enum ChessEndReason {
   ABORTED
 }
 
+// [Major · Gestion des utilisateurs] Refresh tokens stockés hachés, avec rotation.
 model RefreshToken {
   id        String   @id @default(cuid())
   userId    String
@@ -188,6 +208,7 @@ model RefreshToken {
   @@index([userId])
 }
 
+// [Major · Gestion des utilisateurs] Jetons de réinitialisation du mot de passe (hachés, à usage unique).
 model PasswordResetToken {
   id        String   @id @default(cuid())
   userId    String
@@ -200,6 +221,7 @@ model PasswordResetToken {
 }
 
 // Codes de secours 2FA : hashés, à usage unique (usedAt renseigné une fois consommé).
+// [Minor · 2FA] Codes de secours 2FA à usage unique (hachés).
 model TwoFactorRecoveryCode {
   id        String    @id @default(cuid())
   userId    String
@@ -211,6 +233,7 @@ model TwoFactorRecoveryCode {
   @@index([userId])
 }
 
+// [Major · Interaction entre utilisateurs] Relation d'amitié entre deux utilisateurs.
 model Friendship {
   id          String           @id @default(cuid())
   requesterId String
@@ -226,6 +249,7 @@ model Friendship {
   @@index([requesterId])
 }
 
+// [Major · Permissions avancées] Bannissements (durée, motif, auteur).
 model Ban {
   id        String    @id @default(cuid())
   userId    String
@@ -237,6 +261,7 @@ model Ban {
   @@index([userId])
 }
 
+// [Major · Gestion des utilisateurs] Compte utilisateur : profil, avatar, rôle, préférences, Elo, XP, 2FA, OAuth 42.
 model User {
   id                         String             @id @default(cuid())
   login42                    String?            @unique
@@ -296,6 +321,7 @@ model User {
   banReceived                Ban[]
 }
 
+// [Major · Interaction entre utilisateurs] Messages du chat (historique persisté).
 model Message {
   id             String       @id @default(cuid())
   conversationId String
@@ -313,6 +339,7 @@ model Message {
   @@index([chessGameId])
 }
 
+// [Major · Interaction entre utilisateurs] Conversation entre deux utilisateurs, avec dernières lectures (accusés de lecture).
 model Conversation {
   id              String    @id @default(cuid())
   userAId         String
@@ -330,6 +357,7 @@ model Conversation {
   @@index([userBId])
 }
 
+// [Minor · Chat avancé] Blocage d'un utilisateur par un autre.
 model Block {
   id        String   @id @default(cuid())
   blockerId String
@@ -349,6 +377,7 @@ model Block {
 // 20260928090000_queue_groups : index unique partiel (tableId, slot) WHERE
 // status = 'ON_TABLE', et index unique partiel (userId) WHERE active sur
 // QueueGroupMember (un utilisateur = au plus un groupe actif).
+// [Socle produit babyfoot (hors module)] Table de babyfoot.
 model Table {
   id                     String             @id @default(cuid())
   name                   String             @unique
@@ -370,6 +399,7 @@ model Table {
 
 // Un groupe (1 joueur en 1v1, 2 en 2v2) présent sur une table : soit en file,
 // soit sur la table (slot 0 ou 1) face à l'autre groupe.
+// [Socle produit babyfoot (hors module)] Groupe de joueurs dans la file d'une table.
 model QueueGroup {
   id        String             @id @default(cuid())
   tableId   String
@@ -389,6 +419,7 @@ model QueueGroup {
 
 // `active` reflète "le groupe n'est pas terminé" (cf. index unique partiel) ;
 // `accepted` vaut false pour le coéquipier tant qu'il n'a pas répondu à l'invitation.
+// [Socle produit babyfoot (hors module)] Membre d'un groupe de file.
 model QueueGroupMember {
   id          String     @id @default(cuid())
   groupId     String
@@ -404,6 +435,7 @@ model QueueGroupMember {
 }
 
 // Vote "libérer la table" d'un joueur présent sur la table ; à 2 votes le match s'arrête.
+// [Socle produit babyfoot (hors module)] Vote de libération collective d'une table.
 model TableReleaseVote {
   id        String   @id @default(cuid())
   tableId   String
@@ -418,6 +450,7 @@ model TableReleaseVote {
 // Défi 1v1 / 2v2 indépendant des tables : on propose, l'autre accepte
 // (et choisit son coéquipier en 2v2), puis n'importe qui joue et soumet
 // le score, un adversaire valide. L'Elo est appliqué à la validation.
+// [Minor · Stats et historique] Match (défi, scores, Elo, lien éventuel avec un tournoi).
 model Match {
   id     String      @id @default(cuid())
   format MatchFormat
@@ -464,6 +497,7 @@ model Match {
 // Un tournoi : brouillon (l'admin ajoute des entrées) -> lancé (tirage au sort,
 // moteur d'attribution des tables) -> terminé. Format et aller-retour choisis
 // à la création. Les points par tour s'ajoutent au même rating (User.rating).
+// [Minor · Tournois] Tournoi.
 model Tournament {
   id          String            @id @default(cuid())
   name        String
@@ -485,6 +519,7 @@ model Tournament {
 }
 
 // Une place dans le tableau : 1 joueur (1v1) ou 2 (2v2, équipe fixe pour tout le tournoi).
+// [Minor · Tournois] Inscription (joueur ou paire) à un tournoi.
 model TournamentEntry {
   id              String          @id @default(cuid())
   tournamentId    String
@@ -506,6 +541,7 @@ model TournamentEntry {
 // Une rencontre du tableau (round/slot) : ronde 1 = 1er tour, jusqu'à totalRounds = finale.
 // Pré-créée "à blanc" (PENDING, sans entries) pour les tours futurs dès le lancement,
 // puis remplie au fur et à mesure que les vainqueurs avancent.
+// [Minor · Tournois] Confrontation du bracket (et ses manches).
 model TournamentTie {
   id            String              @id @default(cuid())
   tournamentId  String
@@ -531,6 +567,7 @@ model TournamentTie {
 
 // Un badge gagné par un utilisateur. Le catalogue (nom, description, icône)
 // est statique côté code, cette table ne garde que "qui a débloqué quoi, quand".
+// [Minor · Gamification] Badge obtenu par un utilisateur.
 model UserBadge {
   id       String    @id @default(cuid())
   userId   String
@@ -542,6 +579,7 @@ model UserBadge {
   @@index([userId])
 }
 
+// [Minor · Notifications] Notification persistée d'un utilisateur.
 model Notification {
   id        String           @id @default(cuid())
   userId    String
@@ -554,6 +592,7 @@ model Notification {
   @@index([userId, read, createdAt])
 }
 
+// [Major · Jeu web (Échecs)] Profil d'échecs d'un joueur (note, statistiques).
 model ChessProfile {
   id          String   @id @default(cuid())
   userId      String   @unique
@@ -571,6 +610,7 @@ model ChessProfile {
 }
 
 // Parties en cours ET historique (on filtre sur status)
+// [Major · Jeu web (Échecs)] Partie d'échecs (en cours et historique).
 model ChessGame {
   id     String          @id @default(cuid())
   status ChessGameStatus @default(PENDING)
@@ -628,6 +668,7 @@ model ChessGame {
   inviteMessages Message[]
 }
 
+// [Major · Jeu web (Échecs)] Coup joué d'une partie (notation SAN, FEN après le coup).
 model ChessMove {
   id       String     @id @default(cuid())
   gameId   String

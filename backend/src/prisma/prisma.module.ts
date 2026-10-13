@@ -5,6 +5,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { ConfigService } from '@nestjs/config';
 
 /** Accès à la base de données : fournit l'adaptateur PostgreSQL (DATABASE_URL) et exporte PrismaService. */
+/** [Minor · ORM Prisma] Module NestJS de l'accès à la base : regroupe contrôleur, services et dépendances. */
 @Module({
   providers: [
     {

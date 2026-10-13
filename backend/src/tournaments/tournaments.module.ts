@@ -11,6 +11,7 @@ import { TournamentsRepository } from './repositories/tournaments.repository';
 import { TournamentsService } from './services/tournaments.service';
 
 /** Tournois à élimination directe : entrées, tirage du tableau, rencontres et manches. Exporte TournamentsService. */
+/** [Minor · Tournois] Module NestJS des tournois : regroupe contrôleur, services et dépendances. */
 @Module({
   imports: [
     PrismaModule,

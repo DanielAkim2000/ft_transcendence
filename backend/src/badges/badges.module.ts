@@ -8,6 +8,7 @@ import { BadgesRepository } from './repositories/badges.repository';
 import { BadgesService } from './services/badges.service';
 
 /** XP, niveaux et badges des joueurs. Exporte BadgesService. */
+/** [Minor · Gamification] Module NestJS des badges, de l'XP et des niveaux : regroupe contrôleur, services et dépendances. */
 @Module({
   imports: [PrismaModule, forwardRef(() => UsersModule), NotificationsModule],
   controllers: [BadgesController],

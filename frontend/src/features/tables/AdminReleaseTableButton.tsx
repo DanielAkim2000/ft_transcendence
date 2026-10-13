@@ -9,7 +9,7 @@ import {
 } from "@/features/tables/tablesApi";
 import { getErrorMessage } from "@/lib/get-error-message";
 
-/** Admin : libère une table occupée quand il le décide (match annulé sans score, joueurs sortis, la file avance). Absent pour une table libre ou occupée par un match de tournoi (il faut alors en saisir le score). */
+/** [Socle produit babyfoot (hors module)] Admin : libère une table occupée quand il le décide (match annulé sans score, joueurs sortis, la file avance). Absent pour une table libre ou occupée par un match de tournoi (il faut alors en saisir le score). */
 export function AdminReleaseTableButton({ table }: { table: BabyTable }) {
   const { t } = useTranslation();
   const [release] = useAdminReleaseTableMutation();
@@ -17,6 +17,7 @@ export function AdminReleaseTableButton({ table }: { table: BabyTable }) {
   if (table.currentTournamentTie) return null;
   if (table.status !== "BUSY" && table.groups.length === 0) return null;
 
+  /** [Socle produit babyfoot (hors module)] Libère la table de force (administrateur) et confirme par un toast. */
   const handleRelease = async () => {
     try {
       await release(table.id).unwrap();

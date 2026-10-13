@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+/** [Major · Interaction entre utilisateurs] Message d'une conversation. */
 export class MessageEntity {
   @ApiProperty({
     description: 'The id of the message',
@@ -34,7 +35,7 @@ export class MessageEntity {
   })
   chessGameId!: string | null;
 
-  /** Copie dans l'instance les champs fournis. */
+  /** [Major · Interaction entre utilisateurs] Copie dans l'instance les champs fournis. */
   constructor(message: Partial<MessageEntity>) {
     Object.assign(this, message);
   }

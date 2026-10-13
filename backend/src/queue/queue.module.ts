@@ -9,6 +9,7 @@ import { QueueRepository } from './repositories/queue.repository';
 import { QueueService } from './services/queue.service';
 
 /** Groupes sur les tables : invitation du coéquipier, file d'attente, appel, placement, libération à 2 votes et rotation après chaque match. Exporte QueueService. */
+/** [Socle produit babyfoot (hors module)] Module NestJS de la file d'attente des tables : regroupe contrôleur, services et dépendances. */
 @Module({
   imports: [
     PrismaModule,

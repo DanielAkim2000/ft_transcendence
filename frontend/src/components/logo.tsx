@@ -7,6 +7,7 @@ type LogoProps = {
 };
 
 /**
+ * [Minor · Design system]
  * Marque « 42baby » : invite de terminal (">_") + "42" en vert (primary),
  * "baby" dans la couleur de texte ambiante du contexte où le logo apparaît
  * (sidebar, écran de connexion...). Hérite la taille de police du parent :

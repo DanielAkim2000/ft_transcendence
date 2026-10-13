@@ -92,6 +92,7 @@ interface RegenerateRecoveryCodesRequest {
   password?: string;
 }
 
+/** [Major · Gestion des utilisateurs] Endpoints RTK Query du domaine « auth » (requêtes/mutations typées, cache et invalidation par tags) : REGISTER, LOGIN, REFRESH, LOGOUT, FORGOT_PASSWORD, RESET_PASSWORD, ME, CHECK_2FA_PENDING, VERIFY_2FA, SETUP_2FA, TOGGLE_2FA, USE_RECOVERY_CODE, GET_RECOVERY_CODES_STATUS, REGENERATE_RECOVERY_CODES. */
 export const authApi = api.injectEndpoints({
   endpoints: (builder) => ({
     [AUTH_ENDPOINTS.REGISTER]: builder.mutation<
@@ -103,6 +104,7 @@ export const authApi = api.injectEndpoints({
         method: "POST",
         body,
       }),
+      /** [Major · Gestion des utilisateurs] Après l'inscription : stocke l'access token reçu dans le store. */
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
@@ -122,6 +124,7 @@ export const authApi = api.injectEndpoints({
         method: "POST",
         body,
       }),
+      /** [Major · Gestion des utilisateurs] Après le login : stocke l'access token, ou marque la 2FA comme requise (pré-authentification) si elle est activée. */
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
@@ -142,6 +145,7 @@ export const authApi = api.injectEndpoints({
         url: API_ROUTES.AUTH_REFRESH,
         method: "POST",
       }),
+      /** [Major · Gestion des utilisateurs] Après un refresh : remplace l'access token dans le store. */
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
@@ -157,6 +161,7 @@ export const authApi = api.injectEndpoints({
         method: "POST",
       }),
       invalidatesTags: [TAG_TYPES.AUTH],
+      /** [Major · Gestion des utilisateurs] Après la déconnexion : vide les identifiants et le cache API. */
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
@@ -210,6 +215,7 @@ export const authApi = api.injectEndpoints({
         method: "POST",
         body,
       }),
+      /** [Minor · 2FA] Après vérification du code 2FA : stocke l'access token définitif. */
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
@@ -246,6 +252,7 @@ export const authApi = api.injectEndpoints({
         method: "POST",
         body,
       }),
+      /** [Minor · 2FA] Après l'usage d'un code de secours : stocke l'access token définitif. */
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;

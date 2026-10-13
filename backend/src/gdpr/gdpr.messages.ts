@@ -1,5 +1,6 @@
 export type MailLanguage = 'en' | 'fr' | 'es';
 
+/** [Minor · RGPD] Contenu d'un email (sujet, texte) dans une langue. */
 interface Mail {
   subject: string;
   text: string;

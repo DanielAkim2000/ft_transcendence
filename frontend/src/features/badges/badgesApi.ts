@@ -34,6 +34,7 @@ export interface PlayerBadgesProfile {
   badges: EarnedBadge[];
 }
 
+/** [Minor · Gamification] Endpoints RTK Query du domaine « badges » (requêtes/mutations typées, cache et invalidation par tags) : GET_BADGES. */
 export const badgesApi = api.injectEndpoints({
   endpoints: (builder) => ({
     [BADGES_ENDPOINTS.GET_BADGES]: builder.query<PlayerBadgesProfile, string>({

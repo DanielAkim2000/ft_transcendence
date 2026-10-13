@@ -31,6 +31,7 @@ const tileClass =
 
 const hiddenRadio = "absolute inset-0 size-full opacity-0 after:hidden";
 
+/** [Minor · Design system] Titre de section des réglages. */
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
@@ -65,6 +66,7 @@ const themeSwatch: Record<ThemePreference, string> = {
     "bg-linear-to-r from-[#07090a] from-50% to-[#f4f1ea] to-50% border-border",
 };
 
+/** [Major · Gestion des utilisateurs] Page des réglages : thème, langue, couleur d'accent, arrondi, accès à la 2FA, export de données et demande de suppression du compte. */
 export const Settings = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
@@ -77,7 +79,7 @@ export const Settings = () => {
   const [requestDeletion, { isLoading: requestingDeletion }] =
     useRequestAccountDeletionMutation();
 
-  /** Étape 1 de la suppression : envoie l'email de confirmation (le compte n'est pas encore supprimé). */
+  /** [Minor · RGPD] Étape 1 de la suppression : envoie l'email de confirmation (le compte n'est pas encore supprimé). */
   const handleRequestDeletion = async () => {
     try {
       await requestDeletion().unwrap();
@@ -90,6 +92,7 @@ export const Settings = () => {
     }
   };
 
+  /** [Minor · Multilingue] Applique tout de suite un réglage (thème, langue, accent, arrondi) dans le store puis l'enregistre en base pour l'utilisateur. */
   const persistSettings = (
     next: Partial<{
       theme: ThemePreference;

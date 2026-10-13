@@ -6,6 +6,7 @@ interface StoreProviderProps {
   children: React.ReactNode;
 }
 
+/** [Major · Frameworks React + NestJS] Fournit le store Redux et la réhydratation du stockage local (PersistGate) à toute l'application. */
 export function StoreProvider({ children }: StoreProviderProps) {
   return (
     <Provider store={store}>

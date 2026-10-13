@@ -2,6 +2,7 @@ type Cell = string | number | boolean | Date | null | undefined;
 type Row = Record<string, Cell>;
 type Section = { name: string; rows: Row[] };
 
+/** [Minor · RGPD] Objet portant un nom d'affichage (pour l'export CSV). */
 interface Named {
   displayname: string;
 }
@@ -52,7 +53,7 @@ export interface UserDataForCsv {
 
 const BOM = '﻿';
 
-/** Échappe une cellule CSV ; neutralise l'injection de formules (texte commençant par =, +, -, @) que Excel exécuterait à l'ouverture ; les nombres, même négatifs, restent intacts. */
+/** [Minor · RGPD] Échappe une cellule CSV ; neutralise l'injection de formules (texte commençant par =, +, -, @) que Excel exécuterait à l'ouverture ; les nombres, même négatifs, restent intacts. */
 function cell(value: Cell): string {
   if (value === null || value === undefined) return '';
   let text = value instanceof Date ? value.toISOString() : String(value);
@@ -62,7 +63,7 @@ function cell(value: Cell): string {
   return /[",\n\r;]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
-/** Noms des joueurs d'une équipe, séparés par « & » (le coéquipier est optionnel). */
+/** [Minor · RGPD] Noms des joueurs d'une équipe, séparés par « & » (le coéquipier est optionnel). */
 function team(...players: (Named | null)[]): string {
   return players
     .filter((p): p is Named => p !== null)
@@ -70,12 +71,13 @@ function team(...players: (Named | null)[]): string {
     .join(' & ');
 }
 
-/** Un seul fichier CSV : une section par type de donnée (titre, en-têtes, lignes), séparées par une ligne vide. UTF-8 avec BOM pour que Excel affiche bien les accents. */
+/** [Minor · RGPD] Un seul fichier CSV : une section par type de donnée (titre, en-têtes, lignes), séparées par une ligne vide. UTF-8 avec BOM pour que Excel affiche bien les accents. */
 export function toCsv(
   data: UserDataForCsv,
   userId: string,
   exportedAt: string,
 ): string {
+  /** [Minor · RGPD] Extrait du JSON des variations de points d'un match celle de l'utilisateur exporté (null si absente). */
   const points = (deltas: unknown): number | null => {
     const value = (deltas as Record<string, number> | null)?.[userId];
     return typeof value === 'number' ? value : null;

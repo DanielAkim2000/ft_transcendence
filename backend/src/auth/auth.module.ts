@@ -14,6 +14,7 @@ import { RolesGuard } from './guards/roles.guard';
 import { MailModule } from '../mail/mail.module';
 
 /** Authentification : inscription/connexion, JWT (access, refresh, pré-auth 2FA), OAuth 42, 2FA et gardes de rôles. Exporte AuthService et les guards. */
+/** [Major · Gestion des utilisateurs] Module NestJS de l'authentification (inscription, connexion, tokens, mot de passe) : regroupe contrôleur, services et dépendances. */
 @Module({
   imports: [forwardRef(() => UsersModule), MailModule, BanModule],
   providers: [

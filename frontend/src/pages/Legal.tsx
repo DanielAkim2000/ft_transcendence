@@ -6,6 +6,7 @@ import { useAppSelector } from "@/store/hooks";
 
 type Section = { title: string; body: string };
 
+/** [Minor · RGPD] Pages Politique de confidentialité et Conditions d'utilisation (`kind`), rendues depuis les textes traduits ; accessibles connecté ou non. */
 export const Legal = ({ kind }: { kind: "privacy" | "terms" }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();

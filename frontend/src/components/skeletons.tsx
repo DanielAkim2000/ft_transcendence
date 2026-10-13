@@ -18,7 +18,7 @@ type RowSkeletonProps = {
   className?: string;
 };
 
-/** Ligne fantôme à la place d'une ligne de liste (avatar, deux lignes de texte, action) : mêmes marges que les vraies lignes pour éviter tout saut de mise en page. */
+/** [Minor · Design system] Ligne fantôme à la place d'une ligne de liste (avatar, deux lignes de texte, action) : mêmes marges que les vraies lignes pour éviter tout saut de mise en page. */
 export function RowSkeleton({
   index = 0,
   lead = false,
@@ -54,7 +54,7 @@ type ListSkeletonProps = Omit<RowSkeletonProps, "index"> & {
   listClassName?: string;
 };
 
-/** Liste de lignes fantômes, annoncée « chargement » aux lecteurs d'écran. */
+/** [Minor · Design system] Liste de lignes fantômes, annoncée « chargement » aux lecteurs d'écran. */
 export function ListSkeleton({ count = 5, listClassName, ...row }: ListSkeletonProps) {
   const { t } = useTranslation();
   return (
@@ -69,7 +69,7 @@ export function ListSkeleton({ count = 5, listClassName, ...row }: ListSkeletonP
   );
 }
 
-/** Bloc fantôme d'une carte (titre + quelques lignes), pour les cartes de match, de table ou de profil. */
+/** [Minor · Design system] Bloc fantôme d'une carte (titre + quelques lignes), pour les cartes de match, de table ou de profil. */
 export function CardSkeleton({
   lines = 3,
   className,

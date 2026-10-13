@@ -9,7 +9,7 @@ export interface Paginated<T> {
   totalPages: number;
 }
 
-/** Assemble une page de résultats avec son total ; `totalPages` vaut au moins 1 pour qu'une liste vide reste affichable. */
+/** [Minor · Recherche avancée] Assemble une page de résultats avec son total ; `totalPages` vaut au moins 1 pour qu'une liste vide reste affichable. */
 export function toPaginated<T>(
   items: T[],
   total: number,

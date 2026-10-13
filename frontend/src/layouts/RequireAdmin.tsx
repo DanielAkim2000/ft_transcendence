@@ -3,7 +3,7 @@ import { useMeQuery } from "@/features/auth/authApi";
 import { PageFallback } from "@/components/page-fallback";
 import { ROUTES } from "@/constants/routes";
 
-/** Réserve les routes enfants aux administrateurs (les autres sont renvoyés à l'accueil ; le backend refuse de toute façon les appels). */
+/** [Major · Permissions avancées] Réserve les routes enfants aux administrateurs (les autres sont renvoyés à l'accueil ; le backend refuse de toute façon les appels). */
 export const RequireAdmin = () => {
   const { data: me, isLoading } = useMeQuery();
 

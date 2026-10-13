@@ -7,6 +7,7 @@ import { AdminUsersService } from './services/admin-users.service';
 import { AdminUsersRepository } from './repositories/admin-users.repository';
 
 /** Administration : gestion des comptes (recherche, création, modification, suppression), réservée au rôle ADMIN. */
+/** [Major · Permissions avancées] Module NestJS de l'administration des utilisateurs (CRUD réservé aux admins) : regroupe contrôleur, services et dépendances. */
 @Module({
   imports: [PrismaModule, AuthModule, GdprModule],
   controllers: [AdminUsersController],

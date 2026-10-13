@@ -11,6 +11,7 @@ import { API_ROUTES, AUTH_NO_REFRESH_PATHS } from "@/constants/apiRoutes";
 import { banLoginPath } from "@/features/ban/banHelpers";
 import { navigate } from "@/lib/navigation";
 
+/** [Major · Frameworks React + NestJS] Client HTTP de base : URL de l'API, cookies inclus (refresh httpOnly) et en-tête Authorization Bearer ajouté depuis l'access token du store. */
 const baseQuery = fetchBaseQuery({
   baseUrl: import.meta.env.VITE_API_URL,
   credentials: "include",
@@ -23,6 +24,7 @@ const baseQuery = fetchBaseQuery({
   },
 });
 
+/** [Major · Frameworks React + NestJS] Enveloppe du client HTTP : sur ban (403 BAN) coupe la session ; sur 401 d'une vraie session tente un seul refresh du token puis rejoue la requête, sinon vide la session. */
 const baseQueryWithReauth: BaseQueryFn<
   string | FetchArgs,
   unknown,
@@ -73,6 +75,7 @@ const baseQueryWithReauth: BaseQueryFn<
   return result;
 };
 
+/** [Major · Frameworks React + NestJS] Instance RTK Query unique de l'application : cache et tags d'invalidation ; chaque domaine y injecte ses endpoints (injectEndpoints). */
 export const api = createApi({
   reducerPath: "api",
   baseQuery: baseQueryWithReauth,

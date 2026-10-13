@@ -7,6 +7,7 @@ import { BanRepository } from './repositories/ban.repository';
 import { BanService } from './services/ban.service';
 
 /** Modération : bannissement et débannissement d'utilisateurs (admin), historique des bans, déconnexion immédiate et email. Exporte BanService. */
+/** [Major · Permissions avancées] Module NestJS des bannissements : regroupe contrôleur, services et dépendances. */
 @Module({
   imports: [
     PrismaModule,

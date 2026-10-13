@@ -4,6 +4,7 @@ import { usersApi } from "../users/usersApi";
 import { USERS_ENDPOINTS } from "@/constants/queryEndpoints";
 import { TAG_TYPES } from "@/constants/tagTypes";
 
+/** [Major · Temps réel WebSockets] Met à jour le statut en ligne d'un utilisateur dans tous les caches de listes d'amis et de recherche, sans refaire de requête. */
 const applyPresenceToCache = (
   dispatch: AppDispatch,
   userId: string,

@@ -19,6 +19,7 @@ import { ScoreConfirmDialog } from "@/components/score-confirm-dialog";
 
 const TARGET_SCORE = 10;
 
+/** [Minor · Tournois] Libellé d'une inscription (un ou deux joueurs, ou « à déterminer »). */
 function entryName(
   entry: TournamentEntry | null,
   t: (key: string) => string,
@@ -29,6 +30,7 @@ function entryName(
     : entry.player1.displayname;
 }
 
+/** [Minor · Tournois] Côté d'une confrontation : inscription, joueurs et score ou état. */
 function EntrySide({
   entry,
   t,
@@ -65,6 +67,7 @@ function EntrySide({
   );
 }
 
+/** [Minor · Tournois] Carte d'une confrontation du bracket : adversaires, manches, saisie/validation du score par les joueurs et corrections d'administrateur. */
 export function TieCard({
   tie,
   meId,
@@ -93,6 +96,7 @@ export function TieCard({
         : null;
 
   // Côté de la rencontre (A ou B) du joueur qui a soumis le score : l'autre côté valide.
+  /** [Minor · Tournois] Vrai si l'utilisateur fait partie de l'inscription donnée. */
   const isIn = (entry: TournamentEntry | null, id: string | null) =>
     id !== null && (entry?.player1.id === id || entry?.player2?.id === id);
   const submitterSide = isIn(tie.entryA, tie.activeLegSubmittedById)
@@ -103,6 +107,7 @@ export function TieCard({
   const canValidate =
     myEntry !== null && submitterSide !== null && myEntry !== submitterSide;
 
+  /** [Minor · Tournois] Exécute une action (saisie, validation) avec toast de succès ou d'erreur. */
   const run = async (
     action: () => Promise<unknown>,
     successMessage?: string,
@@ -130,6 +135,7 @@ export function TieCard({
     ((a === TARGET_SCORE && b < TARGET_SCORE) ||
       (b === TARGET_SCORE && a < TARGET_SCORE));
 
+  /** [Minor · Tournois] Envoie le score de la manche active (si valide). */
   const submit = () => {
     if (!tie.activeLegId || !scoreValid) return;
     return run(

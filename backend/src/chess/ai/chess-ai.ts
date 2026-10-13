@@ -95,9 +95,10 @@ const PST: Record<string, number[]> = {
   ],
 };
 
+/** [Major · Jeu web (Échecs)] Exception interne signalant que le temps de réflexion de l'IA est écoulé. */
 class TimeUp extends Error {}
 
-/** Évaluation statique, du point de vue du camp au trait. */
+/** [Major · Adversaire IA] Évaluation statique, du point de vue du camp au trait. */
 function evaluate(chess: Chess): number {
   let score = 0;
   const board = chess.board();
@@ -114,8 +115,9 @@ function evaluate(chess: Chess): number {
   return chess.turn() === 'w' ? score : -score;
 }
 
-/** Captures et promotions d'abord (MVV-LVA) : l'élagage coupe bien plus tôt. */
+/** [Major · Adversaire IA] Captures et promotions d'abord (MVV-LVA) : l'élagage coupe bien plus tôt. */
 function orderMoves(moves: Move[]): Move[] {
+  /** [Major · Adversaire IA] Poids de tri d'un coup : valeur de la pièce capturée (MVV-LVA) + valeur de la promotion. */
   const weight = (move: Move) =>
     (move.captured
       ? 10 * PIECE_VALUE[move.captured] - PIECE_VALUE[move.piece] / 10
@@ -123,20 +125,24 @@ function orderMoves(moves: Move[]): Move[] {
   return moves.sort((a, b) => weight(b) - weight(a));
 }
 
+/** [Major · Jeu web (Échecs)] Moteur de recherche de l'IA : négamax à élagage alpha-bêta, approfondissement itératif, quiescence et bruit selon le niveau. */
 class Searcher {
   private nodes = 0;
   private deadline = 0;
 
+  /** [Major · Adversaire IA] Reçoit la position à analyser et la configuration du niveau (profondeur, temps, bruit, quiescence). */
   constructor(
     private readonly chess: Chess,
     private readonly config: LevelConfig,
   ) {}
 
+  /** [Major · Adversaire IA] Compte les nœuds visités et interrompt la recherche (TimeUp) quand le temps imparti au niveau est écoulé. */
   private checkTime(): void {
     if ((++this.nodes & 1023) === 0 && Date.now() > this.deadline)
       throw new TimeUp();
   }
 
+  /** [Major · Adversaire IA] Recherche de quiescence : prolonge l'analyse sur les captures seulement pour éviter l'effet d'horizon, avec élagage alpha-bêta. */
   private quiesce(alpha: number, beta: number, ply: number): number {
     this.checkTime();
     const standPat = evaluate(this.chess);
@@ -157,6 +163,7 @@ class Searcher {
     return alpha;
   }
 
+  /** [Major · Adversaire IA] Négamax avec élagage alpha-bêta : renvoie le score d'une position à une profondeur donnée (mat, nulle, évaluation statique ou quiescence aux feuilles). */
   private negamax(
     depth: number,
     alpha: number,
@@ -183,7 +190,7 @@ class Searcher {
     return best;
   }
 
-  /** Recherche itérative : la dernière profondeur terminée fait foi si le temps est écoulé. */
+  /** [Major · Adversaire IA] Recherche itérative : la dernière profondeur terminée fait foi si le temps est écoulé. */
   search(rootMoves: Move[]): Move {
     this.deadline = Date.now() + this.config.timeMs;
     const rootFen = this.chess.fen();
@@ -225,7 +232,7 @@ class Searcher {
   }
 }
 
-/** Choisit le coup de l'IA pour la position `fen` au niveau demandé. */
+/** [Major · Adversaire IA] Choisit le coup de l'IA pour la position `fen` au niveau demandé. */
 export function chooseMove(fen: string, level: AiLevel): AiMove | null {
   const config = LEVELS[level];
   const chess = new Chess(fen);

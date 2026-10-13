@@ -1,4 +1,4 @@
-/** Mélange Fisher-Yates, pour le tirage au sort du tableau. */
+/** [Minor · Tournois] Mélange Fisher-Yates, pour le tirage au sort du tableau. */
 export function shuffle<T>(items: T[]): T[] {
   const result = [...items];
   for (let i = result.length - 1; i > 0; i--) {
@@ -8,7 +8,7 @@ export function shuffle<T>(items: T[]): T[] {
   return result;
 }
 
-/** round est 1-indexé depuis le 1er tour ; totalRounds = log2(nombre d'entrées). */
+/** [Minor · Tournois] round est 1-indexé depuis le 1er tour ; totalRounds = log2(nombre d'entrées). */
 export function roundLabel(round: number, totalRounds: number): string {
   const distanceFromFinal = totalRounds - round;
   if (distanceFromFinal === 0) return 'FINAL';
@@ -20,21 +20,22 @@ export function roundLabel(round: number, totalRounds: number): string {
 
 /** Points fixes gagnés par le vainqueur d'une rencontre, selon le tour (même barème pour tous, pas d'Elo relatif). */
 const POINTS_PER_ROUND_BASE = 10;
-/** Points gagnés par le vainqueur d'une rencontre : 10 × numéro du tour. */
+/** [Minor · Tournois] Points gagnés par le vainqueur d'une rencontre : 10 × numéro du tour. */
 export function pointsForRound(round: number): number {
   return POINTS_PER_ROUND_BASE * round;
 }
 
-/** Indique si n est une puissance de 2 supérieure ou égale à 2 (taille valide pour un tableau). */
+/** [Minor · Tournois] Indique si n est une puissance de 2 supérieure ou égale à 2 (taille valide pour un tableau). */
 export function isPowerOfTwo(n: number): boolean {
   return n >= 2 && (n & (n - 1)) === 0;
 }
 
-/** Logarithme base 2 arrondi : nombre de tours d'un tableau de n entrées. */
+/** [Minor · Tournois] Logarithme base 2 arrondi : nombre de tours d'un tableau de n entrées. */
 export function log2(n: number): number {
   return Math.round(Math.log2(n));
 }
 
+/** [Minor · Tournois] Manche d'une confrontation (numéro, statut, scores). */
 export interface TieLeg {
   legNumber: number;
   status: string;
@@ -42,6 +43,7 @@ export interface TieLeg {
   scoreB: number | null;
 }
 
+/** [Minor · Tournois] Résultat du calcul d'une confrontation (vainqueur, manche suivante). */
 export interface TieResolution {
   /** true si la rencontre est décidée (plus de manche à jouer). */
   done: boolean;
@@ -51,6 +53,7 @@ export interface TieResolution {
 }
 
 /**
+ * [Minor · Tournois]
  * Détermine si une rencontre est terminée et qui l'emporte, à partir des
  * manches déjà validées (COMPLETED). Aller-retour : décision à l'addition
  * des scores ; égalité après 2 manches -> 3e manche (belle) qui tranche seule.
@@ -107,6 +110,7 @@ export function resolveTie(twoLegged: boolean, legs: TieLeg[]): TieResolution {
   };
 }
 
+/** [Minor · Tournois] Plan de correction d'un score de manche (impact sur le bracket). */
 export interface LegCorrectionPlan {
   /** Résolution de la rencontre avec le score actuel. */
   before: TieResolution;
@@ -118,7 +122,7 @@ export interface LegCorrectionPlan {
   tieOutcomeChanged: boolean;
 }
 
-/** Prévoit l'effet de la correction du score d'une manche terminée sur sa rencontre (sans rien modifier). */
+/** [Minor · Tournois] Prévoit l'effet de la correction du score d'une manche terminée sur sa rencontre (sans rien modifier). */
 export function planLegCorrection(
   twoLegged: boolean,
   legs: TieLeg[],

@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { MessageEntity } from './message.entity';
 
+/** [Major · Interaction entre utilisateurs] Conversation entre deux utilisateurs (dernier message, non lus, dernière lecture de l'interlocuteur). */
 export class ConversationEntity {
   @ApiProperty({
     description: 'The id of the conversation',
@@ -45,7 +46,7 @@ export class ConversationEntity {
   })
   updatedAt!: Date;
 
-  /** Copie dans l'instance les champs fournis. */
+  /** [Major · Interaction entre utilisateurs] Copie dans l'instance les champs fournis. */
   constructor(conversation: Partial<ConversationEntity>) {
     Object.assign(this, conversation);
   }

@@ -3,12 +3,13 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ConversationEntity } from '../entities/conversation.entity';
 import type { Conversation as ConversationPrisma } from '../../generated/prisma/client';
 
+/** [Major · Interaction entre utilisateurs] Dépôt de données du chat (conversations, messages, blocages) : requêtes Prisma et conversion en entités. */
 @Injectable()
 export class ConversationRepository {
   /** Injecte les dépendances : PrismaService. */
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Retrouve la conversation entre deux utilisateurs (ids triés pour être indépendant de l'ordre), ou null. */
+  /** [Major · Interaction entre utilisateurs] Retrouve la conversation entre deux utilisateurs (ids triés pour être indépendant de l'ordre), ou null. */
   async findBetweenUsers(
     userIdA: string,
     userIdB: string,
@@ -21,7 +22,7 @@ export class ConversationRepository {
     return conversation ? this.toEntity(conversation) : null;
   }
 
-  /** Crée la conversation entre deux utilisateurs (ids triés). */
+  /** [Major · Interaction entre utilisateurs] Crée la conversation entre deux utilisateurs (ids triés). */
   async create(userIdA: string, userIdB: string): Promise<ConversationEntity> {
     const [userAId, userBId] = [userIdA, userIdB].sort();
     const conversation = await this.prisma.conversation.create({
@@ -31,7 +32,7 @@ export class ConversationRepository {
     return this.toEntity(conversation);
   }
 
-  /** Retrouve une conversation par son id, ou null. */
+  /** [Major · Interaction entre utilisateurs] Retrouve une conversation par son id, ou null. */
   async findById(conversationId: string): Promise<ConversationEntity | null> {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId },
@@ -40,7 +41,7 @@ export class ConversationRepository {
     return conversation ? this.toEntity(conversation) : null;
   }
 
-  /** Liste les conversations de l'utilisateur, la plus récente d'abord, avec le nombre de messages non lus et la date de dernière lecture de l'interlocuteur. */
+  /** [Major · Interaction entre utilisateurs] Liste les conversations de l'utilisateur, la plus récente d'abord, avec le nombre de messages non lus et la date de dernière lecture de l'interlocuteur. */
   async listForUser(userId: string): Promise<ConversationEntity[]> {
     const conversations = await this.prisma.conversation.findMany({
       where: {
@@ -77,7 +78,7 @@ export class ConversationRepository {
     });
   }
 
-  /** Met à jour la date de dernière lecture de l'utilisateur dans la conversation (côté A ou B selon sa position). */
+  /** [Minor · Chat avancé] Met à jour la date de dernière lecture de l'utilisateur dans la conversation (côté A ou B selon sa position). */
   async markRead(conversationId: string, userId: string): Promise<void> {
     await this.prisma.conversation.updateMany({
       where: { id: conversationId, userAId: userId },
@@ -89,7 +90,7 @@ export class ConversationRepository {
     });
   }
 
-  /** Convertit une conversation Prisma en ConversationEntity. */
+  /** [Major · Interaction entre utilisateurs] Convertit une conversation Prisma en ConversationEntity. */
   private toEntity(conversation: ConversationPrisma): ConversationEntity {
     return new ConversationEntity({
       id: conversation.id,

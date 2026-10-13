@@ -17,14 +17,17 @@ const authSlice = createSlice({
   name: TAG_TYPES.AUTH,
   initialState,
   reducers: {
+    /** [Major · Gestion des utilisateurs] Stocke l'access token (connexion, refresh, 2FA validée) et lève l'exigence de 2FA. */
     setAccessToken: (state, action: PayloadAction<{ accessToken: string }>) => {
       state.accessToken = action.payload.accessToken;
       state.twoFactorRequired = false;
     },
+    /** [Major · Gestion des utilisateurs] Le login exige la 2FA : efface le token et active l'écran de code. */
     setTwoFactorRequired: (state) => {
       state.twoFactorRequired = true;
       state.accessToken = null;
     },
+    /** [Major · Gestion des utilisateurs] Vide la session (déconnexion, ban, refresh refusé). */
     clearCredentials: (state) => {
       state.accessToken = null;
       state.twoFactorRequired = false;
@@ -37,4 +40,5 @@ export const { setAccessToken, setTwoFactorRequired, clearCredentials } =
 
 export default authSlice.reducer;
 
+/** [Major · Gestion des utilisateurs] Sélecteur : access token courant (null si déconnecté). */
 export const selectAccessToken = (state: RootState) => state.auth.accessToken;

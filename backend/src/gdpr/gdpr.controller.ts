@@ -16,12 +16,13 @@ import { ExportQueryDto } from './dtos/export-query.dto';
 import { ConfirmDeletionDto } from './dtos/confirm-deletion.dto';
 import { GdprService } from './gdpr.service';
 
+/** [Minor · RGPD] Contrôleur HTTP RGPD (export des données et suppression du compte) : routes REST protégées par les guards d'authentification. */
 @Controller('gdpr')
 export class GdprController {
   /** Injecte les dépendances : GdprService. */
   constructor(private readonly gdprService: GdprService) {}
 
-  /** GET /gdpr/export?format=json|csv : télécharge toutes les données personnelles de l'utilisateur connecté ; un email l'en informe. */
+  /** [Minor · RGPD] GET /gdpr/export?format=json|csv : télécharge toutes les données personnelles de l'utilisateur connecté ; un email l'en informe. */
   @Get('export')
   @UseGuards(AccessTokenGuard)
   async exportData(
@@ -38,7 +39,7 @@ export class GdprController {
     return file.body;
   }
 
-  /** POST /gdpr/deletion-request : envoie par email un lien de confirmation (1 h) pour supprimer le compte. */
+  /** [Minor · RGPD] POST /gdpr/deletion-request : envoie par email un lien de confirmation (1 h) pour supprimer le compte. */
   @Post('deletion-request')
   @HttpCode(202)
   @UseGuards(AccessTokenGuard)
@@ -47,7 +48,7 @@ export class GdprController {
     return { message: 'Confirmation email sent' };
   }
 
-  /** POST /gdpr/deletion-confirm : public (le jeton signé reçu par email fait foi) ; supprime définitivement le compte. */
+  /** [Minor · RGPD] POST /gdpr/deletion-confirm : public (le jeton signé reçu par email fait foi) ; supprime définitivement le compte. */
   @Post('deletion-confirm')
   @HttpCode(200)
   async confirmDeletion(@Body() dto: ConfirmDeletionDto) {

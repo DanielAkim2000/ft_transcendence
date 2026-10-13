@@ -16,33 +16,34 @@ import { Role } from '../users/entities/users.entity';
 import { TablesService } from './services/tables.service';
 import { TableNameDto } from './dtos/table-name.dto';
 
+/** [Socle produit babyfoot (hors module)] Contrôleur HTTP des tables de babyfoot : routes REST protégées par les guards d'authentification. */
 @Controller('tables')
 @UseGuards(AccessTokenGuard)
 export class TablesController {
   /** Injecte les dépendances : TablesService. */
   constructor(private readonly tablesService: TablesService) {}
 
-  /** GET /tables : liste toutes les tables avec leur statut, leur format et les groupes présents. */
+  /** [Socle produit babyfoot (hors module)] GET /tables : liste toutes les tables avec leur statut, leur format et les groupes présents. */
   @Get()
   list() {
     return this.tablesService.list();
   }
 
-  /** POST /tables (admin) : crée une table. */
+  /** [Socle produit babyfoot (hors module)] POST /tables (admin) : crée une table. */
   @Post()
   @AuthRoles(Role.ADMIN)
   create(@Body() dto: TableNameDto) {
     return this.tablesService.create(dto.name);
   }
 
-  /** PATCH /tables/:id (admin) : renomme une table. */
+  /** [Socle produit babyfoot (hors module)] PATCH /tables/:id (admin) : renomme une table. */
   @Patch(':id')
   @AuthRoles(Role.ADMIN)
   rename(@Param('id') id: string, @Body() dto: TableNameDto) {
     return this.tablesService.rename(id, dto.name);
   }
 
-  /** DELETE /tables/:id (admin) : supprime une table qui n'est pas utilisée. */
+  /** [Socle produit babyfoot (hors module)] DELETE /tables/:id (admin) : supprime une table qui n'est pas utilisée. */
   @Delete(':id')
   @AuthRoles(Role.ADMIN)
   @HttpCode(HttpStatus.OK)

@@ -5,22 +5,27 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 
+/** [Minor · Design system] Panneau latéral coulissant (racine) : utilisé pour la sidebar mobile. */
 function Sheet({ ...props }: SheetPrimitive.Root.Props) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
 }
 
+/** [Minor · Design system] Élément qui ouvre le panneau. */
 function SheetTrigger({ ...props }: SheetPrimitive.Trigger.Props) {
   return <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />
 }
 
+/** [Minor · Design system] Élément qui ferme le panneau. */
 function SheetClose({ ...props }: SheetPrimitive.Close.Props) {
   return <SheetPrimitive.Close data-slot="sheet-close" {...props} />
 }
 
+/** [Minor · Design system] Rend le panneau hors de l'arbre DOM courant. */
 function SheetPortal({ ...props }: SheetPrimitive.Portal.Props) {
   return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />
 }
 
+/** [Minor · Design system] Voile sombre derrière le panneau. */
 function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {
   return (
     <SheetPrimitive.Backdrop
@@ -34,6 +39,7 @@ function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {
   )
 }
 
+/** [Minor · Design system] Contenu du panneau (côté configurable, bouton de fermeture). */
 function SheetContent({
   className,
   children,
@@ -78,6 +84,7 @@ function SheetContent({
   )
 }
 
+/** [Minor · Design system] En-tête du panneau. */
 function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -88,6 +95,7 @@ function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/** [Minor · Design system] Pied du panneau. */
 function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -98,6 +106,7 @@ function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/** [Minor · Design system] Titre accessible du panneau. */
 function SheetTitle({ className, ...props }: SheetPrimitive.Title.Props) {
   return (
     <SheetPrimitive.Title
@@ -111,6 +120,7 @@ function SheetTitle({ className, ...props }: SheetPrimitive.Title.Props) {
   )
 }
 
+/** [Minor · Design system] Description accessible du panneau. */
 function SheetDescription({
   className,
   ...props

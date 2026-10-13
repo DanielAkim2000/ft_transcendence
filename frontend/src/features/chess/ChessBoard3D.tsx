@@ -35,7 +35,7 @@ const CAMERA_DISTANCE = 10;
 /** Déplacement du pointeur (px) au-delà duquel un appui est un geste de rotation et non un clic sur une case. */
 const CLICK_TOLERANCE = 6;
 
-/** Couleur d'accent du joueur (variable CSS --primary posée par son réglage et le thème), en entier 0xRRGGBB ; vert par défaut si elle est illisible. Le canvas convertit n'importe quel format CSS (hex, oklch…) en RGB. */
+/** [Major · Jeu web (Échecs)] Couleur d'accent du joueur (variable CSS --primary posée par son réglage et le thème), en entier 0xRRGGBB ; vert par défaut si elle est illisible. Le canvas convertit n'importe quel format CSS (hex, oklch…) en RGB. */
 function readAccentColor(): number {
     try {
         const value = getComputedStyle(document.documentElement).getPropertyValue("--primary").trim();
@@ -52,6 +52,7 @@ function readAccentColor(): number {
     }
 }
 
+/** [Major · Jeu web (Échecs)] Vrai si la case fait partie des destinations légales (surbrillance). */
 function isLegalPosition(positions: Position[], rowIndex: number, colIndex: number): boolean {
     return positions.some((position) => position.x === colIndex && position.y === rowIndex);
 }
@@ -73,7 +74,7 @@ type SceneState = {
 /** Distance du centre où se posent les repères : au milieu du cadre, juste hors des cases. */
 const LABEL_OFFSET = 4.15;
 
-/** Pose les lettres (colonnes) du côté du joueur et les chiffres (rangées) sur son côté gauche, pour qu'ils restent lisibles quand le plateau est retourné. */
+/** [Major · Graphismes 3D] Pose les lettres (colonnes) du côté du joueur et les chiffres (rangées) sur son côté gauche, pour qu'ils restent lisibles quand le plateau est retourné. */
 function placeLabels(labels: THREE.Sprite[], flipped: boolean): void {
     labels.forEach((label) => {
         const { kind, index } = label.userData as { kind: "file" | "rank"; index: number };
@@ -82,7 +83,7 @@ function placeLabels(labels: THREE.Sprite[], flipped: boolean): void {
     });
 }
 
-/** Repère toujours tourné vers la caméra : une lettre ou un chiffre dessiné sur un canvas. */
+/** [Major · Graphismes 3D] Repère toujours tourné vers la caméra : une lettre ou un chiffre dessiné sur un canvas. */
 function createLabel(text: string, kind: "file" | "rank", index: number): THREE.Sprite {
     const canvas = document.createElement("canvas");
     canvas.width = 64;
@@ -103,7 +104,7 @@ function createLabel(text: string, kind: "file" | "rank", index: number): THREE.
     return sprite;
 }
 
-/** Retire un groupe de sa scène et libère les géométries/matériaux créés pour lui. */
+/** [Major · Graphismes 3D] Retire un groupe de sa scène et libère les géométries/matériaux créés pour lui. */
 function clearGroup(group: THREE.Group): void {
     group.traverse((object: THREE.Object3D) => {
         if (object instanceof THREE.Mesh) {
@@ -114,6 +115,7 @@ function clearGroup(group: THREE.Group): void {
     group.clear();
 }
 
+/** [Major · Graphismes 3D] Plateau d'échecs en 3D (Three.js) : scène, éclairage et ombres, plateau et pièces modélisées, caméra orbitale (rotation/inclinaison tactile et souris, zoom borné), surbrillance des coups légaux et clic sur les cases par raycasting ; la caméra se retourne selon la couleur du joueur. */
 export function ChessBoard3D({ board, positions, selectedPosition, onSquareClick, flipped = false }: ChessBoard3DProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const clickHandlerRef = useRef(onSquareClick);
@@ -239,9 +241,11 @@ export function ChessBoard3D({ board, positions, selectedPosition, onSquareClick
         const pointer = new THREE.Vector2();
         const raycaster = new THREE.Raycaster();
         let pressedAt: { x: number; y: number } | null = null;
+        /** [Major · Jeu web (Échecs)] Début d'un appui : mémorise la position pour distinguer un clic d'un glisser (rotation de la vue). */
         const handlePointerDown = (event: PointerEvent) => {
             pressedAt = { x: event.clientX, y: event.clientY };
         };
+        /** [Major · Jeu web (Échecs)] Fin d'appui : si le pointeur a peu bougé, lance un rayon depuis la caméra, retrouve la case ou la pièce touchée et appelle le gestionnaire de clic. */
         const handlePointerUp = (event: PointerEvent) => {
             const start = pressedAt;
             pressedAt = null;
@@ -270,6 +274,7 @@ export function ChessBoard3D({ board, positions, selectedPosition, onSquareClick
         resizeObserver.observe(container);
 
         let frame = 0;
+        /** [Major · Graphismes 3D] Boucle de rendu : met à jour les contrôles (inertie) puis dessine la scène à chaque frame. */
         const animate = () => {
             frame = window.requestAnimationFrame(animate);
             controls.update();

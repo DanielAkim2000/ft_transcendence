@@ -1,3 +1,4 @@
+/** [Major · Frameworks React + NestJS] Journal de développement : écrit dans la console uniquement en mode dev (aucun log en production). */
 export const logger = (
   message: unknown,
   level: "info" | "error" | "warn" | "debug" = "info",

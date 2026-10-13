@@ -11,6 +11,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsUrl } from 'class-validator';
 import { IsEmail, IsNotEmpty } from 'class-validator';
 
+/** [Minor · OAuth 42] Variantes d'image du profil renvoyé par l'API 42. */
 export class Profile42ImageDto {
   @ApiProperty({
     description: 'The link of the image',
@@ -22,6 +23,7 @@ export class Profile42ImageDto {
   link?: string;
 }
 
+/** [Minor · OAuth 42] Données JSON du profil renvoyé par l'API 42. */
 export class Profile42JsonDto {
   @ApiProperty({
     description: 'The email of the user',
@@ -66,6 +68,7 @@ export class Profile42JsonDto {
   active!: boolean;
 }
 
+/** [Minor · OAuth 42] Profil complet renvoyé par l'API 42 après l'OAuth. */
 export class Profile42Dto {
   @IsNumber()
   id!: number;

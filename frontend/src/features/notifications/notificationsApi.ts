@@ -42,6 +42,7 @@ export interface AppNotification {
   createdAt: string;
 }
 
+/** [Minor · Notifications] Endpoints RTK Query du domaine « notifications » (requêtes/mutations typées, cache et invalidation par tags) : LIST_NOTIFICATIONS, COUNT_UNREAD_NOTIFICATIONS, MARK_ALL_NOTIFICATIONS_READ. */
 export const notificationsApi = api.injectEndpoints({
   endpoints: (builder) => ({
     [NOTIFICATIONS_ENDPOINTS.LIST_NOTIFICATIONS]: builder.query<

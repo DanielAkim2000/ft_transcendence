@@ -40,6 +40,7 @@ import { API_ROUTES } from "@/constants/apiRoutes";
 import { getErrorMessage } from "@/lib/get-error-message";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
+/** [Major · Gestion des utilisateurs] Formulaire de connexion email / mot de passe (validation zod, erreurs serveur, bannières de ban) et bouton « se connecter avec 42 ». */
 function LoginCredentialsForm() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -75,6 +76,7 @@ function LoginCredentialsForm() {
     },
   });
 
+  /** [Minor · OAuth 42] Lance l'OAuth 42 : pose le témoin de session puis redirige le navigateur vers /auth/42/login du backend. */
   const handleLoginWith42 = () => {
     // Au retour de 42, le cookie de refresh est posé : le témoin permet à l'app de le consommer au démarrage.
     setSessionHint();
@@ -225,6 +227,7 @@ function LoginCredentialsForm() {
   );
 }
 
+/** [Minor · 2FA] Formulaire de connexion avec un code de secours 2FA (utilisable une seule fois). */
 function RecoveryCodeForm({
   onRecovering,
   onBack,
@@ -343,6 +346,7 @@ function RecoveryCodeForm({
   );
 }
 
+/** [Minor · 2FA] Formulaire de saisie du code TOTP à 6 chiffres après un login qui exige la 2FA. */
 function TwoFactorForm({ onUseRecovery }: { onUseRecovery: () => void }) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -463,6 +467,7 @@ function TwoFactorForm({ onUseRecovery }: { onUseRecovery: () => void }) {
   );
 }
 
+/** [Major · Gestion des utilisateurs] Page de connexion : redirige si déjà connecté, sinon affiche le formulaire de credentials, le code 2FA ou le code de secours selon l'état. */
 export const Login = () => {
   const accessToken = useAppSelector((s) => s.auth.accessToken);
   const twoFactorRequired = useAppSelector((s) => s.auth.twoFactorRequired);

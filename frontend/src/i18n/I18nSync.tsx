@@ -6,6 +6,7 @@ interface I18nSyncProps {
   children: React.ReactNode;
 }
 
+/** [Minor · Multilingue] Applique à i18next la langue choisie dans le store (changement instantané de toutes les traductions). */
 export function I18nSync({ children }: I18nSyncProps) {
   const language = useAppSelector((s) => s.settings.language);
   const { i18n } = useTranslation();

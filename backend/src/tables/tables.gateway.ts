@@ -16,6 +16,7 @@ type TablesSocket = Socket<
   { userId?: string }
 >;
 
+/** [Major · Temps réel WebSockets] Passerelle WebSocket des tables de babyfoot : namespace socket.io, authentification par access token et diffusion d'événements en temps réel. */
 @WebSocketGateway({
   cors: {
     origin: process.env.FRONTEND_URL,
@@ -27,13 +28,13 @@ export class TablesGateway implements OnGatewayConnection {
   @WebSocketServer()
   private server!: Server;
 
-  /** Injecte les dépendances : UsersService, JwtService. */
+  /** [Major · Temps réel WebSockets] Injecte les dépendances : UsersService, JwtService. */
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
 
-  /** Authentifie la connexion WebSocket via le JWT ; déconnecte le client si le token est absent, invalide ou si l'utilisateur n'existe pas. */
+  /** [Major · Temps réel WebSockets] Authentifie la connexion WebSocket via le JWT ; déconnecte le client si le token est absent, invalide ou si l'utilisateur n'existe pas. */
   async handleConnection(client: TablesSocket): Promise<void> {
     const accessToken = (client.handshake.auth as { access_token?: unknown })
       .access_token;
@@ -57,12 +58,12 @@ export class TablesGateway implements OnGatewayConnection {
     }
   }
 
-  /** Prévient tous les clients connectés qu'une table a été supprimée (événement table:removed). */
+  /** [Major · Temps réel WebSockets] Prévient tous les clients connectés qu'une table a été supprimée (événement table:removed). */
   emitTableRemoved(tableId: string) {
     this.server.emit('table:removed', { id: tableId });
   }
 
-  /** Diffuse l'état à jour d'une table à tous les clients connectés (événement table:update). */
+  /** [Major · Temps réel WebSockets] Diffuse l'état à jour d'une table à tous les clients connectés (événement table:update). */
   emitTableUpdate(table: TableEntity) {
     this.server.emit('table:update', table);
   }

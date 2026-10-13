@@ -32,11 +32,12 @@ const RECOVERY_CODE_LENGTH = 10;
 // 32 symboles (2^5) sans caractères ambigus (0/O, 1/I) : chaque octet aléatoire se ramène à un symbole sans biais.
 const RECOVERY_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
+/** [Major · Gestion des utilisateurs] Service métier de l'authentification (inscription, connexion, tokens, mot de passe). */
 @Injectable()
 export class AuthService {
   private readonly lastResetRequestAt = new Map<string, number>();
 
-  /** Injecte les dépendances : UsersService, JwtService, ConfigService, MailService. */
+  /** [Major · Gestion des utilisateurs] Injecte les dépendances : UsersService, JwtService, ConfigService, MailService. */
   constructor(
     private readonly usersService: UsersService,
     private readonly banService: BanService,
@@ -45,7 +46,7 @@ export class AuthService {
     private readonly mailService: MailService,
   ) {}
 
-  /** Crée l'utilisateur puis génère ses tokens de session. */
+  /** [Major · Gestion des utilisateurs] Crée l'utilisateur puis génère ses tokens de session. */
   async register(registerDto: RegisterDto): Promise<{
     user: UserEntity;
     tokens: { accessToken: string; refreshToken: string };
@@ -56,7 +57,7 @@ export class AuthService {
     return { user, tokens };
   }
 
-  /** Signe un JWT de courte durée prouvant que le mot de passe est validé, en attente du code 2FA. */
+  /** [Minor · 2FA] Signe un JWT de courte durée prouvant que le mot de passe est validé, en attente du code 2FA. */
   async createPreAuthToken(user: UserEntity): Promise<string> {
     const secret = this.configService.get<string>('JWT_PRE_AUTH_TOKEN_SECRET');
     const expiresIn = this.configService.get<msStringValue>(
@@ -75,7 +76,7 @@ export class AuthService {
     );
   }
 
-  /** Lève une ForbiddenException (code BAN, motif et date de fin, null si permanent) si l'utilisateur est banni : le client peut ainsi expliquer le ban au lieu d'afficher une erreur générique. */
+  /** [Major · Permissions avancées] Lève une ForbiddenException (code BAN, motif et date de fin, null si permanent) si l'utilisateur est banni : le client peut ainsi expliquer le ban au lieu d'afficher une erreur générique. */
   async assertNotBanned(userId: string): Promise<void> {
     const ban = await this.banService.findActiveBan(userId);
     if (ban) {
@@ -88,7 +89,7 @@ export class AuthService {
     }
   }
 
-  /** Signe l'access token et le refresh token de l'utilisateur et stocke le hash du refresh token en base. */
+  /** [Major · Gestion des utilisateurs] Signe l'access token et le refresh token de l'utilisateur et stocke le hash du refresh token en base. */
   async createTokens(
     user: UserEntity,
   ): Promise<{ accessToken: string; refreshToken: string }> {
@@ -148,7 +149,7 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  /** Retourne l'utilisateur lié au login 42 du profil, en le créant à la première connexion. */
+  /** [Minor · OAuth 42] Retourne l'utilisateur lié au login 42 du profil, en le créant à la première connexion. */
   async validateUserFrom42Profile(
     _accessToken: string,
     _refreshToken: string,
@@ -163,7 +164,7 @@ export class AuthService {
     return this.usersService.createUserFrom42Profile(profile);
   }
 
-  /** Retrouve l'utilisateur d'un payload JWT ou lève une UnauthorizedException. */
+  /** [Major · Gestion des utilisateurs] Retrouve l'utilisateur d'un payload JWT ou lève une UnauthorizedException. */
   async validateUserFromToken(userId: string): Promise<UserEntity> {
     const user = await this.usersService.findUserById(userId);
     if (!user) {
@@ -176,7 +177,7 @@ export class AuthService {
     return user;
   }
 
-  /** Vérifie email et mot de passe (bcrypt) et retourne l'utilisateur, sinon lève une UnauthorizedException. */
+  /** [Major · Gestion des utilisateurs] Vérifie email et mot de passe (bcrypt) et retourne l'utilisateur, sinon lève une UnauthorizedException. */
   async validateUserFromLogin(loginDto: LoginDto): Promise<UserEntity> {
     const user = await this.usersService.findUserByEmail(loginDto.email);
     if (!user?.passwordHash) {
@@ -202,12 +203,12 @@ export class AuthService {
     return user;
   }
 
-  /** Vérifie le code TOTP de l'utilisateur avec son secret 2FA actif. */
+  /** [Minor · 2FA] Vérifie le code TOTP de l'utilisateur avec son secret 2FA actif. */
   async verify2fa(user: UserEntity, code: string): Promise<void> {
     await this.assertValidTotp(user.twoFactorSecret, code);
   }
 
-  /** Lève une UnauthorizedException si le secret est absent ou si le code TOTP est invalide (tolérance d'un pas de temps). */
+  /** [Minor · 2FA] Lève une UnauthorizedException si le secret est absent ou si le code TOTP est invalide (tolérance d'un pas de temps). */
   private async assertValidTotp(
     secret: string | null,
     code: string,
@@ -233,7 +234,7 @@ export class AuthService {
     }
   }
 
-  /** Génère un secret TOTP et l'URL otpauth, le stocke comme secret en attente ; refuse si la 2FA est déjà active. */
+  /** [Minor · 2FA] Génère un secret TOTP et l'URL otpauth, le stocke comme secret en attente ; refuse si la 2FA est déjà active. */
   async generate2faSecret(
     user: UserEntity,
   ): Promise<{ secret: string; otpauthUrl: string }> {
@@ -257,7 +258,7 @@ export class AuthService {
     return { secret, otpauthUrl };
   }
 
-  /** Désactive la 2FA (code TOTP ou code de secours requis) ou l'active en confirmant le secret en attente avec un code valide. À l'activation, génère et retourne les codes de secours (seule fois où ils sont visibles). */
+  /** [Minor · 2FA] Désactive la 2FA (code TOTP ou code de secours requis) ou l'active en confirmant le secret en attente avec un code valide. À l'activation, génère et retourne les codes de secours (seule fois où ils sont visibles). */
   async toggle2fa(
     user: UserEntity,
     dto: ToggleTwoFactorDto,
@@ -303,7 +304,7 @@ export class AuthService {
     return { enabled: true, recoveryCodes };
   }
 
-  /** Génère un nouveau lot de codes de secours (format XXXXX-XXXXX), remplace l'ancien en base (hashs seulement) et retourne les codes en clair. */
+  /** [Minor · 2FA] Génère un nouveau lot de codes de secours (format XXXXX-XXXXX), remplace l'ancien en base (hashs seulement) et retourne les codes en clair. */
   private async issueRecoveryCodes(userId: string): Promise<string[]> {
     const codes = Array.from({ length: RECOVERY_CODE_COUNT }, () => {
       const bytes = randomBytes(RECOVERY_CODE_LENGTH);
@@ -320,12 +321,12 @@ export class AuthService {
     return codes;
   }
 
-  /** Hash d'un code de secours après normalisation (casse, tirets et espaces ignorés). */
+  /** [Minor · 2FA] Hash d'un code de secours après normalisation (casse, tirets et espaces ignorés). */
   private hashRecoveryCode(code: string): string {
     return hashToken(code.replace(/[\s-]/g, '').toUpperCase());
   }
 
-  /** Consomme un code de secours (usage unique) ; lève une UnauthorizedException s'il est invalide ou déjà utilisé. */
+  /** [Minor · 2FA] Consomme un code de secours (usage unique) ; lève une UnauthorizedException s'il est invalide ou déjà utilisé. */
   private async consumeRecoveryCode(
     userId: string,
     code: string,
@@ -342,7 +343,7 @@ export class AuthService {
     }
   }
 
-  /** Connexion avec un code de secours à la place du code TOTP : le consomme, prévient l'utilisateur par email et retourne le nombre de codes restants. */
+  /** [Minor · 2FA] Connexion avec un code de secours à la place du code TOTP : le consomme, prévient l'utilisateur par email et retourne le nombre de codes restants. */
   async useRecoveryCode(user: UserEntity, code: string): Promise<number> {
     await this.consumeRecoveryCode(user.id, code);
     const remaining = await this.usersService.countUnusedRecoveryCodes(user.id);
@@ -355,12 +356,12 @@ export class AuthService {
     return remaining;
   }
 
-  /** Nombre de codes de secours encore utilisables. */
+  /** [Minor · 2FA] Nombre de codes de secours encore utilisables. */
   countRecoveryCodes(user: UserEntity): Promise<number> {
     return this.usersService.countUnusedRecoveryCodes(user.id);
   }
 
-  /** Régénère les codes de secours (les anciens deviennent invalides) après re-confirmation par code TOTP ou mot de passe ; retourne les nouveaux codes. */
+  /** [Minor · 2FA] Régénère les codes de secours (les anciens deviennent invalides) après re-confirmation par code TOTP ou mot de passe ; retourne les nouveaux codes. */
   async regenerateRecoveryCodes(
     user: UserEntity,
     dto: RegenerateRecoveryCodesDto,
@@ -391,7 +392,7 @@ export class AuthService {
     return this.issueRecoveryCodes(user.id);
   }
 
-  /** Supprime le refresh token en base ; lève une UnauthorizedException s'il n'existe pas. */
+  /** [Major · Gestion des utilisateurs] Supprime le refresh token en base ; lève une UnauthorizedException s'il n'existe pas. */
   async revokeRefreshToken(
     userId: string,
     refreshToken: string,
@@ -408,7 +409,7 @@ export class AuthService {
     }
   }
 
-  /** Vérifie que le refresh token existe en base et n'est pas expiré (il est supprimé s'il l'est). */
+  /** [Major · Gestion des utilisateurs] Vérifie que le refresh token existe en base et n'est pas expiré (il est supprimé s'il l'est). */
   async assertRefreshTokenIsValid(
     userId: string,
     refreshToken: string,
@@ -432,7 +433,7 @@ export class AuthService {
     }
   }
 
-  /** Contrôle et révoque l'ancien refresh token puis en génère une nouvelle paire. */
+  /** [Major · Gestion des utilisateurs] Contrôle et révoque l'ancien refresh token puis en génère une nouvelle paire. */
   async rotateRefreshToken(
     user: UserEntity,
     oldRefreshToken: string,
@@ -442,14 +443,14 @@ export class AuthService {
     return this.createTokens(user);
   }
 
-  /** Langue des emails de l'utilisateur, avec repli sur l'anglais. */
+  /** [Major · Gestion des utilisateurs] Langue des emails de l'utilisateur, avec repli sur l'anglais. */
   private mailLanguage(user: UserEntity): MailLanguage {
     return user.language === 'fr' || user.language === 'es'
       ? user.language
       : 'en';
   }
 
-  /** Étape 1 de « mot de passe oublié » : si un compte à mot de passe existe pour cet email, envoie un lien à usage unique valable une heure. Ne révèle jamais si l'email existe (même comportement dans tous les cas). */
+  /** [Major · Gestion des utilisateurs] Étape 1 de « mot de passe oublié » : si un compte à mot de passe existe pour cet email, envoie un lien à usage unique valable une heure. Ne révèle jamais si l'email existe (même comportement dans tous les cas). */
   async requestPasswordReset(email: string): Promise<void> {
     const user = await this.usersService.findUserByEmail(email);
     if (!user?.passwordHash) return;
@@ -473,7 +474,7 @@ export class AuthService {
     await this.mailService.sendQuietly(user.email, mail.subject, mail.text);
   }
 
-  /** Étape 2 : vérifie le jeton reçu par email, définit le nouveau mot de passe, déconnecte toutes les sessions et prévient l'utilisateur par email. */
+  /** [Major · Gestion des utilisateurs] Étape 2 : vérifie le jeton reçu par email, définit le nouveau mot de passe, déconnecte toutes les sessions et prévient l'utilisateur par email. */
   async resetPassword(token: string, newPassword: string): Promise<void> {
     const user = await this.usersService.consumePasswordResetToken(
       hashToken(token),

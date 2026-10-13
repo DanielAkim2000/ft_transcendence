@@ -18,7 +18,7 @@ type Props = {
   onConfirm: () => void | Promise<void>;
 };
 
-/** Récapitulatif du score (équipes, score, vainqueur) : on relit ce qu'on a saisi avant d'enregistrer. */
+/** [Minor · Design system] Récapitulatif du score (équipes, score, vainqueur) : on relit ce qu'on a saisi avant d'enregistrer. */
 function ScoreRecap({
   teamA,
   teamB,
@@ -26,6 +26,7 @@ function ScoreRecap({
   scoreB,
 }: Pick<Props, "teamA" | "teamB" | "scoreA" | "scoreB">) {
   const aWins = scoreA > scoreB;
+  /** [Minor · Design system] Rend un camp du récapitulatif (nom, score) en mettant le gagnant en évidence. */
   const side = (name: string, score: number, wins: boolean) => (
     <div
       className={cn(
@@ -55,7 +56,7 @@ function ScoreRecap({
   );
 }
 
-/** Demande de confirmation avant d'enregistrer un score : rappelle le score saisi, qui gagne, et ce qui se passera ensuite. */
+/** [Minor · Design system] Demande de confirmation avant d'enregistrer un score : rappelle le score saisi, qui gagne, et ce qui se passera ensuite. */
 export function ScoreConfirmDialog({
   children,
   teamA,

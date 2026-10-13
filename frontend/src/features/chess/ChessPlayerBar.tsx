@@ -15,7 +15,7 @@ type Props = {
   finished: boolean;
 };
 
-/** Barre d'un joueur autour de l'échiquier : avatar, nom, couleur des pièces et indication du trait. */
+/** [Major · Jeu web (Échecs)] Barre d'un joueur autour de l'échiquier : avatar, nom, couleur des pièces et indication du trait. */
 export function ChessPlayerBar({ player, color, isMe, toMove, finished }: Props) {
   const { t } = useTranslation();
   const active = toMove && !finished;

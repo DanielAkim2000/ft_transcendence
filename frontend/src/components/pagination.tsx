@@ -8,7 +8,7 @@ type PaginationProps = {
   disabled?: boolean;
 };
 
-/** Barre Précédent / « Page x sur y » / Suivant ; masquée quand il n'y a qu'une page. */
+/** [Minor · Recherche avancée] Barre Précédent / « Page x sur y » / Suivant ; masquée quand il n'y a qu'une page. */
 export function Pagination({ page, totalPages, onPageChange, disabled = false }: PaginationProps) {
   const { t } = useTranslation();
   if (totalPages <= 1) return null;

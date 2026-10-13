@@ -29,9 +29,10 @@ export type UserWithFriendship = UserEntity & {
   friendshipStatus: 'none' | 'pending_out' | 'pending_in' | 'friends';
 };
 
+/** [Major · Gestion des utilisateurs] Service métier des utilisateurs (profil, amis, classement). */
 @Injectable()
 export class UsersService {
-  /** Injecte les dépendances : UserRepository, PresenceGateway, NotificationsService. */
+  /** [Major · Gestion des utilisateurs] Injecte les dépendances : UserRepository, PresenceGateway, NotificationsService. */
   constructor(
     private readonly userRepository: UserRepository,
     @Inject(forwardRef(() => PresenceGateway))
@@ -40,22 +41,22 @@ export class UsersService {
     private readonly notificationsService: NotificationsService,
   ) {}
 
-  /** Retrouve un utilisateur par id, ou null. */
+  /** [Major · Gestion des utilisateurs] Retrouve un utilisateur par id, ou null. */
   findUserById(id: string): Promise<UserEntity | null> {
     return this.userRepository.findUserById(id);
   }
 
-  /** Retrouve un utilisateur par email, ou null. */
+  /** [Major · Gestion des utilisateurs] Retrouve un utilisateur par email, ou null. */
   findUserByEmail(email: string): Promise<UserEntity | null> {
     return this.userRepository.findUserByEmail(email);
   }
 
-  /** Retrouve un utilisateur par login 42, ou null. */
+  /** [Major · Gestion des utilisateurs] Retrouve un utilisateur par login 42, ou null. */
   findUserByLogin(login: string): Promise<UserEntity | null> {
     return this.userRepository.findUserByLogin(login);
   }
 
-  /** Retourne un utilisateur par id ou lève une NotFoundException. */
+  /** [Major · Interaction entre utilisateurs] Retourne un utilisateur par id ou lève une NotFoundException. */
   async getProfile(id: string): Promise<UserEntity> {
     const user = await this.userRepository.findUserById(id);
     if (!user) {
@@ -67,7 +68,7 @@ export class UsersService {
     return user;
   }
 
-  /** Profil public : la presence n'est visible qu'aux amis (ou soi-même). */
+  /** [Major · Interaction entre utilisateurs] Profil public : la presence n'est visible qu'aux amis (ou soi-même). */
   async getProfileForViewer(
     viewerId: string,
     targetId: string,
@@ -84,7 +85,7 @@ export class UsersService {
     return { user, friendshipStatus };
   }
 
-  /** Recherche paginée d'utilisateurs (hors l'utilisateur courant) : chaque résultat porte sa relation d'amitié avec l'utilisateur, et la présence des non-amis est masquée. */
+  /** [Minor · Recherche avancée] Recherche paginée d'utilisateurs (hors l'utilisateur courant) : chaque résultat porte sa relation d'amitié avec l'utilisateur, et la présence des non-amis est masquée. */
   async searchUsers(
     excludeUserId: string,
     query: string | undefined,
@@ -109,19 +110,19 @@ export class UsersService {
     return toPaginated(items, total, page);
   }
 
-  /** Masque isOnline / status pour les non-amis. */
+  /** [Major · Gestion des utilisateurs] Masque isOnline / status pour les non-amis. */
   private hidePresence(user: UserEntity): UserEntity {
     user.isOnline = false;
     user.status = Status.OFFLINE;
     return user;
   }
 
-  /** Crée un utilisateur à partir du profil renvoyé par l'OAuth 42. */
+  /** [Major · Gestion des utilisateurs] Crée un utilisateur à partir du profil renvoyé par l'OAuth 42. */
   createUserFrom42Profile(profile: Profile42Dto): Promise<UserEntity> {
     return this.userRepository.createUserFrom42Profile(profile);
   }
 
-  /** Crée un utilisateur avec mot de passe haché (bcrypt) ; lève une ConflictException si l'email est déjà pris. */
+  /** [Major · Gestion des utilisateurs] Crée un utilisateur avec mot de passe haché (bcrypt) ; lève une ConflictException si l'email est déjà pris. */
   async createUserFromRegisterInfo(
     registerDto: RegisterDto,
   ): Promise<UserEntity> {
@@ -147,12 +148,12 @@ export class UsersService {
     }
   }
 
-  /** Enregistre en base l'état complet de l'entité utilisateur. */
+  /** [Major · Gestion des utilisateurs] Enregistre en base l'état complet de l'entité utilisateur. */
   updateUser(user: UserEntity): Promise<UserEntity> {
     return this.userRepository.updateUser(user);
   }
 
-  /** Met à jour le nom d'affichage (espaces retirés) de l'utilisateur. */
+  /** [Major · Gestion des utilisateurs] Met à jour le nom d'affichage (espaces retirés) de l'utilisateur. */
   async updateProfile(
     user: UserEntity,
     dto: UpdateProfileDto,
@@ -161,7 +162,7 @@ export class UsersService {
     return this.userRepository.updateUser(user);
   }
 
-  /** Met à jour le thème, la langue, la couleur principale et l'arrondi des bordures de l'utilisateur. */
+  /** [Major · Gestion des utilisateurs] Met à jour le thème, la langue, la couleur principale et l'arrondi des bordures de l'utilisateur. */
   async updateSettings(
     user: UserEntity,
     dto: UpdateSettingsDto,
@@ -173,7 +174,7 @@ export class UsersService {
     return this.userRepository.updateUser(user);
   }
 
-  /** Enregistre le nouvel avatar et supprime l'ancien fichier s'il était stocké localement. */
+  /** [Major · Gestion des utilisateurs] Enregistre le nouvel avatar et supprime l'ancien fichier s'il était stocké localement. */
   async updateAvatar(user: UserEntity, filename: string): Promise<UserEntity> {
     const previous = user.avatarUrl;
     user.avatarUrl = `/uploads/avatars/${filename}`;
@@ -185,7 +186,7 @@ export class UsersService {
     return updated;
   }
 
-  /** Envoie une demande d'ami et notifie le destinataire ; si l'autre avait déjà envoyé une demande, l'amitié est acceptée. Refuse si on se cible soi-même, déjà amis ou demande déjà envoyée. */
+  /** [Major · Interaction entre utilisateurs] Envoie une demande d'ami et notifie le destinataire ; si l'autre avait déjà envoyé une demande, l'amitié est acceptée. Refuse si on se cible soi-même, déjà amis ou demande déjà envoyée. */
   async sendFriendRequest(
     requester: UserEntity,
     addresseeId: string,
@@ -232,7 +233,7 @@ export class UsersService {
     return addressee;
   }
 
-  /** Accepte la demande d'ami reçue d'un utilisateur et le notifie ; 404 si aucune demande en attente ne lui est adressée. */
+  /** [Major · Interaction entre utilisateurs] Accepte la demande d'ami reçue d'un utilisateur et le notifie ; 404 si aucune demande en attente ne lui est adressée. */
   async acceptFriendRequest(
     currentUser: UserEntity,
     requesterId: string,
@@ -258,7 +259,7 @@ export class UsersService {
     return this.getProfile(requesterId);
   }
 
-  /** Supprime l'amitié ou la demande entre deux utilisateurs et notifie l'autre ; 404 si aucune relation n'existe. */
+  /** [Major · Interaction entre utilisateurs] Supprime l'amitié ou la demande entre deux utilisateurs et notifie l'autre ; 404 si aucune relation n'existe. */
   async removeFriendship(
     currentUser: UserEntity,
     otherUserId: string,
@@ -279,7 +280,7 @@ export class UsersService {
     });
   }
 
-  /** Supprime silencieusement la relation d'amitié entre deux utilisateurs si elle existe (utilisé au blocage). */
+  /** [Major · Interaction entre utilisateurs] Supprime silencieusement la relation d'amitié entre deux utilisateurs si elle existe (utilisé au blocage). */
   async removeFriendshipIfExists(
     userId: string,
     otherUserId: string,
@@ -293,7 +294,7 @@ export class UsersService {
     }
   }
 
-  /** Liste une page des amis confirmés de l'utilisateur (en ligne d'abord), avec filtres optionnels texte / en ligne. */
+  /** [Major · Interaction entre utilisateurs] Liste une page des amis confirmés de l'utilisateur (en ligne d'abord), avec filtres optionnels texte / en ligne. */
   async listFriends(
     userId: string,
     page: PageQueryDto,
@@ -307,12 +308,12 @@ export class UsersService {
     return toPaginated(users, total, page);
   }
 
-  /** Ids de tous les amis confirmés (sans pagination : usage interne, ex. présence en temps réel). */
+  /** [Major · Interaction entre utilisateurs] Ids de tous les amis confirmés (sans pagination : usage interne, ex. présence en temps réel). */
   listFriendIds(userId: string): Promise<string[]> {
     return this.userRepository.listAcceptedFriendIds(userId);
   }
 
-  /** Liste une page des demandes d'ami reçues par l'utilisateur et non encore acceptées. */
+  /** [Major · Interaction entre utilisateurs] Liste une page des demandes d'ami reçues par l'utilisateur et non encore acceptées. */
   async listPendingRequests(
     userId: string,
     page: PageQueryDto,
@@ -324,7 +325,7 @@ export class UsersService {
     return toPaginated(users, total, page);
   }
 
-  /** Liste une page des demandes d'ami envoyées par l'utilisateur et non encore acceptées. */
+  /** [Major · Interaction entre utilisateurs] Liste une page des demandes d'ami envoyées par l'utilisateur et non encore acceptées. */
   async listOutgoingRequests(
     userId: string,
     page: PageQueryDto,
@@ -336,7 +337,7 @@ export class UsersService {
     return toPaginated(users, total, page);
   }
 
-  /** Retourne la relation entre deux utilisateurs : 'self', 'none', 'pending_out', 'pending_in' ou 'friends'. */
+  /** [Major · Interaction entre utilisateurs] Retourne la relation entre deux utilisateurs : 'self', 'none', 'pending_out', 'pending_in' ou 'friends'. */
   async getFriendshipStatus(
     currentUserId: string,
     otherUserId: string,
@@ -359,7 +360,7 @@ export class UsersService {
       : 'pending_in';
   }
 
-  /** Enregistre le hash d'un refresh token pour l'utilisateur, avec sa date d'expiration. */
+  /** [Major · Gestion des utilisateurs] Enregistre le hash d'un refresh token pour l'utilisateur, avec sa date d'expiration. */
   addRefreshToken(
     userId: string,
     tokenHash: string,
@@ -368,7 +369,7 @@ export class UsersService {
     return this.userRepository.addRefreshToken(userId, tokenHash, expiresAt);
   }
 
-  /** Révoque (supprime) un refresh token ; retourne true s'il existait. */
+  /** [Major · Gestion des utilisateurs] Révoque (supprime) un refresh token ; retourne true s'il existait. */
   async revokeRefreshToken(
     userId: string,
     tokenHash: string,
@@ -376,7 +377,7 @@ export class UsersService {
     return this.userRepository.deleteRefreshToken(userId, tokenHash);
   }
 
-  /** Enregistre le hash du jeton de réinitialisation de mot de passe de l'utilisateur (remplace le précédent). */
+  /** [Major · Gestion des utilisateurs] Enregistre le hash du jeton de réinitialisation de mot de passe de l'utilisateur (remplace le précédent). */
   savePasswordResetToken(
     userId: string,
     tokenHash: string,
@@ -389,7 +390,7 @@ export class UsersService {
     );
   }
 
-  /** Consomme un jeton de réinitialisation (usage unique), change le mot de passe et révoque les sessions ; null si le jeton est invalide ou expiré. */
+  /** [Major · Gestion des utilisateurs] Consomme un jeton de réinitialisation (usage unique), change le mot de passe et révoque les sessions ; null si le jeton est invalide ou expiré. */
   async consumePasswordResetToken(
     tokenHash: string,
     newPassword: string,
@@ -401,27 +402,27 @@ export class UsersService {
     );
   }
 
-  /** Remplace les codes de secours 2FA de l'utilisateur par un nouveau lot (hashs). */
+  /** [Minor · 2FA] Remplace les codes de secours 2FA de l'utilisateur par un nouveau lot (hashs). */
   replaceRecoveryCodes(userId: string, codeHashes: string[]): Promise<void> {
     return this.userRepository.replaceRecoveryCodes(userId, codeHashes);
   }
 
-  /** Supprime les codes de secours 2FA de l'utilisateur. */
+  /** [Minor · 2FA] Supprime les codes de secours 2FA de l'utilisateur. */
   deleteRecoveryCodes(userId: string): Promise<void> {
     return this.userRepository.deleteRecoveryCodes(userId);
   }
 
-  /** Consomme un code de secours (usage unique) ; retourne true s'il était valide. */
+  /** [Minor · 2FA] Consomme un code de secours (usage unique) ; retourne true s'il était valide. */
   consumeRecoveryCode(userId: string, codeHash: string): Promise<boolean> {
     return this.userRepository.consumeRecoveryCode(userId, codeHash);
   }
 
-  /** Nombre de codes de secours encore utilisables. */
+  /** [Minor · 2FA] Nombre de codes de secours encore utilisables. */
   countUnusedRecoveryCodes(userId: string): Promise<number> {
     return this.userRepository.countUnusedRecoveryCodes(userId);
   }
 
-  /** Retrouve un refresh token de l'utilisateur à partir de son hash, ou null. */
+  /** [Major · Gestion des utilisateurs] Retrouve un refresh token de l'utilisateur à partir de son hash, ou null. */
   findRefreshToken(
     userId: string,
     tokenHash: string,
@@ -429,7 +430,7 @@ export class UsersService {
     return this.userRepository.findRefreshToken(userId, tokenHash);
   }
 
-  /** Met à jour l'état de connexion et le statut (en ligne, hors ligne, en jeu) de l'utilisateur. */
+  /** [Major · Temps réel WebSockets] Met à jour l'état de connexion et le statut (en ligne, hors ligne, en jeu) de l'utilisateur. */
   updatePresence(
     userId: string,
     isOnline: boolean,
@@ -438,7 +439,7 @@ export class UsersService {
     return this.userRepository.updatePresence(userId, isOnline, status);
   }
 
-  /** Retourne une page du classement des joueurs par note Elo, avec recherche, filtres et tri. */
+  /** [Minor · Stats et historique] Retourne une page du classement des joueurs par note Elo, avec recherche, filtres et tri. */
   async getRanking(
     userId: string,
     query: RankingQueryDto,

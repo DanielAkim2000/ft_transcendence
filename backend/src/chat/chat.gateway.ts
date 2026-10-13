@@ -21,6 +21,7 @@ type ChatSocket = Socket<
   { userId?: string }
 >;
 
+/** [Major · Temps réel WebSockets] Passerelle WebSocket du chat (conversations, messages, blocages) : namespace socket.io, authentification par access token et diffusion d'événements en temps réel. */
 @WebSocketGateway({
   cors: {
     origin: process.env.FRONTEND_URL,
@@ -32,14 +33,14 @@ export class ChatGateway implements OnGatewayConnection {
   @WebSocketServer()
   private server!: Server;
 
-  /** Injecte les dépendances : UsersService, JwtService, ConversationRepository. */
+  /** [Major · Temps réel WebSockets] Injecte les dépendances : UsersService, JwtService, ConversationRepository. */
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly conversationRepository: ConversationRepository,
   ) {}
 
-  /** Authentifie la connexion WebSocket via le JWT et fait rejoindre au client sa room personnelle (son userId) ; déconnecte si le token est absent ou invalide. */
+  /** [Major · Temps réel WebSockets] Authentifie la connexion WebSocket via le JWT et fait rejoindre au client sa room personnelle (son userId) ; déconnecte si le token est absent ou invalide. */
   async handleConnection(client: ChatSocket): Promise<void> {
     const accessToken = (client.handshake.auth as { access_token?: unknown })
       .access_token;
@@ -64,14 +65,14 @@ export class ChatGateway implements OnGatewayConnection {
     }
   }
 
-  /** Envoie le nouveau message (message:new) aux deux participants de la conversation. */
+  /** [Major · Temps réel WebSockets] Envoie le nouveau message (message:new) aux deux participants de la conversation. */
   emitNewMessage(conversation: ConversationEntity, message: MessageEntity) {
     this.server
       .to([conversation.userAId, conversation.userBId])
       .emit('message:new', message);
   }
 
-  /** Prévient les deux participants (conversation:read) que l'un d'eux a lu la conversation. */
+  /** [Minor · Chat avancé] Prévient les deux participants (conversation:read) que l'un d'eux a lu la conversation. */
   emitConversationRead(
     conversation: ConversationEntity,
     readerId: string,
@@ -86,7 +87,7 @@ export class ChatGateway implements OnGatewayConnection {
       });
   }
 
-  /** Relaye l'indicateur « en train d'écrire » aux deux participants, après avoir vérifié que l'émetteur fait partie de la conversation. */
+  /** [Minor · Chat avancé] Relaye l'indicateur « en train d'écrire » aux deux participants, après avoir vérifié que l'émetteur fait partie de la conversation. */
   @SubscribeMessage('typing')
   async handleTyping(
     @ConnectedSocket() client: ChatSocket,

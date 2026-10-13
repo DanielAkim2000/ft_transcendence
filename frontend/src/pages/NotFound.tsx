@@ -4,7 +4,7 @@ import { AuthShell } from "@/layouts/AuthShell";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
 
-/** Page 404 : même ambiance « terminal » que le logo et l'écran de chargement. */
+/** [Minor · Design system] Page 404 : même ambiance « terminal » que le logo et l'écran de chargement. */
 export const NotFound = () => {
   const { t } = useTranslation();
   const { pathname } = useLocation();

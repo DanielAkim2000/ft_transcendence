@@ -16,6 +16,7 @@ type MatchesSocket = Socket<
   { userId?: string }
 >;
 
+/** [Major · Temps réel WebSockets] Passerelle WebSocket des matchs (défis, scores, Elo, historique) : namespace socket.io, authentification par access token et diffusion d'événements en temps réel. */
 @WebSocketGateway({
   cors: {
     origin: process.env.FRONTEND_URL,
@@ -27,13 +28,13 @@ export class MatchesGateway implements OnGatewayConnection {
   @WebSocketServer()
   private server!: Server;
 
-  /** Injecte les dépendances : UsersService, JwtService. */
+  /** [Major · Temps réel WebSockets] Injecte les dépendances : UsersService, JwtService. */
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
 
-  /** Authentifie la connexion WebSocket via le JWT et fait rejoindre au client sa room personnelle (son userId) ; déconnecte si le token est absent ou invalide. */
+  /** [Major · Temps réel WebSockets] Authentifie la connexion WebSocket via le JWT et fait rejoindre au client sa room personnelle (son userId) ; déconnecte si le token est absent ou invalide. */
   async handleConnection(client: MatchesSocket): Promise<void> {
     const accessToken = (client.handshake.auth as { access_token?: unknown })
       .access_token;
@@ -58,12 +59,12 @@ export class MatchesGateway implements OnGatewayConnection {
     }
   }
 
-  /** Envoie un événement au seul utilisateur ciblé (via sa room personnelle). */
+  /** [Major · Temps réel WebSockets] Envoie un événement au seul utilisateur ciblé (via sa room personnelle). */
   emitToUser(userId: string, event: string, payload: unknown): void {
     this.server.to(userId).emit(event, payload);
   }
 
-  /** Diffuse un événement à tous les participants (1 à 4 joueurs) du match. */
+  /** [Major · Temps réel WebSockets] Diffuse un événement à tous les participants (1 à 4 joueurs) du match. */
   emitToMatch(match: MatchEntity, event: string, payload: unknown): void {
     const ids = [...match.teamA, ...match.teamB].map((player) => player.id);
     this.server.to(ids).emit(event, payload);

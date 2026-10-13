@@ -15,6 +15,7 @@ type TournamentsSocket = Socket<
   { userId?: string }
 >;
 
+/** [Major · Temps réel WebSockets] Passerelle WebSocket des tournois : namespace socket.io, authentification par access token et diffusion d'événements en temps réel. */
 @WebSocketGateway({
   cors: {
     origin: process.env.FRONTEND_URL,
@@ -26,13 +27,13 @@ export class TournamentsGateway implements OnGatewayConnection {
   @WebSocketServer()
   private server!: Server;
 
-  /** Injecte les dépendances : UsersService, JwtService. */
+  /** [Major · Temps réel WebSockets] Injecte les dépendances : UsersService, JwtService. */
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
 
-  /** Authentifie la connexion WebSocket via le JWT et fait rejoindre au client sa room personnelle (son userId) ; déconnecte si le token est absent ou invalide. */
+  /** [Major · Temps réel WebSockets] Authentifie la connexion WebSocket via le JWT et fait rejoindre au client sa room personnelle (son userId) ; déconnecte si le token est absent ou invalide. */
   async handleConnection(client: TournamentsSocket): Promise<void> {
     const accessToken = (client.handshake.auth as { access_token?: unknown })
       .access_token;
@@ -57,17 +58,17 @@ export class TournamentsGateway implements OnGatewayConnection {
     }
   }
 
-  /** Diffuse à tout le monde (liste des tournois, page publique). */
+  /** [Major · Temps réel WebSockets] Diffuse à tout le monde (liste des tournois, page publique). */
   broadcast(event: string, payload: unknown): void {
     this.server.emit(event, payload);
   }
 
-  /** Envoie un événement au seul utilisateur ciblé. */
+  /** [Major · Temps réel WebSockets] Envoie un événement au seul utilisateur ciblé. */
   emitToUser(userId: string, event: string, payload: unknown): void {
     this.server.to(userId).emit(event, payload);
   }
 
-  /** Envoie un événement à plusieurs utilisateurs à la fois (leurs rooms personnelles). */
+  /** [Major · Temps réel WebSockets] Envoie un événement à plusieurs utilisateurs à la fois (leurs rooms personnelles). */
   emitToUsers(userIds: string[], event: string, payload: unknown): void {
     this.server.to(userIds).emit(event, payload);
   }

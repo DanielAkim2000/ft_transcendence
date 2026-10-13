@@ -1,5 +1,6 @@
 import type { MailLanguage } from '../gdpr/gdpr.messages';
 
+/** [Major · Gestion des utilisateurs] Contenu d'un email (sujet, texte) dans une langue. */
 interface Mail {
   subject: string;
   text: string;

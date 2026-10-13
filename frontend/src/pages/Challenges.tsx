@@ -11,7 +11,7 @@ import { useClampedPage } from "@/lib/use-clamped-page";
 
 const MATCHES_PAGE_SIZE = 10;
 
-/** Défis de l'utilisateur : ceux reçus (à accepter), à jouer (saisie du score) et à valider. Pour en lancer un, on passe par le classement. */
+/** [Minor · Stats et historique] Défis de l'utilisateur : ceux reçus (à accepter), à jouer (saisie du score) et à valider. Pour en lancer un, on passe par le classement. */
 export const Challenges = () => {
   const { t } = useTranslation();
   const { data: me } = useMeQuery();

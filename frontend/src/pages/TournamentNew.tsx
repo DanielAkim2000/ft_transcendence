@@ -24,6 +24,7 @@ interface StagedEntry {
   label: string;
 }
 
+/** [Minor · Tournois] Page de création d'un tournoi : nom, format (1v1/2v2), aller-retour, inscriptions initiales. */
 export const TournamentNew = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -54,6 +55,7 @@ export const TournamentNew = () => {
     entries.flatMap((entry) => [entry.player1Id, entry.player2Id].filter((id): id is string => !!id)),
   );
 
+  /** [Minor · Tournois] Ajoute un joueur aux inscriptions (ou forme une paire en 2v2) en évitant les doublons. */
   const pickUser = (user: { id: string; displayname: string }) => {
     if (enteredIds.has(user.id) || pendingPlayer1?.id === user.id) return;
     if (format === "ONE_V_ONE") {
@@ -79,10 +81,12 @@ export const TournamentNew = () => {
     setPendingPlayer1(null);
   };
 
+  /** [Minor · Tournois] Retire une inscription de la liste. */
   const removeEntry = (key: string) => {
     setEntries((prev) => prev.filter((entry) => entry.key !== key));
   };
 
+  /** [Minor · Tournois] Crée le tournoi avec ses inscriptions puis ouvre sa page. */
   const submit = async () => {
     try {
       const tournament: Tournament = await createTournament({

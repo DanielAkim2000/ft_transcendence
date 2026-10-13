@@ -5,6 +5,7 @@ import {
   MinLength,
 } from 'class-validator';
 
+/** [Major · Gestion des utilisateurs] Corps validé de la réinitialisation (jeton, nouveau mot de passe). */
 export class ResetPasswordDto {
   @IsString()
   @IsNotEmpty()

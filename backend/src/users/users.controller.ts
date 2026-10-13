@@ -31,13 +31,14 @@ import { PageQueryDto } from '../common/pagination/page-query.dto';
 const AVATAR_DIR = join(process.cwd(), 'uploads', 'avatars');
 const AVATAR_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
+/** [Major · Gestion des utilisateurs] Contrôleur HTTP des utilisateurs (profil, amis, classement) : routes REST protégées par les guards d'authentification. */
 @Controller('users')
 @UseGuards(AccessTokenGuard)
 export class UsersController {
   /** Injecte les dépendances : UsersService. */
   constructor(private readonly usersService: UsersService) {}
 
-  /** GET /users?q=&page=&limit= : recherche paginée d'utilisateurs (nom ou email) hors utilisateur connecté, avec leur relation d'amitié ; la présence n'est visible que pour les amis. */
+  /** [Minor · Recherche avancée] GET /users?q=&page=&limit= : recherche paginée d'utilisateurs (nom ou email) hors utilisateur connecté, avec leur relation d'amitié ; la présence n'est visible que pour les amis. */
   @Get()
   listUsers(
     @Req() req: Request & { user: UserEntity },
@@ -46,7 +47,7 @@ export class UsersController {
     return this.usersService.searchUsers(req.user.id, query.q, query);
   }
 
-  /** GET /users/ranking?page=&limit=&q=&scope=&minMatches=&sort= : page du classement par note Elo, avec recherche, filtres et tri. */
+  /** [Minor · Recherche avancée] GET /users/ranking?page=&limit=&q=&scope=&minMatches=&sort= : page du classement par note Elo, avec recherche, filtres et tri. */
   @Get('ranking')
   getRanking(
     @Req() req: Request & { user: UserEntity },
@@ -55,7 +56,7 @@ export class UsersController {
     return this.usersService.getRanking(req.user.id, query);
   }
 
-  /** GET /users/me/friends?page=&limit=&q=&online= : page des amis de l'utilisateur connecté, en ligne d'abord. */
+  /** [Major · Interaction entre utilisateurs] GET /users/me/friends?page=&limit=&q=&online= : page des amis de l'utilisateur connecté, en ligne d'abord. */
   @Get('me/friends')
   listFriends(
     @Req() req: Request & { user: UserEntity },
@@ -67,7 +68,7 @@ export class UsersController {
     });
   }
 
-  /** GET /users/me/friends/pending?page=&limit= : page des demandes d'ami reçues, en attente de réponse. */
+  /** [Major · Interaction entre utilisateurs] GET /users/me/friends/pending?page=&limit= : page des demandes d'ami reçues, en attente de réponse. */
   @Get('me/friends/pending')
   listPending(
     @Req() req: Request & { user: UserEntity },
@@ -76,7 +77,7 @@ export class UsersController {
     return this.usersService.listPendingRequests(req.user.id, query);
   }
 
-  /** GET /users/me/friends/outgoing?page=&limit= : page des demandes d'ami envoyées, en attente de réponse. */
+  /** [Major · Interaction entre utilisateurs] GET /users/me/friends/outgoing?page=&limit= : page des demandes d'ami envoyées, en attente de réponse. */
   @Get('me/friends/outgoing')
   listOutgoing(
     @Req() req: Request & { user: UserEntity },
@@ -85,7 +86,7 @@ export class UsersController {
     return this.usersService.listOutgoingRequests(req.user.id, query);
   }
 
-  /** POST /users/me/friends/:userId : envoie une demande d'ami (ou accepte si l'autre en avait déjà envoyé une). */
+  /** [Major · Interaction entre utilisateurs] POST /users/me/friends/:userId : envoie une demande d'ami (ou accepte si l'autre en avait déjà envoyé une). */
   @Post('me/friends/:userId')
   sendFriendRequest(
     @Req() req: Request & { user: UserEntity },
@@ -94,7 +95,7 @@ export class UsersController {
     return this.usersService.sendFriendRequest(req.user, userId);
   }
 
-  /** PATCH /users/me/friends/:userId/accept : accepte la demande d'ami reçue de cet utilisateur. */
+  /** [Major · Interaction entre utilisateurs] PATCH /users/me/friends/:userId/accept : accepte la demande d'ami reçue de cet utilisateur. */
   @Patch('me/friends/:userId/accept')
   acceptFriendRequest(
     @Req() req: Request & { user: UserEntity },
@@ -103,7 +104,7 @@ export class UsersController {
     return this.usersService.acceptFriendRequest(req.user, userId);
   }
 
-  /** DELETE /users/me/friends/:userId : supprime l'amitié ou annule/refuse la demande. */
+  /** [Major · Interaction entre utilisateurs] DELETE /users/me/friends/:userId : supprime l'amitié ou annule/refuse la demande. */
   @Delete('me/friends/:userId')
   async removeFriend(
     @Req() req: Request & { user: UserEntity },
@@ -113,7 +114,7 @@ export class UsersController {
     return { ok: true };
   }
 
-  /** PATCH /users/me : met à jour le profil (nom d'affichage) de l'utilisateur connecté. */
+  /** [Major · Gestion des utilisateurs] PATCH /users/me : met à jour le profil (nom d'affichage) de l'utilisateur connecté. */
   @Patch('me')
   updateMe(
     @Req() req: Request & { user: UserEntity },
@@ -122,7 +123,7 @@ export class UsersController {
     return this.usersService.updateProfile(req.user, dto);
   }
 
-  /** PATCH /users/me/settings : met à jour les préférences (thème, langue). */
+  /** [Major · Gestion des utilisateurs] PATCH /users/me/settings : met à jour les préférences (thème, langue). */
   @Patch('me/settings')
   updateSettings(
     @Req() req: Request & { user: UserEntity },
@@ -131,7 +132,7 @@ export class UsersController {
     return this.usersService.updateSettings(req.user, dto);
   }
 
-  /** POST /users/me/avatar : envoie l'avatar (JPEG/PNG/WebP, 2 Mo max), le stocke sur disque et met à jour le profil. */
+  /** [Major · Gestion des utilisateurs] POST /users/me/avatar : envoie l'avatar (JPEG/PNG/WebP, 2 Mo max), le stocke sur disque et met à jour le profil. */
   @Post('me/avatar')
   @UseInterceptors(
     FileInterceptor('avatar', {
@@ -174,7 +175,7 @@ export class UsersController {
     return this.usersService.updateAvatar(req.user, file.filename);
   }
 
-  /** GET /users/:id : profil public d'un utilisateur avec le statut d'amitié vis-à-vis de l'utilisateur connecté. */
+  /** [Major · Interaction entre utilisateurs] GET /users/:id : profil public d'un utilisateur avec le statut d'amitié vis-à-vis de l'utilisateur connecté. */
   @Get(':id')
   async getById(
     @Req() req: Request & { user: UserEntity },

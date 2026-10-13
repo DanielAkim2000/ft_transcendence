@@ -4,6 +4,7 @@ import { GDPR_ENDPOINTS } from "@/constants/queryEndpoints";
 
 export type ExportFormat = "csv" | "json";
 
+/** [Minor · RGPD] Endpoints RTK Query du domaine « gdpr » (requêtes/mutations typées, cache et invalidation par tags) : EXPORT_DATA, REQUEST_DELETION, CONFIRM_DELETION. */
 export const gdprApi = api.injectEndpoints({
   endpoints: (builder) => ({
     // Déclenché par un clic (téléchargement), donc une mutation. Le fichier (JSON ou CSV)

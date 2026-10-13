@@ -8,12 +8,13 @@ import { PrismaClient } from '../generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PRISMA_ADAPTER } from './constants/injection-tokens';
 
+/** [Minor · ORM Prisma] Service métier de l'accès à la base. */
 @Injectable()
 export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
-  /** Injecte les dépendances : PrismaPg. */
+  /** [Minor · ORM Prisma] Injecte les dépendances : PrismaPg. */
   constructor(@Inject(PRISMA_ADAPTER) adapter: PrismaPg) {
     super({
       adapter: adapter,
@@ -21,12 +22,12 @@ export class PrismaService
     });
   }
 
-  /** Ouvre la connexion à la base au démarrage du module. */
+  /** [Minor · ORM Prisma] Ouvre la connexion à la base au démarrage du module. */
   async onModuleInit() {
     await this.$connect();
   }
 
-  /** Ferme la connexion à la base à l'arrêt du module. */
+  /** [Minor · ORM Prisma] Ferme la connexion à la base à l'arrêt du module. */
   async onModuleDestroy() {
     await this.$disconnect();
   }

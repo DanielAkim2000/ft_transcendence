@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+/** [Minor · Chat avancé] Blocage d'un utilisateur par un autre (empêche les messages et les invitations). */
 export class BlockEntity {
   @ApiProperty({
     description: 'The id of the user who blocked another user',
@@ -17,7 +18,7 @@ export class BlockEntity {
   })
   createdAt!: Date;
 
-  /** Copie dans l'instance les champs fournis. */
+  /** [Minor · Chat avancé] Copie dans l'instance les champs fournis. */
   constructor(block: Partial<BlockEntity>) {
     Object.assign(this, block);
   }

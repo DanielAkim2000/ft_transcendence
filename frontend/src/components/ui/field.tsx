@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 
+/** [Minor · Design system] Regroupement sémantique (fieldset) de champs de formulaire. */
 function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
   return (
     <fieldset
@@ -18,6 +19,7 @@ function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
   )
 }
 
+/** [Minor · Design system] Légende d'un FieldSet. */
 function FieldLegend({
   className,
   variant = "legend",
@@ -36,6 +38,7 @@ function FieldLegend({
   )
 }
 
+/** [Minor · Design system] Pile verticale de champs avec espacement uniforme. */
 function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -67,6 +70,7 @@ const fieldVariants = cva(
   }
 )
 
+/** [Minor · Design system] Un champ de formulaire (label + contrôle + aide/erreur), orientation verticale ou horizontale. */
 function Field({
   className,
   orientation = "vertical",
@@ -83,6 +87,7 @@ function Field({
   )
 }
 
+/** [Minor · Design system] Colonne regroupant libellé et description d'un champ. */
 function FieldContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -96,6 +101,7 @@ function FieldContent({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/** [Minor · Design system] Libellé d'un champ. */
 function FieldLabel({
   className,
   ...props
@@ -113,6 +119,7 @@ function FieldLabel({
   )
 }
 
+/** [Minor · Design system] Titre dans une carte de champ. */
 function FieldTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -126,6 +133,7 @@ function FieldTitle({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/** [Minor · Design system] Texte d'aide sous un champ. */
 function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
   return (
     <p
@@ -141,6 +149,7 @@ function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
   )
 }
 
+/** [Minor · Design system] Séparateur entre champs, avec texte optionnel. */
 function FieldSeparator({
   children,
   className,
@@ -171,6 +180,7 @@ function FieldSeparator({
   )
 }
 
+/** [Minor · Design system] Message d'erreur d'un champ (accessible, un ou plusieurs messages). */
 function FieldError({
   className,
   children,

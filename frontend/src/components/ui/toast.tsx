@@ -7,14 +7,17 @@ import { XIcon, CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Load
 
 const toast = ToastPrimitive.createToastManager()
 
+/** [Minor · Design system] Fournit le gestionnaire de toasts à l'application. */
 function ToastProvider({ ...props }: ToastPrimitive.Provider.Props) {
   return <ToastPrimitive.Provider {...props} />
 }
 
+/** [Minor · Design system] Rend les toasts au-dessus de la page. */
 function ToastPortal({ ...props }: ToastPrimitive.Portal.Props) {
   return <ToastPrimitive.Portal data-slot="toast-portal" {...props} />
 }
 
+/** [Minor · Design system] Zone d'affichage des toasts (coin de l'écran). */
 function ToastViewport({ className, ...props }: ToastPrimitive.Viewport.Props) {
   return (
     <ToastPrimitive.Viewport
@@ -28,6 +31,7 @@ function ToastViewport({ className, ...props }: ToastPrimitive.Viewport.Props) {
   )
 }
 
+/** [Minor · Design system] Un toast (variantes par type : succès, erreur, info) avec animation d'entrée/sortie. */
 function Toast({ className, ...props }: ToastPrimitive.Root.Props) {
   return (
     <ToastPrimitive.Root
@@ -55,6 +59,7 @@ function Toast({ className, ...props }: ToastPrimitive.Root.Props) {
   )
 }
 
+/** [Minor · Design system] Contenu d'un toast. */
 function ToastContent({ className, ...props }: ToastPrimitive.Content.Props) {
   return (
     <ToastPrimitive.Content
@@ -68,6 +73,7 @@ function ToastContent({ className, ...props }: ToastPrimitive.Content.Props) {
   )
 }
 
+/** [Minor · Design system] Titre d'un toast. */
 function ToastTitle({ className, ...props }: ToastPrimitive.Title.Props) {
   return (
     <ToastPrimitive.Title
@@ -78,6 +84,7 @@ function ToastTitle({ className, ...props }: ToastPrimitive.Title.Props) {
   )
 }
 
+/** [Minor · Design system] Description d'un toast. */
 function ToastDescription({
   className,
   ...props
@@ -91,6 +98,7 @@ function ToastDescription({
   )
 }
 
+/** [Minor · Design system] Bouton d'action d'un toast (ex. « voir »). */
 function ToastAction({
   className,
   render = <Button variant="outline" size="sm" />,
@@ -106,6 +114,7 @@ function ToastAction({
   )
 }
 
+/** [Minor · Design system] Bouton de fermeture d'un toast. */
 function ToastClose({
   className,
   children,
@@ -130,6 +139,7 @@ function ToastClose({
   )
 }
 
+/** [Minor · Design system] Icône d'un toast selon son type. */
 function ToastIcon({ type }: { type: string | undefined }) {
   let icon: React.ReactNode = null
 
@@ -177,6 +187,7 @@ function ToastIcon({ type }: { type: string | undefined }) {
   )
 }
 
+/** [Minor · Design system] Liste des toasts actifs. */
 function ToastList() {
   const { toasts } = ToastPrimitive.useToastManager()
 
@@ -195,6 +206,7 @@ function ToastList() {
   ))
 }
 
+/** [Minor · Design system] Composant à monter une fois : affiche les toasts déclenchés par `toast.add(...)` partout dans l'app (support du système de notifications). */
 function Toaster({
   children,
   toastManager = toast,

@@ -17,9 +17,10 @@ import { ChatGateway } from '../chat.gateway';
 import { PageQueryDto } from '../../common/pagination/page-query.dto';
 import { Paginated, toPaginated } from '../../common/pagination/paginated';
 
+/** [Major · Interaction entre utilisateurs] Service métier du chat (conversations, messages, blocages). */
 @Injectable()
 export class ChatService {
-  /** Injecte les dépendances : ConversationRepository, BlockRepository, MessageRepository, UsersService, ChatGateway. */
+  /** [Major · Interaction entre utilisateurs] Injecte les dépendances : ConversationRepository, BlockRepository, MessageRepository, UsersService, ChatGateway. */
   constructor(
     private readonly conversationRepository: ConversationRepository,
     private readonly blockRepository: BlockRepository,
@@ -28,7 +29,7 @@ export class ChatService {
     private readonly chatGateway: ChatGateway,
   ) {}
 
-  /** Retourne la conversation entre deux utilisateurs ; en l'absence de conversation, ne la crée que s'ils sont amis et non bloqués. */
+  /** [Major · Interaction entre utilisateurs] Retourne la conversation entre deux utilisateurs ; en l'absence de conversation, ne la crée que s'ils sont amis et non bloqués. */
   async findOrCreateConversation(
     currentUserId: string,
     otherUserId: string,
@@ -69,7 +70,7 @@ export class ChatService {
     return conversation;
   }
 
-  /** Retrouve une conversation et vérifie que l'utilisateur en est participant (404 / 403 sinon). */
+  /** [Major · Interaction entre utilisateurs] Retrouve une conversation et vérifie que l'utilisateur en est participant (404 / 403 sinon). */
   async getConversation(
     currentUserId: string,
     conversationId: string,
@@ -94,7 +95,7 @@ export class ChatService {
     return conversation;
   }
 
-  /** Liste les conversations de l'utilisateur en y attachant leur dernier message. */
+  /** [Major · Interaction entre utilisateurs] Liste les conversations de l'utilisateur en y attachant leur dernier message. */
   async listConversations(
     currentUserId: string,
   ): Promise<ConversationEntity[]> {
@@ -115,7 +116,7 @@ export class ChatService {
     return conversations;
   }
 
-  /** Marque la conversation comme lue par l'utilisateur et prévient l'autre participant en temps réel. */
+  /** [Minor · Chat avancé] Marque la conversation comme lue par l'utilisateur et prévient l'autre participant en temps réel. */
   async markConversationRead(
     currentUserId: string,
     conversationId: string,
@@ -129,7 +130,7 @@ export class ChatService {
     this.chatGateway.emitConversationRead(conversation, currentUserId, readAt);
   }
 
-  /** Bloque un utilisateur (pas soi-même, pas deux fois) et supprime l'amitié éventuelle entre les deux. */
+  /** [Minor · Chat avancé] Bloque un utilisateur (pas soi-même, pas deux fois) et supprime l'amitié éventuelle entre les deux. */
   async blockUser(currentUserId: string, targetUserId: string): Promise<void> {
     if (currentUserId === targetUserId) {
       throw new BadRequestException({
@@ -151,7 +152,7 @@ export class ChatService {
     );
   }
 
-  /** Retire le blocage d'un utilisateur ; 404 s'il n'était pas bloqué. */
+  /** [Minor · Chat avancé] Retire le blocage d'un utilisateur ; 404 s'il n'était pas bloqué. */
   async unblockUser(
     currentUserId: string,
     targetUserId: string,
@@ -165,7 +166,7 @@ export class ChatService {
     await this.blockRepository.remove(currentUserId, targetUserId);
   }
 
-  /** Retourne les profils des utilisateurs bloqués par l'utilisateur. */
+  /** [Minor · Chat avancé] Retourne les profils des utilisateurs bloqués par l'utilisateur. */
   async listBlockedUsers(
     currentUserId: string,
     page: PageQueryDto,
@@ -184,7 +185,7 @@ export class ChatService {
     );
   }
 
-  /** Indique si l'utilisateur connecté a bloqué l'utilisateur ciblé. */
+  /** [Minor · Chat avancé] Indique si l'utilisateur connecté a bloqué l'utilisateur ciblé. */
   async isBlockedByMe(
     currentUserId: string,
     targetUserId: string,
@@ -196,7 +197,7 @@ export class ChatService {
     };
   }
 
-  /** Envoie un message dans une conversation, à condition que les deux soient amis et non bloqués, puis le diffuse en temps réel. */
+  /** [Major · Interaction entre utilisateurs] Envoie un message dans une conversation, à condition que les deux soient amis et non bloqués, puis le diffuse en temps réel. */
   async sendMessage(
     currentUserId: string,
     conversationId: string,
@@ -237,7 +238,7 @@ export class ChatService {
     return message;
   }
 
-  /** Poste dans la conversation entre les deux joueurs un message d'invitation à la partie d'échecs donnée (affiché comme une carte côté client). Sans effet si les joueurs ne sont pas amis ou si l'un a bloqué l'autre : l'invitation reste alors visible dans les notifications. */
+  /** [Minor · Chat avancé] Poste dans la conversation entre les deux joueurs un message d'invitation à la partie d'échecs donnée (affiché comme une carte côté client). Sans effet si les joueurs ne sont pas amis ou si l'un a bloqué l'autre : l'invitation reste alors visible dans les notifications. */
   async postChessInvite(
     senderId: string,
     recipientId: string,
@@ -263,7 +264,7 @@ export class ChatService {
     return message;
   }
 
-  /** Retourne une page de messages d'une conversation dont l'utilisateur est participant. */
+  /** [Major · Interaction entre utilisateurs] Retourne une page de messages d'une conversation dont l'utilisateur est participant. */
   async getMessages(
     currentUserId: string,
     conversationId: string,

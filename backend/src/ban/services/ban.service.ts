@@ -16,9 +16,10 @@ import { PresenceGateway } from '../../presence/presence.gateway';
 import { banMails } from '../ban.messages';
 import type { MailLanguage } from '../../gdpr/gdpr.messages';
 
+/** [Major · Permissions avancées] Service métier des bannissements. */
 @Injectable()
 export class BanService {
-  /** Injecte les dépendances : BanRepository, UsersService, MailService, PresenceGateway. */
+  /** [Major · Permissions avancées] Injecte les dépendances : BanRepository, UsersService, MailService, PresenceGateway. */
   constructor(
     private readonly banRepository: BanRepository,
     private readonly usersService: UsersService,
@@ -27,24 +28,24 @@ export class BanService {
     private readonly presenceGateway: PresenceGateway,
   ) {}
 
-  /** Langue des emails de l'utilisateur, avec repli sur l'anglais. */
+  /** [Major · Permissions avancées] Langue des emails de l'utilisateur, avec repli sur l'anglais. */
   private mailLanguage(user: UserEntity): MailLanguage {
     return user.language === 'fr' || user.language === 'es'
       ? user.language
       : 'en';
   }
 
-  /** Retourne le ban en cours de l'utilisateur, ou null. */
+  /** [Major · Permissions avancées] Retourne le ban en cours de l'utilisateur, ou null. */
   findActiveBan(userId: string): Promise<Ban | null> {
     return this.banRepository.findActiveBan(userId);
   }
 
-  /** Historique des bans de l'utilisateur, du plus récent au plus ancien. */
+  /** [Major · Permissions avancées] Historique des bans de l'utilisateur, du plus récent au plus ancien. */
   findBans(userId: string): Promise<Ban[]> {
     return this.banRepository.findBans(userId);
   }
 
-  /** Bannit un utilisateur : refuse un administrateur ou un utilisateur déjà banni, révoque ses sessions, le déconnecte en temps réel et l'informe par email. */
+  /** [Major · Permissions avancées] Bannit un utilisateur : refuse un administrateur ou un utilisateur déjà banni, révoque ses sessions, le déconnecte en temps réel et l'informe par email. */
   async banUser(userId: string, dto: CreateBanDto): Promise<Ban> {
     const user = await this.usersService.findUserById(userId);
     if (!user) {
@@ -80,7 +81,7 @@ export class BanService {
     return ban;
   }
 
-  /** Lève le ban en cours ; lève une NotFoundException si l'utilisateur n'est pas banni. L'utilisateur en est informé par email. */
+  /** [Major · Permissions avancées] Lève le ban en cours ; lève une NotFoundException si l'utilisateur n'est pas banni. L'utilisateur en est informé par email. */
   async unbanUser(userId: string): Promise<void> {
     if ((await this.banRepository.unbanUser(userId)) === 0) {
       throw new NotFoundException({

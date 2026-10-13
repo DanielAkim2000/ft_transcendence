@@ -44,6 +44,7 @@ type SidebarContextProps = {
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null)
 
+/** [Minor · Design system] Hook donnant l'état de la sidebar (ouverte, mobile, bascule) ; doit être utilisé sous SidebarProvider. */
 function useSidebar() {
   const context = React.useContext(SidebarContext)
   if (!context) {
@@ -53,6 +54,7 @@ function useSidebar() {
   return context
 }
 
+/** [Minor · Design system] Fournit l'état de la sidebar (ouverte/repliée, persistée en cookie) et le raccourci clavier Ctrl/Cmd+B. */
 function SidebarProvider({
   defaultOpen = true,
   open: openProp,
@@ -95,6 +97,7 @@ function SidebarProvider({
 
   // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {
+    /** [Minor · Design system] Raccourci clavier Ctrl/Cmd+B pour ouvrir ou replier la sidebar. */
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
         event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
@@ -149,6 +152,7 @@ function SidebarProvider({
   )
 }
 
+/** [Minor · Design system] Sidebar responsive : fixe sur bureau (repliable), panneau Sheet sur mobile. */
 function Sidebar({
   side = "left",
   variant = "sidebar",
@@ -251,6 +255,7 @@ function Sidebar({
   )
 }
 
+/** [Minor · Design system] Bouton qui ouvre ou replie la sidebar. */
 function SidebarTrigger({
   className,
   onClick,
@@ -277,6 +282,7 @@ function SidebarTrigger({
   )
 }
 
+/** [Minor · Design system] Fine zone cliquable sur le bord pour replier la sidebar. */
 function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
   const { toggleSidebar } = useSidebar()
 
@@ -302,6 +308,7 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
   )
 }
 
+/** [Minor · Design system] Zone de contenu principal à côté de la sidebar. */
 function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
   return (
     <main
@@ -315,6 +322,7 @@ function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
   )
 }
 
+/** [Minor · Design system] Champ de recherche intégré à la sidebar. */
 function SidebarInput({
   className,
   ...props
@@ -329,6 +337,7 @@ function SidebarInput({
   )
 }
 
+/** [Minor · Design system] En-tête de la sidebar. */
 function SidebarHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -340,6 +349,7 @@ function SidebarHeader({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/** [Minor · Design system] Pied de la sidebar. */
 function SidebarFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -351,6 +361,7 @@ function SidebarFooter({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/** [Minor · Design system] Séparateur dans la sidebar. */
 function SidebarSeparator({
   className,
   ...props
@@ -365,6 +376,7 @@ function SidebarSeparator({
   )
 }
 
+/** [Minor · Design system] Zone défilante centrale de la sidebar. */
 function SidebarContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -379,6 +391,7 @@ function SidebarContent({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/** [Minor · Design system] Groupe de liens de la sidebar. */
 function SidebarGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -390,6 +403,7 @@ function SidebarGroup({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/** [Minor · Design system] Titre d'un groupe de la sidebar. */
 function SidebarGroupLabel({
   className,
   render,
@@ -414,6 +428,7 @@ function SidebarGroupLabel({
   })
 }
 
+/** [Minor · Design system] Bouton d'action d'un groupe. */
 function SidebarGroupAction({
   className,
   render,
@@ -438,6 +453,7 @@ function SidebarGroupAction({
   })
 }
 
+/** [Minor · Design system] Contenu d'un groupe. */
 function SidebarGroupContent({
   className,
   ...props
@@ -452,6 +468,7 @@ function SidebarGroupContent({
   )
 }
 
+/** [Minor · Design system] Liste de menu de la sidebar. */
 function SidebarMenu({ className, ...props }: React.ComponentProps<"ul">) {
   return (
     <ul
@@ -463,6 +480,7 @@ function SidebarMenu({ className, ...props }: React.ComponentProps<"ul">) {
   )
 }
 
+/** [Minor · Design system] Élément de menu. */
 function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
   return (
     <li
@@ -496,6 +514,7 @@ const sidebarMenuButtonVariants = cva(
   }
 )
 
+/** [Minor · Design system] Bouton ou lien de menu (variantes, état actif, info-bulle quand la sidebar est repliée). */
 function SidebarMenuButton({
   render,
   isActive = false,
@@ -550,6 +569,7 @@ function SidebarMenuButton({
   )
 }
 
+/** [Minor · Design system] Action secondaire à droite d'un élément de menu. */
 function SidebarMenuAction({
   className,
   render,
@@ -580,6 +600,7 @@ function SidebarMenuAction({
   })
 }
 
+/** [Minor · Design system] Pastille de compteur sur un élément de menu. */
 function SidebarMenuBadge({
   className,
   ...props
@@ -597,6 +618,7 @@ function SidebarMenuBadge({
   )
 }
 
+/** [Minor · Design system] Squelette de chargement d'un élément de menu. */
 function SidebarMenuSkeleton({
   className,
   showIcon = false,
@@ -635,6 +657,7 @@ function SidebarMenuSkeleton({
   )
 }
 
+/** [Minor · Design system] Sous-menu imbriqué. */
 function SidebarMenuSub({ className, ...props }: React.ComponentProps<"ul">) {
   return (
     <ul
@@ -649,6 +672,7 @@ function SidebarMenuSub({ className, ...props }: React.ComponentProps<"ul">) {
   )
 }
 
+/** [Minor · Design system] Élément d'un sous-menu. */
 function SidebarMenuSubItem({
   className,
   ...props
@@ -663,6 +687,7 @@ function SidebarMenuSubItem({
   )
 }
 
+/** [Minor · Design system] Lien d'un sous-menu. */
 function SidebarMenuSubButton({
   render,
   size = "md",

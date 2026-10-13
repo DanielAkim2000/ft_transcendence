@@ -11,6 +11,7 @@ import { NotificationsBootstrap } from "@/features/notifications/NotificationsBo
 import { SettingsBootstrap } from "@/features/settings/SettingsBootstrap";
 import { ROUTES } from "@/constants/routes";
 
+/** [Major · Gestion des utilisateurs] Garde des pages privées : sans access token, redirige vers /login ; sinon monte les bootstraps temps réel (réglages, présence, chat, tables, file, matchs, tournois, badges, notifications) autour de la page. */
 export const ProtectedLayout = () => {
   const accessToken = useAppSelector((s) => s.auth.accessToken);
 

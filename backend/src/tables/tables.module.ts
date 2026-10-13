@@ -7,6 +7,7 @@ import { TablesRepository } from './repositories/tables.repository';
 import { TablesService } from './services/tables.service';
 
 /** Tables de jeu : état (format, groupes, match en cours) et réservation par les tournois. Exporte TablesService. */
+/** [Socle produit babyfoot (hors module)] Module NestJS des tables de babyfoot : regroupe contrôleur, services et dépendances. */
 @Module({
   imports: [PrismaModule, forwardRef(() => UsersModule)],
   controllers: [TablesController],

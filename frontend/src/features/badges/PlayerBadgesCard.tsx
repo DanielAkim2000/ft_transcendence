@@ -8,6 +8,7 @@ import { RankTrophy } from "@/features/users/RankTrophy";
 import { isPodium } from "@/features/users/podium";
 import { CardSkeleton } from "@/components/skeletons";
 
+/** [Minor · Gamification] Carte d'un joueur : niveau, barre de progression d'XP, statistiques (victoires, défaites, série) et badges obtenus ou à débloquer. */
 export function PlayerBadgesCard({ userId }: { userId: string }) {
   const { t } = useTranslation();
   const { data: profile, isLoading } = useGetBadgesQuery(userId);

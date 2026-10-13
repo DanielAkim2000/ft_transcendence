@@ -1,3 +1,4 @@
+/** [Minor · Gamification] Codes des badges attribuables. */
 export enum BadgeCode {
   FIRST_WIN = 'FIRST_WIN',
   TEN_WINS = 'TEN_WINS',
@@ -8,16 +9,18 @@ export enum BadgeCode {
   GIANT_SLAYER = 'GIANT_SLAYER',
 }
 
+/** [Minor · Gamification] Badge obtenu par un joueur (code, date). */
 export class UserBadgeEntity {
   code!: BadgeCode;
   earnedAt!: Date;
 
-  /** Copie dans l'instance les champs fournis. */
+  /** [Minor · Gamification] Copie dans l'instance les champs fournis. */
   constructor(badge: Partial<UserBadgeEntity>) {
     Object.assign(this, badge);
   }
 }
 
+/** [Minor · Gamification] Profil de progression d'un joueur : XP, niveau, statistiques, badges. */
 export class PlayerBadgesProfile {
   userId!: string;
   xp!: number;
@@ -35,7 +38,7 @@ export class PlayerBadgesProfile {
   totalPlayers!: number;
   badges!: UserBadgeEntity[];
 
-  /** Copie dans l'instance les champs fournis. */
+  /** [Minor · Gamification] Copie dans l'instance les champs fournis. */
   constructor(profile: Partial<PlayerBadgesProfile>) {
     Object.assign(this, profile);
   }

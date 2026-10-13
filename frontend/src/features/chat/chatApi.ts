@@ -31,6 +31,7 @@ export interface MessagesArg {
 
 export const MESSAGES_PAGE_SIZE = 30;
 
+/** [Major · Interaction entre utilisateurs] Endpoints RTK Query du domaine « chat » (requêtes/mutations typées, cache et invalidation par tags) : LIST_CONVERSATIONS, CREATE_CONVERSATION, GET_MESSAGES, SEND_MESSAGE, MARK_READ, IS_BLOCKED, BLOCK_USER, UNBLOCK_USER. */
 export const chatApi = api.injectEndpoints({
   endpoints: (builder) => ({
     [CHAT_ENDPOINTS.LIST_CONVERSATIONS]: builder.query<Conversation[], void>({
@@ -76,6 +77,7 @@ export const chatApi = api.injectEndpoints({
         method: "POST",
         body: { content },
       }),
+      /** [Major · Interaction entre utilisateurs] Après l'envoi : insère le message dans le cache sans attendre le socket. */
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
         applyMessageToCache(dispatch, data, { meId: data.senderId });
@@ -86,6 +88,7 @@ export const chatApi = api.injectEndpoints({
         url: API_ROUTES.chatRead(conversationId),
         method: "POST",
       }),
+      /** [Minor · Chat avancé] Mise à jour optimiste : remet à zéro le compteur de non lus de la conversation marquée comme lue. */
       async onQueryStarted(conversationId, { dispatch }) {
         dispatch(
           chatApi.util.updateQueryData(
@@ -124,7 +127,7 @@ export const chatApi = api.injectEndpoints({
 
 type Dispatch = (action: unknown) => unknown;
 
-/** Insère un message (envoi ou websocket) dans les caches, sans doublon. */
+/** [Major · Interaction entre utilisateurs] Insère un message (envoi ou websocket) dans les caches, sans doublon. */
 export function applyMessageToCache(
   dispatch: Dispatch,
   message: Message,
@@ -168,7 +171,7 @@ export function applyMessageToCache(
   }
 }
 
-/** Met à jour la date de dernière lecture du pair (double check en temps réel). */
+/** [Minor · Chat avancé] Met à jour la date de dernière lecture du pair (double check en temps réel). */
 export function applyConversationReadToCache(
   dispatch: Dispatch,
   payload: { conversationId: string; readerId: string; readAt: string },

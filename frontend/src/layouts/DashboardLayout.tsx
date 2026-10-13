@@ -12,6 +12,7 @@ import { LegalLinks } from "@/components/legal-links";
 import { PageFallback } from "@/components/page-fallback";
 import { ChessLauncher } from "@/features/chess/ChessLauncher";
 
+/** [Minor · Design system] Mise en page de l'application connectée : sidebar, en-tête, zone de page avec Suspense (loader à chaque navigation) et pied de page légal. */
 export const DashboardLayout = () => {
   const { pathname } = useLocation();
   return (

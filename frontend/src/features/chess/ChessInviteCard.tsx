@@ -20,7 +20,7 @@ type Props = {
   peerName: string;
 };
 
-/** Carte affichée dans le chat à la place d'un message texte : invitation à une partie d'échecs, toujours à jour (en attente, acceptée, refusée, terminée) avec les actions utiles. */
+/** [Minor · Chat avancé] Carte affichée dans le chat à la place d'un message texte : invitation à une partie d'échecs, toujours à jour (en attente, acceptée, refusée, terminée) avec les actions utiles. */
 export function ChessInviteCard({ gameId, meId, peerName }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -28,10 +28,12 @@ export function ChessInviteCard({ gameId, meId, peerName }: Props) {
   const [acceptGame, { isLoading: accepting }] = useAcceptChessGameMutation();
   const [declineGame, { isLoading: declining }] = useDeclineChessGameMutation();
 
+  /** [Minor · Chat avancé] Ouvre la partie liée à l'invitation (/chess?gameId=…). */
   const openGame = () => navigate(`${ROUTES.CHESS}?gameId=${gameId}`);
   const isChallenger = game?.challengerId === meId;
   const busy = accepting || declining;
 
+  /** [Minor · Chat avancé] Accepte l'invitation reçue dans le chat puis ouvre la partie. */
   const handleAccept = async () => {
     try {
       await acceptGame(gameId).unwrap();
@@ -44,6 +46,7 @@ export function ChessInviteCard({ gameId, meId, peerName }: Props) {
     }
   };
 
+  /** [Minor · Chat avancé] Refuse l'invitation reçue dans le chat. */
   const handleDecline = async () => {
     try {
       await declineGame(gameId).unwrap();

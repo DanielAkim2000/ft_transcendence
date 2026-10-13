@@ -3,6 +3,7 @@ import { useMeQuery } from "@/features/auth/authApi";
 import { MatchHistoryList } from "@/features/matches/MatchHistoryList";
 import { PageFallback } from "@/components/page-fallback";
 
+/** [Minor · Stats et historique] Page d'historique : affiche la liste des matchs terminés de l'utilisateur (MatchHistoryList). */
 export const History = () => {
   const { t } = useTranslation();
   const { data: me, isLoading } = useMeQuery();

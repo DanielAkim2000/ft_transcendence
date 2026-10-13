@@ -31,7 +31,7 @@ export interface ListFriendsArgs extends PageArgs {
   online?: boolean;
 }
 
-/** Retire les paramètres non définis pour ne pas les envoyer dans l'URL. */
+/** [Minor · Recherche avancée] Retire les paramètres non définis pour ne pas les envoyer dans l'URL. */
 function toParams(
   args: object | void,
 ): Record<string, string | number | boolean> {
@@ -60,6 +60,7 @@ export interface RankingArgs extends PageArgs {
   sort?: "rank" | "matches" | "name";
 }
 
+/** [Major · Interaction entre utilisateurs] Endpoints RTK Query du domaine « users » (requêtes/mutations typées, cache et invalidation par tags) : SEARCH_USERS, GET_RANKING, GET_USER, UPDATE_PROFILE, UPDATE_SETTINGS, UPLOAD_AVATAR, LIST_FRIENDS, LIST_PENDING_FRIENDS, LIST_OUTGOING_FRIENDS, SEND_FRIEND_REQUEST, ACCEPT_FRIEND_REQUEST, REMOVE_FRIEND. */
 export const usersApi = api.injectEndpoints({
   endpoints: (builder) => ({
     [USERS_ENDPOINTS.SEARCH_USERS]: builder.query<
@@ -121,6 +122,7 @@ export const usersApi = api.injectEndpoints({
       // sans ça, SettingsBootstrap peut réhydrater depuis un `me` encore
       // ancien pendant le PATCH et écraser le thème/langue qu'on vient de choisir.
       // Si la requête échoue, undo() restaure l'ancien cache.
+      /** [Minor · Multilingue] Mise à jour optimiste du cache /auth/me avec le thème/la langue choisis (annulée si la requête échoue) pour éviter qu'une réhydratation avec d'anciennes valeurs ne les écrase. */
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         const patch = dispatch(
           authApi.util.updateQueryData(

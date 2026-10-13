@@ -5,6 +5,7 @@ import { AuthService } from '../auth.service';
 import { Profile42Dto } from '../dtos/profile42.dto';
 import { FOURTY_TWO_STRATEGY } from '../constants/injection-tokens';
 
+/** [Minor · OAuth 42] Options de la stratégie passport-42 (client, secret, URL de callback). */
 interface StrategyOptions {
   clientID: string;
   clientSecret: string;
@@ -12,12 +13,13 @@ interface StrategyOptions {
   scope: string[];
 }
 
+/** [Minor · OAuth 42] Stratégie passport-42 : OAuth 2.0 avec l'intra 42, récupère le profil et crée ou retrouve le compte. */
 @Injectable()
 export class FortyTwoStrategy extends PassportStrategy(
   Strategy,
   FOURTY_TWO_STRATEGY,
 ) {
-  /** Injecte les dépendances : AuthService. */
+  /** [Minor · OAuth 42] Injecte les dépendances : AuthService. */
   constructor(private readonly authService: AuthService) {
     const clientID = process.env.CLIENT_ID;
     if (!clientID) {
@@ -40,7 +42,7 @@ export class FortyTwoStrategy extends PassportStrategy(
     super(options);
   }
 
-  /** Reçoit le profil OAuth 42 et retourne l'utilisateur correspondant (créé si nouveau). */
+  /** [Minor · OAuth 42] Reçoit le profil OAuth 42 et retourne l'utilisateur correspondant (créé si nouveau). */
   async validate(
     accessToken: string,
     refreshToken: string,

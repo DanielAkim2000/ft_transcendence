@@ -4,7 +4,7 @@ import type { PieceType } from "./utils";
 
 /** Pièces d'échecs modélisées en volume, sans fichier externe : corps de révolution (lathe) + détails (couronne, créneaux, croix) et une tête de cheval extrudée. Chaque type est fusionné en une seule géométrie, partagée par toutes les pièces du même type. */
 
-/** Profil de révolution : liste de [rayon, hauteur] de bas en haut, terminée sur l'axe pour fermer le volume. */
+/** [Major · Graphismes 3D] Profil de révolution : liste de [rayon, hauteur] de bas en haut, terminée sur l'axe pour fermer le volume. */
 function lathe(profile: [number, number][]): THREE.BufferGeometry {
     return new THREE.LatheGeometry(
         profile.map(([radius, height]) => new THREE.Vector2(radius, height)),
@@ -12,6 +12,7 @@ function lathe(profile: [number, number][]): THREE.BufferGeometry {
     );
 }
 
+/** [Major · Graphismes 3D] Géométrie d'une sphère (éventuellement aplatie) placée à la hauteur y. */
 function sphere(radius: number, y: number, scaleY = 1): THREE.BufferGeometry {
     const geometry = new THREE.SphereGeometry(radius, 28, 20);
     geometry.scale(1, scaleY, 1);
@@ -19,13 +20,14 @@ function sphere(radius: number, y: number, scaleY = 1): THREE.BufferGeometry {
     return geometry;
 }
 
+/** [Major · Graphismes 3D] Géométrie d'une boîte positionnée en (x, y, z). */
 function box(width: number, height: number, depth: number, x: number, y: number, z: number): THREE.BufferGeometry {
     const geometry = new THREE.BoxGeometry(width, height, depth);
     geometry.translate(x, y, z);
     return geometry;
 }
 
-/** Petites billes régulièrement réparties sur un cercle (pointes de la couronne de la dame). */
+/** [Major · Graphismes 3D] Petites billes régulièrement réparties sur un cercle (pointes de la couronne de la dame). */
 function ringOfSpheres(count: number, ringRadius: number, sphereRadius: number, y: number): THREE.BufferGeometry[] {
     return Array.from({ length: count }, (_, index) => {
         const angle = (index / count) * Math.PI * 2;
@@ -35,7 +37,7 @@ function ringOfSpheres(count: number, ringRadius: number, sphereRadius: number, 
     });
 }
 
-/** Créneaux de la tour : petits blocs sur le pourtour, orientés vers l'extérieur. */
+/** [Major · Graphismes 3D] Créneaux de la tour : petits blocs sur le pourtour, orientés vers l'extérieur. */
 function battlements(count: number, ringRadius: number, y: number): THREE.BufferGeometry[] {
     return Array.from({ length: count }, (_, index) => {
         const angle = (index / count) * Math.PI * 2;
@@ -46,7 +48,7 @@ function battlements(count: number, ringRadius: number, y: number): THREE.Buffer
     });
 }
 
-/** Tête et encolure du cheval : silhouette de profil (museau vers +x) extrudée en épaisseur. */
+/** [Major · Graphismes 3D] Tête et encolure du cheval : silhouette de profil (museau vers +x) extrudée en épaisseur. */
 function knightHead(): THREE.BufferGeometry {
     const shape = new THREE.Shape();
     shape.moveTo(-0.22, 0.16);
@@ -103,7 +105,7 @@ const BODIES: Record<PieceType, () => THREE.BufferGeometry[]> = {
 
 const cache = new Map<PieceType, THREE.BufferGeometry>();
 
-/** Géométrie (unique, mise en cache) d'un type de pièce, posée sur y = 0 et centrée sur son axe. */
+/** [Major · Graphismes 3D] Géométrie (unique, mise en cache) d'un type de pièce, posée sur y = 0 et centrée sur son axe. */
 export function getPieceGeometry(type: PieceType): THREE.BufferGeometry {
     const cached = cache.get(type);
     if (cached) return cached;

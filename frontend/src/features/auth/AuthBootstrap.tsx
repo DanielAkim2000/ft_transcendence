@@ -10,6 +10,7 @@ interface AuthBootstrapProps {
   children: React.ReactNode;
 }
 
+/** [Major · Gestion des utilisateurs] Au démarrage de l'app : tente un refresh de session (si un témoin existe) avant d'afficher quoi que ce soit, pour restaurer la connexion. */
 export const AuthBootstrap = ({ children }: AuthBootstrapProps) => {
   const accessToken = useAppSelector((s) => s.auth.accessToken);
   const [refresh] = useRefreshMutation();

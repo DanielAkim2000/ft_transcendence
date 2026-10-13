@@ -7,12 +7,13 @@ import {
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 
+/** [Major · Frameworks React + NestJS] Filtre global : toutes les erreurs deviennent une réponse JSON uniforme avec code stable. */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   /** Injecte les dépendances : HttpAdapterHost. */
   constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
 
-  /** Intercepte toute exception et répond avec un JSON uniforme (statusCode, message, timestamp, path) ; les erreurs non HTTP deviennent une 500 générique. */
+  /** [Major · Frameworks React + NestJS] Intercepte toute exception et répond avec un JSON uniforme (statusCode, message, timestamp, path) ; les erreurs non HTTP deviennent une 500 générique. */
   catch(exception: unknown, host: ArgumentsHost): void {
     const { httpAdapter } = this.httpAdapterHost;
     const ctx = host.switchToHttp();

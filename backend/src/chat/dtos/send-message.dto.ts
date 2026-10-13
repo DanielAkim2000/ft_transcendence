@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
 
+/** [Major · Interaction entre utilisateurs] Corps validé d'un message (contenu non vide). */
 export class SendMessageDto {
   @ApiProperty({
     description: 'The message content',

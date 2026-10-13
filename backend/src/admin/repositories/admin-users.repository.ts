@@ -26,11 +26,12 @@ const adminSelect = {
   updatedAt: true,
 } satisfies Prisma.UserSelect;
 
-/** Ban en cours : permanent (pas de date de fin) ou pas encore terminé. */
+/** [Major · Permissions avancées] Ban en cours : permanent (pas de date de fin) ou pas encore terminé. */
 const activeBan = (): Prisma.BanWhereInput => ({
   OR: [{ endTime: null }, { endTime: { gt: new Date() } }],
 });
 
+/** [Major · Permissions avancées] Construit le `select` Prisma d'un utilisateur côté admin, enrichi de son ban actif le plus récent. */
 const adminSelectWithBan = () =>
   ({
     ...adminSelect,
@@ -67,12 +68,13 @@ export interface AdminUserView {
   updatedAt: Date;
 }
 
+/** [Major · Permissions avancées] Dépôt de données de l'administration des utilisateurs (CRUD réservé aux admins) : requêtes Prisma et conversion en entités. */
 @Injectable()
 export class AdminUsersRepository {
   /** Injecte les dépendances : PrismaService. */
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Une page d'utilisateurs actifs (comptes supprimés exclus) filtrés par nom, email ou login 42, triés par nom, plus le total. */
+  /** [Major · Permissions avancées] Une page d'utilisateurs actifs (comptes supprimés exclus) filtrés par nom, email ou login 42, triés par nom, plus le total. */
   async list(
     q: string | undefined,
     page: PageQueryDto,
@@ -105,7 +107,7 @@ export class AdminUsersRepository {
     return { users: users.map((user) => this.toView(user)), total };
   }
 
-  /** Retrouve un utilisateur actif par id, ou null (inconnu ou supprimé). */
+  /** [Major · Permissions avancées] Retrouve un utilisateur actif par id, ou null (inconnu ou supprimé). */
   async findById(id: string): Promise<AdminUserView | null> {
     const user = await this.prisma.user.findFirst({
       where: { id, deletedAt: null },
@@ -114,7 +116,7 @@ export class AdminUsersRepository {
     return user ? this.toView(user) : null;
   }
 
-  /** Retrouve l'id d'un utilisateur par email exact (colonne unique), ou null. */
+  /** [Major · Permissions avancées] Retrouve l'id d'un utilisateur par email exact (colonne unique), ou null. */
   async findIdByEmail(email: string): Promise<string | null> {
     const user = await this.prisma.user.findUnique({
       where: { email },
@@ -123,14 +125,14 @@ export class AdminUsersRepository {
     return user?.id ?? null;
   }
 
-  /** Nombre d'administrateurs actifs. */
+  /** [Major · Permissions avancées] Nombre d'administrateurs actifs. */
   countAdmins(): Promise<number> {
     return this.prisma.user.count({
       where: { role: Role.ADMIN, deletedAt: null },
     });
   }
 
-  /** Crée un utilisateur avec mot de passe déjà haché et rôle donné. */
+  /** [Major · Permissions avancées] Crée un utilisateur avec mot de passe déjà haché et rôle donné. */
   async create(data: {
     email: string;
     displayname: string;
@@ -144,7 +146,7 @@ export class AdminUsersRepository {
     return this.toView(user);
   }
 
-  /** Met à jour les champs fournis ; si le mot de passe change, révoque toutes les sessions (refresh tokens) et jetons de réinitialisation, dans la même transaction. */
+  /** [Major · Permissions avancées] Met à jour les champs fournis ; si le mot de passe change, révoque toutes les sessions (refresh tokens) et jetons de réinitialisation, dans la même transaction. */
   async update(
     id: string,
     data: {
@@ -169,7 +171,7 @@ export class AdminUsersRepository {
     return this.toView(user);
   }
 
-  /** Convertit une ligne Prisma en vue d'administration (sans hash). */
+  /** [Major · Permissions avancées] Convertit une ligne Prisma en vue d'administration (sans hash). */
   private toView(user: AdminUserRow): AdminUserView {
     const { passwordHash, role, status, banReceived, ...rest } = user;
     return {

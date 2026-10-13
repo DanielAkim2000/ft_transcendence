@@ -1,11 +1,12 @@
 import type { MailLanguage } from '../gdpr/gdpr.messages';
 
+/** [Major · Permissions avancées] Contenu d'un email (sujet, texte) dans une langue. */
 interface Mail {
   subject: string;
   text: string;
 }
 
-/** Date de fin de ban lisible, en UTC (null = ban permanent). */
+/** [Major · Permissions avancées] Date de fin de ban lisible, en UTC (null = ban permanent). */
 function untilLabel(lang: MailLanguage, until: Date | null): string {
   if (!until) {
     return { en: 'permanent', fr: 'définitif', es: 'permanente' }[lang];

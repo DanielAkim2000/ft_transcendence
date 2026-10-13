@@ -24,6 +24,7 @@ export const BadgesBootstrap = ({
     }
     const socket = connect(accessToken);
 
+    /** [Minor · Gamification] Quand le serveur annonce un badge gagné : invalide le cache des badges du joueur et affiche un toast de félicitations. */
     const onEarned = (payload: { code: BadgeCode }) => {
       dispatch(
         badgesApi.util.invalidateTags([{ type: TAG_TYPES.BADGES, id: me.id }]),

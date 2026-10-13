@@ -27,7 +27,7 @@ const selectClass =
 
 type Filters = Pick<RankingArgs, "scope" | "minMatches" | "sort">;
 
-/** Barre de recherche du classement : nom, périmètre (tous / mes amis), matchs minimum et tri. */
+/** [Minor · Recherche avancée] Barre de recherche du classement : nom, périmètre (tous / mes amis), matchs minimum et tri. */
 function RankingFilters({
   search,
   onSearch,
@@ -120,6 +120,7 @@ function RankingFilters({
   );
 }
 
+/** [Minor · Stats et historique] Page du classement Elo : recherche, filtres (périmètre, matchs minimum), tri et pagination côté serveur, podium et rang de l'utilisateur. */
 export const Ranking = () => {
   const { t } = useTranslation();
   const { data: me } = useMeQuery();

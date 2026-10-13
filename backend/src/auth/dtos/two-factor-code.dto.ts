@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, Length, Matches } from 'class-validator';
 
+/** [Minor · 2FA] Corps validé d'un code TOTP à 6 chiffres. */
 export class TwoFactorCodeDto {
   @ApiProperty({
     description: 'The 6-digit TOTP code',

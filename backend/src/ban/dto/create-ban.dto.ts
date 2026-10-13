@@ -11,6 +11,7 @@ import {
 /** Durée maximale d'un ban temporaire : 10 ans (au-delà, utiliser un ban permanent). */
 export const MAX_BAN_HOURS = 24 * 365 * 10;
 
+/** [Major · Permissions avancées] Corps validé d'un bannissement (durée en heures, motif). */
 export class CreateBanDto {
   /** Durée en heures ; 0 = ban permanent. */
   @IsInt()

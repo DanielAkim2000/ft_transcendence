@@ -8,17 +8,17 @@ export const GIANT_SLAYER_RATING_GAP = 150;
 
 const LEVEL_XP_STEP = 100;
 
-/** Niveau du joueur (à partir de 1) pour un total d'XP donné. */
+/** [Minor · Gamification] Niveau du joueur (à partir de 1) pour un total d'XP donné. */
 export function levelForXp(xp: number): number {
   return Math.floor(xp / LEVEL_XP_STEP) + 1;
 }
 
-/** XP accumulée dans le niveau courant. */
+/** [Minor · Gamification] XP accumulée dans le niveau courant. */
 export function xpIntoLevel(xp: number): number {
   return xp % LEVEL_XP_STEP;
 }
 
-/** Nombre d'XP nécessaires pour passer un niveau. */
+/** [Minor · Gamification] Nombre d'XP nécessaires pour passer un niveau. */
 export function xpPerLevel(): number {
   return LEVEL_XP_STEP;
 }

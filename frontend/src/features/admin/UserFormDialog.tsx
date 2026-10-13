@@ -29,7 +29,7 @@ type Props = {
   onClose: () => void;
 };
 
-/** Formulaire (en fenêtre) de création ou de modification d'un compte par un administrateur. */
+/** [Major · Permissions avancées] Formulaire (en fenêtre) de création ou de modification d'un compte par un administrateur. */
 export function UserFormDialog({ user, isSelf = false, onClose }: Props) {
   const { t, i18n } = useTranslation();
   const editing = user !== undefined;

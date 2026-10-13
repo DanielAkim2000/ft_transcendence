@@ -15,12 +15,13 @@ import { RefreshToken as RefreshTokenEntity } from '../entities/users.entity';
 import { RankingEntry } from '../entities/ranking-entry.entity';
 import { RankingQueryDto } from '../dtos/ranking-query.dto';
 
+/** [Major · Gestion des utilisateurs] Dépôt de données des utilisateurs (profil, amis, classement) : requêtes Prisma et conversion en entités. */
 @Injectable()
 export class UserRepository {
   /** Injecte les dépendances : PrismaService. */
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Retrouve un utilisateur par id, avec ses refresh tokens, ou null. */
+  /** [Major · Gestion des utilisateurs] Retrouve un utilisateur par id, avec ses refresh tokens, ou null. */
   async findUserById(id: string): Promise<UserEntity | null> {
     const user = await this.prisma.user.findUnique({
       where: { id },
@@ -34,7 +35,7 @@ export class UserRepository {
     return user && !user.deletedAt ? this.mapUser(user) : null;
   }
 
-  /** Retrouve un utilisateur par email, avec ses refresh tokens, ou null. */
+  /** [Major · Gestion des utilisateurs] Retrouve un utilisateur par email, avec ses refresh tokens, ou null. */
   async findUserByEmail(email: string): Promise<UserEntity | null> {
     const user = await this.prisma.user.findUnique({
       where: { email },
@@ -47,7 +48,7 @@ export class UserRepository {
     return user ? this.mapUser(user) : null;
   }
 
-  /** Retrouve un utilisateur par login 42, avec ses refresh tokens, ou null. */
+  /** [Major · Gestion des utilisateurs] Retrouve un utilisateur par login 42, avec ses refresh tokens, ou null. */
   async findUserByLogin(login: string): Promise<UserEntity | null> {
     const user = await this.prisma.user.findUnique({
       where: { login42: login },
@@ -60,7 +61,7 @@ export class UserRepository {
     return user ? this.mapUser(user) : null;
   }
 
-  /** Crée un utilisateur à partir d'un profil 42 (login, email, nom complet, avatar). */
+  /** [Major · Gestion des utilisateurs] Crée un utilisateur à partir d'un profil 42 (login, email, nom complet, avatar). */
   async createUserFrom42Profile(profile: Profile42Dto): Promise<UserEntity> {
     const user = await this.prisma.user.create({
       data: {
@@ -78,7 +79,7 @@ export class UserRepository {
     return this.mapUser(user);
   }
 
-  /** Crée un utilisateur à partir d'une inscription classique (email, nom, mot de passe haché). */
+  /** [Major · Gestion des utilisateurs] Crée un utilisateur à partir d'une inscription classique (email, nom, mot de passe haché). */
   async createUserFromRegisterInfo(user: UserEntity): Promise<UserEntity> {
     const newUser = await this.prisma.user.create({
       data: {
@@ -95,7 +96,7 @@ export class UserRepository {
     return this.mapUser(newUser);
   }
 
-  /** Met à jour les champs modifiables de l'utilisateur (2FA, présence, rôle, avatar, mot de passe, nom, email, préférences). */
+  /** [Major · Gestion des utilisateurs] Met à jour les champs modifiables de l'utilisateur (2FA, présence, rôle, avatar, mot de passe, nom, email, préférences). */
   async updateUser(user: UserEntity): Promise<UserEntity> {
     const updatedUser = await this.prisma.user.update({
       where: { id: user.id },
@@ -124,7 +125,7 @@ export class UserRepository {
     return this.mapUser(updatedUser);
   }
 
-  /** Insère un refresh token (hash + expiration) pour l'utilisateur. */
+  /** [Major · Gestion des utilisateurs] Insère un refresh token (hash + expiration) pour l'utilisateur. */
   async addRefreshToken(
     userId: string,
     tokenHash: string,
@@ -139,7 +140,7 @@ export class UserRepository {
     });
   }
 
-  /** Supprime un refresh token de l'utilisateur ; retourne true si au moins une ligne a été supprimée. */
+  /** [Major · Gestion des utilisateurs] Supprime un refresh token de l'utilisateur ; retourne true si au moins une ligne a été supprimée. */
   async deleteRefreshToken(
     userId: string,
     tokenHash: string,
@@ -153,7 +154,7 @@ export class UserRepository {
     return result.count > 0;
   }
 
-  /** Retrouve un refresh token par son hash, uniquement s'il appartient à l'utilisateur, sinon null. */
+  /** [Major · Gestion des utilisateurs] Retrouve un refresh token par son hash, uniquement s'il appartient à l'utilisateur, sinon null. */
   async findRefreshToken(
     userId: string,
     tokenHash: string,
@@ -172,7 +173,7 @@ export class UserRepository {
     });
   }
 
-  /** Remplace le jeton de réinitialisation du mot de passe de l'utilisateur (un seul actif à la fois). */
+  /** [Major · Gestion des utilisateurs] Remplace le jeton de réinitialisation du mot de passe de l'utilisateur (un seul actif à la fois). */
   async replacePasswordResetToken(
     userId: string,
     tokenHash: string,
@@ -186,7 +187,7 @@ export class UserRepository {
     ]);
   }
 
-  /** Consomme un jeton de réinitialisation valide (usage unique) : change le mot de passe et révoque toutes les sessions. Retourne l'utilisateur concerné, ou null si le jeton est inconnu, expiré ou déjà utilisé. */
+  /** [Major · Gestion des utilisateurs] Consomme un jeton de réinitialisation valide (usage unique) : change le mot de passe et révoque toutes les sessions. Retourne l'utilisateur concerné, ou null si le jeton est inconnu, expiré ou déjà utilisé. */
   async consumePasswordResetToken(
     tokenHash: string,
     passwordHash: string,
@@ -214,7 +215,7 @@ export class UserRepository {
     });
   }
 
-  /** Remplace tous les codes de secours 2FA de l'utilisateur par un nouveau lot (hashs). */
+  /** [Minor · 2FA] Remplace tous les codes de secours 2FA de l'utilisateur par un nouveau lot (hashs). */
   async replaceRecoveryCodes(
     userId: string,
     codeHashes: string[],
@@ -227,12 +228,12 @@ export class UserRepository {
     ]);
   }
 
-  /** Supprime tous les codes de secours 2FA de l'utilisateur. */
+  /** [Minor · 2FA] Supprime tous les codes de secours 2FA de l'utilisateur. */
   async deleteRecoveryCodes(userId: string): Promise<void> {
     await this.prisma.twoFactorRecoveryCode.deleteMany({ where: { userId } });
   }
 
-  /** Marque un code de secours comme utilisé ; retourne true s'il existait et n'avait pas déjà servi (usage unique, même en concurrence). */
+  /** [Minor · 2FA] Marque un code de secours comme utilisé ; retourne true s'il existait et n'avait pas déjà servi (usage unique, même en concurrence). */
   async consumeRecoveryCode(
     userId: string,
     codeHash: string,
@@ -244,14 +245,14 @@ export class UserRepository {
     return result.count > 0;
   }
 
-  /** Nombre de codes de secours encore utilisables. */
+  /** [Minor · 2FA] Nombre de codes de secours encore utilisables. */
   countUnusedRecoveryCodes(userId: string): Promise<number> {
     return this.prisma.twoFactorRecoveryCode.count({
       where: { userId, usedAt: null },
     });
   }
 
-  /** Cherche des utilisateurs par nom ou email (insensible à la casse), triés par nom, en excluant l'utilisateur donné : une page de résultats plus le total. */
+  /** [Minor · Recherche avancée] Cherche des utilisateurs par nom ou email (insensible à la casse), triés par nom, en excluant l'utilisateur donné : une page de résultats plus le total. */
   async searchUsers(
     excludeUserId: string,
     query: string | undefined,
@@ -280,7 +281,7 @@ export class UserRepository {
     return { users: users.map((user) => this.mapUser(user)), total };
   }
 
-  /** Relation d'amitié de l'utilisateur avec chacun des `otherIds` ('friends', 'pending_out' ou 'pending_in') ; les absents n'ont aucune relation. */
+  /** [Minor · Recherche avancée] Relation d'amitié de l'utilisateur avec chacun des `otherIds` ('friends', 'pending_out' ou 'pending_in') ; les absents n'ont aucune relation. */
   async findFriendshipStatuses(
     userId: string,
     otherIds: string[],
@@ -313,7 +314,7 @@ export class UserRepository {
     return statuses;
   }
 
-  /** Filtre Prisma « le nom ou l'email contient le texte » (insensible à la casse) ; vide si aucun texte. */
+  /** [Minor · Recherche avancée] Filtre Prisma « le nom ou l'email contient le texte » (insensible à la casse) ; vide si aucun texte. */
   private textFilter(query?: string): Prisma.UserWhereInput {
     const text = query?.trim();
     if (!text) {
@@ -327,7 +328,7 @@ export class UserRepository {
     };
   }
 
-  /** Retrouve la relation d'amitié entre deux utilisateurs, quel que soit celui qui a fait la demande. */
+  /** [Major · Interaction entre utilisateurs] Retrouve la relation d'amitié entre deux utilisateurs, quel que soit celui qui a fait la demande. */
   async findFriendshipBetween(userIdA: string, userIdB: string) {
     return this.prisma.friendship.findFirst({
       where: {
@@ -339,14 +340,14 @@ export class UserRepository {
     });
   }
 
-  /** Crée une demande d'ami au statut PENDING. */
+  /** [Major · Interaction entre utilisateurs] Crée une demande d'ami au statut PENDING. */
   async createFriendRequest(requesterId: string, addresseeId: string) {
     return this.prisma.friendship.create({
       data: { requesterId, addresseeId, status: 'PENDING' },
     });
   }
 
-  /** Passe une relation d'amitié au statut ACCEPTED. */
+  /** [Major · Interaction entre utilisateurs] Passe une relation d'amitié au statut ACCEPTED. */
   async acceptFriendship(id: string) {
     return this.prisma.friendship.update({
       where: { id },
@@ -354,12 +355,12 @@ export class UserRepository {
     });
   }
 
-  /** Supprime une relation d'amitié ou une demande. */
+  /** [Major · Interaction entre utilisateurs] Supprime une relation d'amitié ou une demande. */
   async deleteFriendship(id: string) {
     await this.prisma.friendship.delete({ where: { id } });
   }
 
-  /** Liste les amis confirmés de l'utilisateur (l'autre partie de chaque amitié acceptée), en ligne d'abord puis par nom : une page plus le total. Filtres optionnels : texte (nom ou email) et « en ligne seulement ». */
+  /** [Major · Interaction entre utilisateurs] Liste les amis confirmés de l'utilisateur (l'autre partie de chaque amitié acceptée), en ligne d'abord puis par nom : une page plus le total. Filtres optionnels : texte (nom ou email) et « en ligne seulement ». */
   async listAcceptedFriends(
     userId: string,
     page: PageQueryDto,
@@ -396,7 +397,7 @@ export class UserRepository {
     return { users: users.map((user) => this.mapUser(user)), total };
   }
 
-  /** Liste les utilisateurs ayant envoyé une demande d'ami en attente à cet utilisateur, les plus récentes d'abord : une page plus le total. */
+  /** [Major · Interaction entre utilisateurs] Liste les utilisateurs ayant envoyé une demande d'ami en attente à cet utilisateur, les plus récentes d'abord : une page plus le total. */
   async listIncomingRequests(
     userId: string,
     page: PageQueryDto,
@@ -418,7 +419,7 @@ export class UserRepository {
     return { users: rows.map((row) => this.mapUser(row.requester)), total };
   }
 
-  /** Liste les utilisateurs auxquels cet utilisateur a envoyé une demande d'ami en attente, les plus récentes d'abord : une page plus le total. */
+  /** [Major · Interaction entre utilisateurs] Liste les utilisateurs auxquels cet utilisateur a envoyé une demande d'ami en attente, les plus récentes d'abord : une page plus le total. */
   async listOutgoingRequests(
     userId: string,
     page: PageQueryDto,
@@ -440,7 +441,7 @@ export class UserRepository {
     return { users: rows.map((row) => this.mapUser(row.addressee)), total };
   }
 
-  /** Ids de tous les amis confirmés de l'utilisateur (sans pagination : usage interne, ex. diffusion de la présence). */
+  /** [Major · Interaction entre utilisateurs] Ids de tous les amis confirmés de l'utilisateur (sans pagination : usage interne, ex. diffusion de la présence). */
   async listAcceptedFriendIds(userId: string): Promise<string[]> {
     const rows = await this.prisma.friendship.findMany({
       where: {
@@ -454,7 +455,7 @@ export class UserRepository {
     );
   }
 
-  /** Classement des joueurs actifs par note Elo (ex æquo = même rang), filtré par nom, périmètre (amis) et nombre de matchs, trié, une page plus le total. Le rang affiché reste le rang général, quel que soit le filtre. */
+  /** [Minor · Recherche avancée] Classement des joueurs actifs par note Elo (ex æquo = même rang), filtré par nom, périmètre (amis) et nombre de matchs, trié, une page plus le total. Le rang affiché reste le rang général, quel que soit le filtre. */
   async listRanking(
     userId: string,
     query: RankingQueryDto,
@@ -519,7 +520,7 @@ export class UserRepository {
     };
   }
 
-  /** Met à jour l'état de connexion et le statut de l'utilisateur. */
+  /** [Major · Temps réel WebSockets] Met à jour l'état de connexion et le statut de l'utilisateur. */
   async updatePresence(
     userId: string,
     isOnline: boolean,
@@ -531,7 +532,7 @@ export class UserRepository {
     });
   }
 
-  /** Convertit un utilisateur Prisma (avec refresh tokens) en UserEntity, en normalisant statut, rôle et préférences. */
+  /** [Major · Gestion des utilisateurs] Convertit un utilisateur Prisma (avec refresh tokens) en UserEntity, en normalisant statut, rôle et préférences. */
   private mapUser(user: User & { refreshTokens: RefreshToken[] }): UserEntity {
     let status: Status = Status.OFFLINE;
     switch (user.status) {

@@ -42,6 +42,7 @@ const BOT_ID_PREFIX = "chess-bot-";
 const AI_LEVELS: ChessAiLevel[] = ["EASY", "MEDIUM", "HARD", "EXPERT"];
 const AI_COLORS: ChessColor[] = ["WHITE", "BLACK", "RANDOM"];
 
+/** [Major · Jeu web (Échecs)] Page des échecs : lobby (parties en cours, invitations reçues, défier un ami, jouer contre l'IA, historique) ou partie en cours (plateau 3D, joueurs, coups, abandon, promotion, chat, résultat). */
 export const Chess = () => {
     const { t, i18n } = useTranslation();
     const navigate = useNavigate();
@@ -153,6 +154,7 @@ export const Chess = () => {
         }
 
         const socket = connectChess(accessToken);
+        /** [Major · Temps réel WebSockets] État de partie reçu en direct (`chess:state`) : met à jour plateau, tour, statut, résultat et coups, et efface la sélection. */
         const onState = (nextGame: ChessGame) => {
             if (nextGame.id !== gameId) return;
             setBoard(boardFromFen(nextGame.fen));
@@ -166,6 +168,7 @@ export const Chess = () => {
             setPositions([]);
             setPromotion(null);
         };
+        /** [Major · Temps réel WebSockets] Erreur de coup reçue (`chess:error`) : toast traduit et annulation de la sélection. */
         const onError = (payload: { message?: string }) => {
             toast.add({ title: translateErrorCode((payload as { code?: string }).code) ?? t("chess.page.moveFailed"), type: "error" });
             setSelected(null);
@@ -200,6 +203,7 @@ export const Chess = () => {
     }, [opponentUserId, botLevel, createConversation]);
     const chatConversation = botLevel ? null : conversations.find((conversation) => conversation.id === chatConversationId) ?? null;
 
+    /** [Major · Jeu web (Échecs)] Vrai si la case est une destination légale de la pièce sélectionnée. */
     function isSelected(rowIndex: number, colIndex: number): boolean {
         const result = positions.some(
             position => position.x === colIndex && position.y === rowIndex
@@ -208,6 +212,7 @@ export const Chess = () => {
         return result;
     }
 
+    /** [Major · Jeu web (Échecs)] Clic sur une case : sélectionne une pièce du joueur (calcul des coups légaux) ou, si la case est une destination, envoie le coup au serveur (ouvre le choix de promotion pour un pion arrivant au bord). */
     function selectPiece(rowIndex: number, colIndex: number): void {
         if (!game || gameStatus !== "ACTIVE" || !me || !accessToken || !gameId || turn !== playerColor)
             return;
@@ -242,16 +247,19 @@ export const Chess = () => {
         ));
     }
 
+    /** [Major · Jeu web (Échecs)] Abandon : envoie `chess:resign` au serveur. */
     function handleResign() {
         if (!accessToken || !gameId) return;
         connectChess(accessToken).emit("chess:resign", { gameId });
     }
 
+    /** [Major · Jeu web (Échecs)] Quitte la partie et revient au lobby. */
     function leaveGame() {
         setChatOpen(false);
         navigate(ROUTES.CHESS);
     }
 
+    /** [Major · Jeu web (Échecs)] Rejouer : crée une nouvelle partie contre la même IA, ou renvoie un défi au même adversaire. */
     async function handleReplay() {
         if (!opponentUserId || !game) return;
         try {
@@ -269,6 +277,7 @@ export const Chess = () => {
         }
     }
 
+    /** [Major · Jeu web (Échecs)] Choix de la pièce de promotion (dame, tour, fou, cavalier) puis envoi du coup. */
     function choosePromotion(piece: "q" | "r" | "b" | "n") {
         if (!promotion || !accessToken || !gameId) return;
         connectChess(accessToken).emit("chess:move", { gameId, from: promotion.from, to: promotion.to, promotion: piece });
@@ -278,10 +287,12 @@ export const Chess = () => {
         setPositions([]);
     }
 
+    /** [Major · Jeu web (Échecs)] Convertit (ligne, colonne) du plateau en notation algébrique (ex. e4). */
     function toSquare(row: number, col: number): string {
         return `${String.fromCharCode(97 + col)}${8 - row}`;
     }
 
+    /** [Major · Jeu web (Échecs)] Convertit une case algébrique (ex. e3) en position du plateau ; undefined si invalide (utile pour la prise en passant). */
     function fromSquare(square: string | undefined): Position | undefined {
         if (!square || square === "-") return undefined;
         const file = square.charCodeAt(0) - 97;
@@ -307,6 +318,7 @@ export const Chess = () => {
         </div>
     );
 
+    /** [Minor · Stats et historique] Résultat d'une partie de l'historique du point de vue de l'utilisateur : victoire, défaite, nulle ou abandon. */
     function getHistoryResult(chessGame: ChessGame): "draw" | "win" | "aborted" | "loss" {
         if (chessGame.result === "DRAW") return "draw";
         if (chessGame.winnerId === me?.id) return "win";
@@ -314,16 +326,18 @@ export const Chess = () => {
         return "loss";
     }
 
+    /** [Minor · Stats et historique] Libellé traduit de la raison de fin de partie. */
     function getHistoryReason(chessGame: ChessGame): string {
         return t(`chess.page.reason.${chessGame.endReason ?? "FINISHED"}`);
     }
 
-    /** L'autre joueur d'une partie (nom d'affichage), « ? » s'il est inconnu. */
+    /** [Minor · Stats et historique] L'autre joueur d'une partie (nom d'affichage), « ? » s'il est inconnu. */
     function opponentName(chessGame: ChessGame): string {
         const other = chessGame.whitePlayerId === me?.id ? chessGame.blackPlayer : chessGame.whitePlayer;
         return other?.displayname ?? "?";
     }
 
+    /** [Major · Jeu web (Échecs)] Défie un ami (couleur aléatoire) et confirme par un toast. */
     async function handleCreateGame(opponentId: string) {
         try {
             await createGame({ opponentId, color: "RANDOM" }).unwrap();
@@ -333,6 +347,7 @@ export const Chess = () => {
         }
     }
 
+    /** [Major · Jeu web (Échecs)] Crée une partie contre l'IA avec le niveau et la couleur choisis, et l'ouvre. */
     async function handleCreateAiGame() {
         try {
             const created = await createAiGame({ level: aiLevel, color: aiColor }).unwrap();
@@ -342,6 +357,7 @@ export const Chess = () => {
         }
     }
 
+    /** [Major · Jeu web (Échecs)] Accepte une invitation de partie et l'ouvre. */
     async function handleAcceptGame(targetGameId: string) {
         try {
             await acceptGame(targetGameId).unwrap();
@@ -352,6 +368,7 @@ export const Chess = () => {
         }
     }
 
+    /** [Major · Jeu web (Échecs)] Refuse une invitation de partie. */
     async function handleDeclineGame(targetGameId: string) {
         try {
             await declineGame(targetGameId).unwrap();

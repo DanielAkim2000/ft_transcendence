@@ -10,12 +10,13 @@ import {
   pageOffset,
 } from '../../common/pagination/page-query.dto';
 
+/** [Minor · Notifications] Dépôt de données des notifications : requêtes Prisma et conversion en entités. */
 @Injectable()
 export class NotificationsRepository {
   /** Injecte les dépendances : PrismaService. */
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Crée une notification pour un utilisateur. */
+  /** [Minor · Notifications] Crée une notification pour un utilisateur. */
   async create(
     userId: string,
     type: NotificationType,
@@ -27,7 +28,7 @@ export class NotificationsRepository {
     return this.toEntity(row);
   }
 
-  /** Liste une page des notifications d'un utilisateur, les plus récentes d'abord, plus le total. */
+  /** [Minor · Notifications] Liste une page des notifications d'un utilisateur, les plus récentes d'abord, plus le total. */
   async listPage(
     userId: string,
     page: PageQueryDto,
@@ -45,12 +46,12 @@ export class NotificationsRepository {
     return { notifications: rows.map((row) => this.toEntity(row)), total };
   }
 
-  /** Nombre de notifications non lues de l'utilisateur. */
+  /** [Minor · Notifications] Nombre de notifications non lues de l'utilisateur. */
   countUnread(userId: string): Promise<number> {
     return this.prisma.notification.count({ where: { userId, read: false } });
   }
 
-  /** Marque toutes les notifications de l'utilisateur comme lues. */
+  /** [Minor · Notifications] Marque toutes les notifications de l'utilisateur comme lues. */
   async markAllRead(userId: string): Promise<void> {
     await this.prisma.notification.updateMany({
       where: { userId, read: false },
@@ -58,7 +59,7 @@ export class NotificationsRepository {
     });
   }
 
-  /** Convertit une ligne Prisma en NotificationEntity. */
+  /** [Minor · Notifications] Convertit une ligne Prisma en NotificationEntity. */
   private toEntity(row: {
     id: string;
     type: string;

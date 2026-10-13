@@ -6,6 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export type ServiceState = 'ok' | 'down';
 export type BackupState = 'ok' | 'stale' | 'none';
 
+/** [Minor · Health check et sauvegardes] Rapport de santé : statut global, base, sauvegardes, uptime. */
 export interface HealthReport {
   status: 'ok' | 'degraded' | 'down';
   timestamp: string;
@@ -28,12 +29,13 @@ const DEFAULT_MAX_AGE_HOURS = 36;
 const DB_CHECK_TIMEOUT_MS = 3000;
 const BACKUP_FILE = /\.sql\.gz$/;
 
+/** [Minor · Health check et sauvegardes] Service métier du health check. */
 @Injectable()
 export class HealthService {
   /** Injecte les dépendances : PrismaService. */
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Rapport d'état : API, base de données (requête réelle + latence) et sauvegardes (dernier dump trop ancien ou absent = dégradé). */
+  /** [Minor · Health check et sauvegardes] Rapport d'état : API, base de données (requête réelle + latence) et sauvegardes (dernier dump trop ancien ou absent = dégradé). */
   async check(): Promise<HealthReport> {
     const [database, backups] = await Promise.all([
       this.checkDatabase(),
@@ -53,7 +55,7 @@ export class HealthService {
     };
   }
 
-  /** Exécute `SELECT 1` avec un délai maximal et mesure la latence. */
+  /** [Minor · Health check et sauvegardes] Exécute `SELECT 1` avec un délai maximal et mesure la latence. */
   private async checkDatabase(): Promise<{
     status: ServiceState;
     latencyMs: number | null;
@@ -75,7 +77,7 @@ export class HealthService {
     }
   }
 
-  /** Lit le dossier des sauvegardes (monté en lecture seule) : nombre de dumps, date et taille du plus récent. */
+  /** [Minor · Health check et sauvegardes] Lit le dossier des sauvegardes (monté en lecture seule) : nombre de dumps, date et taille du plus récent. */
   private async checkBackups(): Promise<HealthReport['checks']['backups']> {
     const dir = process.env.BACKUP_DIR ?? DEFAULT_BACKUP_DIR;
     const maxAgeHours = Number(

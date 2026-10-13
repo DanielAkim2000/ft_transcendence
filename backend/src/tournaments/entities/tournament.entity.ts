@@ -1,5 +1,6 @@
 import { MatchFormat } from '../../matches/entities/match.entity';
 
+/** [Minor · Tournois] États d'un tournoi (brouillon, en cours, terminé, annulé). */
 export enum TournamentStatus {
   DRAFT = 'DRAFT',
   QUEUED = 'QUEUED',
@@ -8,6 +9,7 @@ export enum TournamentStatus {
   CANCELLED = 'CANCELLED',
 }
 
+/** [Minor · Tournois] États d'une confrontation (en attente, prête, en cours, terminée). */
 export enum TournamentTieStatus {
   PENDING = 'PENDING',
   READY = 'READY',
@@ -15,6 +17,7 @@ export enum TournamentTieStatus {
   DONE = 'DONE',
 }
 
+/** [Minor · Tournois] Joueur d'une inscription de tournoi. */
 export class TournamentPlayer {
   id!: string;
   displayname!: string;
@@ -22,6 +25,7 @@ export class TournamentPlayer {
   rating!: number;
 }
 
+/** [Minor · Tournois] Inscription (équipe) à un tournoi. */
 export class TournamentEntryEntity {
   id!: string;
   seed!: number;
@@ -29,12 +33,13 @@ export class TournamentEntryEntity {
   player2!: TournamentPlayer | null;
   eliminatedRound!: number | null;
 
-  /** Copie dans l'instance les champs fournis. */
+  /** [Minor · Tournois] Copie dans l'instance les champs fournis. */
   constructor(entry: Partial<TournamentEntryEntity>) {
     Object.assign(this, entry);
   }
 }
 
+/** [Minor · Tournois] Confrontation du bracket avec ses manches. */
 export class TournamentTieEntity {
   id!: string;
   round!: number;
@@ -65,12 +70,13 @@ export class TournamentTieEntity {
     scoreB: number;
   }[];
 
-  /** Copie dans l'instance les champs fournis. */
+  /** [Minor · Tournois] Copie dans l'instance les champs fournis. */
   constructor(tie: Partial<TournamentTieEntity>) {
     Object.assign(this, tie);
   }
 }
 
+/** [Minor · Tournois] Tournoi avec ses inscriptions et son bracket. */
 export class TournamentEntity {
   id!: string;
   name!: string;
@@ -86,7 +92,7 @@ export class TournamentEntity {
   completedAt!: Date | null;
   championEntryId!: string | null;
 
-  /** Copie dans l'instance les champs fournis. */
+  /** [Minor · Tournois] Copie dans l'instance les champs fournis. */
   constructor(tournament: Partial<TournamentEntity>) {
     Object.assign(this, tournament);
   }

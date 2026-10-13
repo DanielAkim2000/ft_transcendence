@@ -14,7 +14,7 @@ export const MAX_BAN_HOURS = 24 * 365 * 10;
 
 export const MAX_REASON_LENGTH = 500;
 
-/** Date et heure lisibles dans la langue de l'interface. */
+/** [Major · Permissions avancées] Date et heure lisibles dans la langue de l'interface. */
 export function formatBanDate(iso: string, language: string): string {
   return new Date(iso).toLocaleString(language, {
     dateStyle: "medium",
@@ -22,12 +22,12 @@ export function formatBanDate(iso: string, language: string): string {
   });
 }
 
-/** Vrai tant que le ban n'est pas terminé (permanent ou date de fin dans le futur). */
+/** [Major · Permissions avancées] Vrai tant que le ban n'est pas terminé (permanent ou date de fin dans le futur). */
 export function isBanActive(ban: { endTime: string | null }): boolean {
   return ban.endTime === null || new Date(ban.endTime).getTime() > Date.now();
 }
 
-/** Page de connexion qui affiche le bandeau de ban (motif et date de fin en paramètres d'URL). */
+/** [Major · Permissions avancées] Page de connexion qui affiche le bandeau de ban (motif et date de fin en paramètres d'URL). */
 export function banLoginPath(reason: string, endTime: string | null): string {
   const params = new URLSearchParams({ banned: "1", reason });
   if (endTime) params.set("until", endTime);

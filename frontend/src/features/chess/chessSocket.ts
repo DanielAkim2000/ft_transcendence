@@ -1,5 +1,5 @@
 import type { Socket } from "socket.io-client";
-import { createSocket } from "@/lib/socket";
+import { closeSocket, createSocket } from "@/lib/socket";
 
 let socket: Socket | null = null;
 
@@ -13,7 +13,6 @@ export function connectChess(accessToken: string): Socket {
 
 export function disconnectChess(): void {
     if (!socket) return;
-    socket.removeAllListeners();
-    socket.disconnect();
+    closeSocket(socket);
     socket = null;
 }

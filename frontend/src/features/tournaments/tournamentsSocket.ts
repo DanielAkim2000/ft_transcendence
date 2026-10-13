@@ -1,5 +1,5 @@
 import type { Socket } from "socket.io-client";
-import { createSocket } from "@/lib/socket";
+import { closeSocket, createSocket } from "@/lib/socket";
 
 let socket: Socket | null = null;
 
@@ -13,8 +13,7 @@ const connect = (accessToken: string): Socket => {
 
 const disconnect = () => {
   if (!socket) return;
-  socket.removeAllListeners();
-  socket.disconnect();
+  closeSocket(socket);
   socket = null;
 };
 

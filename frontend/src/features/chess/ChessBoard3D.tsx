@@ -138,7 +138,8 @@ export function ChessBoard3D({ board, positions, selectedPosition, onSquareClick
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        // VSM : ombres douces sans comparaison de profondeur filtrée (PCF déclenche un warning WebGL sous Firefox).
+        renderer.shadowMap.type = THREE.VSMShadowMap;
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         container.replaceChildren(renderer.domElement);
         renderer.domElement.setAttribute("aria-label", i18n.t("chess.page.boardAria"));
@@ -169,6 +170,8 @@ export function ChessBoard3D({ board, positions, selectedPosition, onSquareClick
         keyLight.shadow.camera.near = 1;
         keyLight.shadow.camera.far = 30;
         keyLight.shadow.bias = -0.0004;
+        keyLight.shadow.radius = 3;
+        keyLight.shadow.blurSamples = 12;
         scene.add(keyLight);
         const fillLight = new THREE.DirectionalLight(0x9ec5ff, 0.7);
         fillLight.position.set(6, 5, -7);

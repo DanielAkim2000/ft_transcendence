@@ -80,7 +80,7 @@ function isHealthReport(value: unknown): value is HealthReport {
 export const Status = () => {
   const { t, i18n } = useTranslation();
   const isLoggedIn = useAppSelector((s) => Boolean(s.auth.accessToken));
-  const { data, error } = useGetHealthQuery(undefined, {
+  const { data, error, isLoading } = useGetHealthQuery(undefined, {
     pollingInterval: POLL_INTERVAL_MS,
   });
   // Le backend répond 503 avec le rapport quand la base est en panne.
@@ -88,7 +88,7 @@ export const Status = () => {
   const candidate =
     data ?? (error as { data?: Partial<HealthReport> } | undefined)?.data;
   const report = isHealthReport(candidate) ? candidate : undefined;
-  const unreachable = !report && error !== undefined;
+  const unreachable = !report && (error !== undefined || !isLoading);
 
   const overall = unreachable ? "unreachable" : (report?.status ?? null);
   const overallTone: Tone =

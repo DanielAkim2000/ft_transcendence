@@ -12,19 +12,17 @@ import { Toaster } from "@/components/ui/toast";
 import { NavigationBridge } from "@/components/navigation-bridge";
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <StoreProvider>
-      <ThemeSync>
-        <I18nSync>
-          <BrowserRouter>
-            <NavigationBridge />
-            <AuthBootstrap>
-              <App />
-              <Toaster />
-            </AuthBootstrap>
-          </BrowserRouter>
-        </I18nSync>
-      </ThemeSync>
-    </StoreProvider>
-  </StrictMode>,
+  <StoreProvider>
+    <ThemeSync>
+      <I18nSync>
+        <BrowserRouter>
+          <NavigationBridge />
+          <AuthBootstrap>
+            <App />
+            <Toaster />
+          </AuthBootstrap>
+        </BrowserRouter>
+      </I18nSync>
+    </ThemeSync>
+  </StoreProvider>
 );

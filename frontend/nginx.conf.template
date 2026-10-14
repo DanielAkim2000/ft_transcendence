@@ -17,9 +17,10 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    # NGINX_LOCAL_RESOLVERS vient de /etc/resolv.conf du conteneur (Docker ou Podman).
     # Docker peut changer l'IP d'un conteneur apres un redemarrage.
     # Ce resolver evite que nginx garde une ancienne adresse du backend.
-    resolver 127.0.0.11 valid=5s ipv6=off;
+    resolver ${NGINX_LOCAL_RESOLVERS} valid=5s ipv6=off;
     set $backend_upstream http://backend:${BACKEND_PORT};
 
     gzip on;

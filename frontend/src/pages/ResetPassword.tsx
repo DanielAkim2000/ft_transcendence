@@ -102,6 +102,17 @@ export const ResetPassword = () => {
                                 form.handleSubmit();
                             }}
                         >
+                            {/* Champ identifiant masqué : demandé par les navigateurs/gestionnaires de mots de passe pour tout formulaire de mot de passe (accessibilité). */}
+                            <input
+                                type="text"
+                                name="username"
+                                autoComplete="username"
+                                defaultValue=""
+                                hidden
+                                readOnly
+                                tabIndex={-1}
+                                aria-hidden="true"
+                            />
                             <FieldGroup>
                                 <form.Field
                                     name="password"

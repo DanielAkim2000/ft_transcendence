@@ -71,6 +71,11 @@ function ServiceRow({
   );
 }
 
+function isHealthReport(value: unknown): value is HealthReport {
+  const checks = (value as Partial<HealthReport> | null | undefined)?.checks;
+  return Boolean(checks?.api && checks.database && checks.backups);
+}
+
 /** [Minor · Health check et sauvegardes] Page publique /status : interroge GET /health toutes les 15 s et affiche l'état de l'API, de la base et des sauvegardes. */
 export const Status = () => {
   const { t, i18n } = useTranslation();
@@ -79,10 +84,10 @@ export const Status = () => {
     pollingInterval: POLL_INTERVAL_MS,
   });
   // Le backend répond 503 avec le rapport quand la base est en panne.
-  const report =
-    data ??
-    ((error as { data?: HealthReport } | undefined)?.data as
-      HealthReport | undefined);
+  // Si le backend est coupé, le proxy renvoie un corps qui n'est pas un rapport : on le valide.
+  const candidate =
+    data ?? (error as { data?: Partial<HealthReport> } | undefined)?.data;
+  const report = isHealthReport(candidate) ? candidate : undefined;
   const unreachable = !report && error !== undefined;
 
   const overall = unreachable ? "unreachable" : (report?.status ?? null);

@@ -186,9 +186,9 @@ Pour chaque module, la fiche `docs/modules/NN-….md` contient « ce que demande
 
 ## Écarts connus à corriger avant de passer (README et dépôt)
 
-1. **README, section Modules** : indique « 19 points » sans le jeu d'échecs et affirme que les modules Gaming ne sont pas revendiqués ; il faut le réaligner sur [`docs/modules/README.md`](modules/README.md) (jeu web, IA, 3D, stats, tournois, chat avancé…). Retirer « PWA / navigateurs » des « planned » s'ils ne sont pas faits.
-2. **README, équipe** : renvoie vers `docs/team/*.md` et `docs/PLAN.md`, `docs/DESIGN_SYSTEM.md`, `docs/BACKUP.md`, `docs/DOCKER.md`, `docs/PRESENCE.md` — **ces fichiers sont actuellement supprimés dans votre copie de travail** (`git status`) : restaurez-les (`git checkout -- docs`) ou retirez les liens, sinon liens cassés (et les fiches modules y font référence).
-3. **README, comptes de démo** : `alice@ft.local`/`bob@ft.local` n'existent plus (voir section 0).
+1. ~~README, section Modules~~ — **résolu** : le README a été réécrit et aligné sur [`docs/modules/README.md`](modules/README.md) (29 points).
+2. ~~Liens vers `docs/team/`, `PLAN.md`, `DESIGN_SYSTEM.md`, `BACKUP.md`, `DOCKER.md`, `PRESENCE.md`~~ — **résolu** : ces fichiers n'existent plus et plus aucun lien du README ou des fiches n'y pointe.
+3. ~~Comptes de démo du README~~ — **résolu** (`admin@ft.local`, `prenom.nom@ft.local`).
 4. **Noms d'auteurs git ≠ logins du README** : expliquez ou alignez (voir 1.4).
 5. **Secrets JWT locaux** : régénérer (section 0).
 6. **Lint backend** : une erreur préexistante (`Paginated` importé et inutilisé dans `chess.service.ts`) à supprimer pour un dépôt propre.

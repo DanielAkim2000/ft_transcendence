@@ -219,7 +219,6 @@ Un **namespace Socket.IO par domaine** (`presence`, `chat`, `tables`, `queue`, `
 ### Autres fichiers liés
 
 - `frontend/nginx.conf.template` — Proxy `/api/socket.io/` avec en-têtes Upgrade pour les WebSockets en production.
-- `docs/PRESENCE.md` — Documentation de la présence en ligne.
 
 ## Comment le démontrer
 

@@ -14,7 +14,7 @@ import { Role, UserEntity } from '../../users/entities/users.entity';
 import { MailService } from '../../mail/mail.service';
 import { PresenceGateway } from '../../presence/presence.gateway';
 import { banMails } from '../ban.messages';
-import type { MailLanguage } from '../../gdpr/gdpr.messages';
+import type { MailLanguage } from '../../gdprs/gdpr.messages';
 
 /** [Major · Permissions avancées] Service métier des bannissements. */
 @Injectable()

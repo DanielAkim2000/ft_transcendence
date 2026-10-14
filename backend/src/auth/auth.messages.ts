@@ -1,4 +1,4 @@
-import type { MailLanguage } from '../gdpr/gdpr.messages';
+import type { MailLanguage } from '../gdprs/gdpr.messages';
 
 /** [Major · Gestion des utilisateurs] Contenu d'un email (sujet, texte) dans une langue. */
 interface Mail {

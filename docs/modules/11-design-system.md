@@ -11,7 +11,7 @@
 
 ## Ce qui est implémenté
 
-Composants UI maison au-dessus de `@base-ui/react` : tokens CSS (clair/sombre, couleur d'accent et arrondi réglables), une police unique, icônes `lucide-react`, et plus de 20 composants réutilisables (voir aussi `docs/DESIGN_SYSTEM.md`).
+Composants UI maison au-dessus de `@base-ui/react` : tokens CSS (clair/sombre, couleur d'accent et arrondi réglables), une police unique, icônes `lucide-react`, et plus de 20 composants réutilisables.
 
 ## Logique utilisée
 
@@ -245,7 +245,6 @@ Composants UI maison au-dessus de `@base-ui/react` : tokens CSS (clair/sombre, c
 
 ### Autres fichiers liés
 
-- `docs/DESIGN_SYSTEM.md` — Documentation complète du design system (palette, composants, variantes).
 - `frontend/src/index.css` — Tokens CSS : couleurs claires/sombres, accents, arrondis, animations.
 - `frontend/components.json` — Configuration de la bibliothèque de composants.
 

@@ -20,28 +20,28 @@
 1. `HealthService.check` agrège `checkDatabase` (requête réelle + temps de réponse) et `checkBackups` (âge du dernier dump vs `BACKUP_MAX_AGE_HOURS`) ; le contrôleur renvoie 503 avec le rapport quand la base est KO.
 2. **Front** : `Status.tsx` interroge `/health` (polling 15 s) et affiche l'état de l'API, de la base et des sauvegardes (uptime, taille, âge).
 3. **Sauvegardes** : `scripts/db-backup.sh` (mode `once`, `list`, `restore`) tourne dans le conteneur `backup` ; `scripts/db-restore.sh` arrête le backend, restaure, relance. Healthchecks Docker sur db/backend/frontend.
-4. Procédure détaillée : `docs/BACKUP.md`. Commandes : `make db-backup`, `make db-backups`, `make db-restore`.
+4. Reprise après sinistre : `make db-restore` (ou `scripts/db-restore.sh`) restaure un dump choisi dans `make db-backups`. Commandes : `make db-backup`, `make db-backups`, `make db-restore`.
 
 ## Fichiers concernés et rôle de chaque fonction
 
 ### Backend (NestJS)
 
-**[`backend/src/health/health.controller.ts`](../../backend/src/health/health.controller.ts)**
+**[`backend/src/health%20status/health.controller.ts`](../../backend/src/health%20status/health.controller.ts)**
 
-- `HealthController` ([l.5](../../backend/src/health/health.controller.ts#L5)) — Contrôleur HTTP du health check : routes REST protégées par les guards d'authentification.
-- `check` ([l.11](../../backend/src/health/health.controller.ts#L11)) — GET /health : public (utilisé par Docker et la page de statut).
+- `HealthController` ([l.5](../../backend/src/health%20status/health.controller.ts#L5)) — Contrôleur HTTP du health check : routes REST protégées par les guards d'authentification.
+- `check` ([l.11](../../backend/src/health%20status/health.controller.ts#L11)) — GET /health : public (utilisé par Docker et la page de statut).
 
-**[`backend/src/health/health.module.ts`](../../backend/src/health/health.module.ts)**
+**[`backend/src/health%20status/health.module.ts`](../../backend/src/health%20status/health.module.ts)**
 
-- `HealthModule` ([l.7](../../backend/src/health/health.module.ts#L7)) — Module NestJS du health check : regroupe contrôleur, services et dépendances.
+- `HealthModule` ([l.7](../../backend/src/health%20status/health.module.ts#L7)) — Module NestJS du health check : regroupe contrôleur, services et dépendances.
 
-**[`backend/src/health/health.service.ts`](../../backend/src/health/health.service.ts)**
+**[`backend/src/health%20status/health.service.ts`](../../backend/src/health%20status/health.service.ts)**
 
-- `HealthReport` ([l.9](../../backend/src/health/health.service.ts#L9)) — Rapport de santé : statut global, base, sauvegardes, uptime.
-- `HealthService` ([l.32](../../backend/src/health/health.service.ts#L32)) — Service métier du health check.
-- `check` ([l.38](../../backend/src/health/health.service.ts#L38)) — Rapport d'état : API, base de données (requête réelle + latence) et sauvegardes (dernier dump trop ancien ou absent = dégradé).
-- `checkDatabase` ([l.58](../../backend/src/health/health.service.ts#L58)) — Exécute `SELECT 1` avec un délai maximal et mesure la latence.
-- `checkBackups` ([l.80](../../backend/src/health/health.service.ts#L80)) — Lit le dossier des sauvegardes (monté en lecture seule) : nombre de dumps, date et taille du plus récent.
+- `HealthReport` ([l.9](../../backend/src/health%20status/health.service.ts#L9)) — Rapport de santé : statut global, base, sauvegardes, uptime.
+- `HealthService` ([l.32](../../backend/src/health%20status/health.service.ts#L32)) — Service métier du health check.
+- `check` ([l.38](../../backend/src/health%20status/health.service.ts#L38)) — Rapport d'état : API, base de données (requête réelle + latence) et sauvegardes (dernier dump trop ancien ou absent = dégradé).
+- `checkDatabase` ([l.58](../../backend/src/health%20status/health.service.ts#L58)) — Exécute `SELECT 1` avec un délai maximal et mesure la latence.
+- `checkBackups` ([l.80](../../backend/src/health%20status/health.service.ts#L80)) — Lit le dossier des sauvegardes (monté en lecture seule) : nombre de dumps, date et taille du plus récent.
 
 ### Frontend (React)
 
@@ -60,7 +60,6 @@
 
 - `scripts/db-backup.sh` — Sauvegarde PostgreSQL (once/list/restore), rétention 7 jours.
 - `scripts/db-restore.sh` — Restauration transactionnelle (arrête le backend, restaure, relance).
-- `docs/BACKUP.md` — Procédure de sauvegarde et de reprise après sinistre.
 - `docker-compose.yml` — Service `backup` et healthchecks db/backend/frontend.
 
 ## Comment le démontrer

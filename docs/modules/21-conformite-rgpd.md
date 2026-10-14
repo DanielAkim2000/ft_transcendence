@@ -23,55 +23,55 @@
 
 ### Backend (NestJS)
 
-**[`backend/src/gdpr/dtos/confirm-deletion.dto.ts`](../../backend/src/gdpr/dtos/confirm-deletion.dto.ts)**
+**[`backend/src/gdprs/dtos/confirm-deletion.dto.ts`](../../backend/src/gdprs/dtos/confirm-deletion.dto.ts)**
 
-- `ConfirmDeletionDto` ([l.3](../../backend/src/gdpr/dtos/confirm-deletion.dto.ts#L3)) — Corps validé de confirmation de suppression (jeton signé).
+- `ConfirmDeletionDto` ([l.3](../../backend/src/gdprs/dtos/confirm-deletion.dto.ts#L3)) — Corps validé de confirmation de suppression (jeton signé).
 
-**[`backend/src/gdpr/dtos/export-query.dto.ts`](../../backend/src/gdpr/dtos/export-query.dto.ts)**
+**[`backend/src/gdprs/dtos/export-query.dto.ts`](../../backend/src/gdprs/dtos/export-query.dto.ts)**
 
-- `ExportQueryDto` ([l.6](../../backend/src/gdpr/dtos/export-query.dto.ts#L6)) — Paramètre validé de l'export (format csv ou json).
+- `ExportQueryDto` ([l.6](../../backend/src/gdprs/dtos/export-query.dto.ts#L6)) — Paramètre validé de l'export (format csv ou json).
 
-**[`backend/src/gdpr/gdpr.controller.ts`](../../backend/src/gdpr/gdpr.controller.ts)**
+**[`backend/src/gdprs/gdpr.controller.ts`](../../backend/src/gdprs/gdpr.controller.ts)**
 
-- `GdprController` ([l.19](../../backend/src/gdpr/gdpr.controller.ts#L19)) — Contrôleur HTTP RGPD (export des données et suppression du compte) : routes REST protégées par les guards d'authentification.
-- `exportData` ([l.25](../../backend/src/gdpr/gdpr.controller.ts#L25)) — GET /gdpr/export?format=json|csv : télécharge toutes les données personnelles de l'utilisateur connecté ; un email l'en informe.
-- `requestDeletion` ([l.42](../../backend/src/gdpr/gdpr.controller.ts#L42)) — POST /gdpr/deletion-request : envoie par email un lien de confirmation (1 h) pour supprimer le compte.
-- `confirmDeletion` ([l.51](../../backend/src/gdpr/gdpr.controller.ts#L51)) — POST /gdpr/deletion-confirm : public (le jeton signé reçu par email fait foi) ; supprime définitivement le compte.
+- `GdprController` ([l.19](../../backend/src/gdprs/gdpr.controller.ts#L19)) — Contrôleur HTTP RGPD (export des données et suppression du compte) : routes REST protégées par les guards d'authentification.
+- `exportData` ([l.25](../../backend/src/gdprs/gdpr.controller.ts#L25)) — GET /gdpr/export?format=json|csv : télécharge toutes les données personnelles de l'utilisateur connecté ; un email l'en informe.
+- `requestDeletion` ([l.42](../../backend/src/gdprs/gdpr.controller.ts#L42)) — POST /gdpr/deletion-request : envoie par email un lien de confirmation (1 h) pour supprimer le compte.
+- `confirmDeletion` ([l.51](../../backend/src/gdprs/gdpr.controller.ts#L51)) — POST /gdpr/deletion-confirm : public (le jeton signé reçu par email fait foi) ; supprime définitivement le compte.
 
-**[`backend/src/gdpr/gdpr.csv.ts`](../../backend/src/gdpr/gdpr.csv.ts)**
+**[`backend/src/gdprs/gdpr.csv.ts`](../../backend/src/gdprs/gdpr.csv.ts)**
 
-- `Named` ([l.5](../../backend/src/gdpr/gdpr.csv.ts#L5)) — Objet portant un nom d'affichage (pour l'export CSV).
-- `cell` ([l.56](../../backend/src/gdpr/gdpr.csv.ts#L56)) — Échappe une cellule CSV ; neutralise l'injection de formules (texte commençant par =, +, -, @) que Excel exécuterait à l'ouverture ; les nombres, mêm…
-- `team` ([l.66](../../backend/src/gdpr/gdpr.csv.ts#L66)) — Noms des joueurs d'une équipe, séparés par « & » (le coéquipier est optionnel).
-- `toCsv` ([l.74](../../backend/src/gdpr/gdpr.csv.ts#L74)) — Un seul fichier CSV : une section par type de donnée (titre, en-têtes, lignes), séparées par une ligne vide.
-- `points` ([l.80](../../backend/src/gdpr/gdpr.csv.ts#L80)) — Extrait du JSON des variations de points d'un match celle de l'utilisateur exporté (null si absente).
+- `Named` ([l.5](../../backend/src/gdprs/gdpr.csv.ts#L5)) — Objet portant un nom d'affichage (pour l'export CSV).
+- `cell` ([l.56](../../backend/src/gdprs/gdpr.csv.ts#L56)) — Échappe une cellule CSV ; neutralise l'injection de formules (texte commençant par =, +, -, @) que Excel exécuterait à l'ouverture ; les nombres, mêm…
+- `team` ([l.66](../../backend/src/gdprs/gdpr.csv.ts#L66)) — Noms des joueurs d'une équipe, séparés par « & » (le coéquipier est optionnel).
+- `toCsv` ([l.74](../../backend/src/gdprs/gdpr.csv.ts#L74)) — Un seul fichier CSV : une section par type de donnée (titre, en-têtes, lignes), séparées par une ligne vide.
+- `points` ([l.80](../../backend/src/gdprs/gdpr.csv.ts#L80)) — Extrait du JSON des variations de points d'un match celle de l'utilisateur exporté (null si absente).
 
-**[`backend/src/gdpr/gdpr.messages.ts`](../../backend/src/gdpr/gdpr.messages.ts)**
+**[`backend/src/gdprs/gdpr.messages.ts`](../../backend/src/gdprs/gdpr.messages.ts)**
 
-- `Mail` ([l.3](../../backend/src/gdpr/gdpr.messages.ts#L3)) — Contenu d'un email (sujet, texte) dans une langue.
+- `Mail` ([l.3](../../backend/src/gdprs/gdpr.messages.ts#L3)) — Contenu d'un email (sujet, texte) dans une langue.
 
-**[`backend/src/gdpr/gdpr.module.ts`](../../backend/src/gdpr/gdpr.module.ts)**
+**[`backend/src/gdprs/gdpr.module.ts`](../../backend/src/gdprs/gdpr.module.ts)**
 
-- `GdprModule` ([l.8](../../backend/src/gdpr/gdpr.module.ts#L8)) — Module NestJS RGPD (export des données et suppression du compte) : regroupe contrôleur, services et dépendances.
+- `GdprModule` ([l.8](../../backend/src/gdprs/gdpr.module.ts#L8)) — Module NestJS RGPD (export des données et suppression du compte) : regroupe contrôleur, services et dépendances.
 
-**[`backend/src/gdpr/gdpr.repository.ts`](../../backend/src/gdpr/gdpr.repository.ts)**
+**[`backend/src/gdprs/gdpr.repository.ts`](../../backend/src/gdprs/gdpr.repository.ts)**
 
-- `GdprRepository` ([l.9](../../backend/src/gdpr/gdpr.repository.ts#L9)) — Dépôt de données RGPD (export des données et suppression du compte) : requêtes Prisma et conversion en entités.
-- `collectUserData` ([l.15](../../backend/src/gdpr/gdpr.repository.ts#L15)) — Toutes les données personnelles d'un utilisateur, sans secrets (hash du mot de passe, secrets 2FA, jetons) ni contenu d'autres personnes (seuls les m…
-- `findDeletionBlockers` ([l.134](../../backend/src/gdpr/gdpr.repository.ts#L134)) — Raisons qui empêchent de supprimer le compte : tournois créés encore ouverts, participation à un tournoi non terminé (le tableau serait cassé) ou par…
-- `anonymizeUser` ([l.162](../../backend/src/gdpr/gdpr.repository.ts#L162)) — 
+- `GdprRepository` ([l.9](../../backend/src/gdprs/gdpr.repository.ts#L9)) — Dépôt de données RGPD (export des données et suppression du compte) : requêtes Prisma et conversion en entités.
+- `collectUserData` ([l.15](../../backend/src/gdprs/gdpr.repository.ts#L15)) — Toutes les données personnelles d'un utilisateur, sans secrets (hash du mot de passe, secrets 2FA, jetons) ni contenu d'autres personnes (seuls les m…
+- `findDeletionBlockers` ([l.134](../../backend/src/gdprs/gdpr.repository.ts#L134)) — Raisons qui empêchent de supprimer le compte : tournois créés encore ouverts, participation à un tournoi non terminé (le tableau serait cassé) ou par…
+- `anonymizeUser` ([l.162](../../backend/src/gdprs/gdpr.repository.ts#L162)) — 
 
-**[`backend/src/gdpr/gdpr.service.ts`](../../backend/src/gdpr/gdpr.service.ts)**
+**[`backend/src/gdprs/gdpr.service.ts`](../../backend/src/gdprs/gdpr.service.ts)**
 
-- `GdprService` ([l.22](../../backend/src/gdpr/gdpr.service.ts#L22)) — Service métier RGPD (export des données et suppression du compte).
-- `constructor` ([l.27](../../backend/src/gdpr/gdpr.service.ts#L27)) — Injecte les dépendances : GdprRepository, MailService, JwtService.
-- `deletionSecret` ([l.34](../../backend/src/gdpr/gdpr.service.ts#L34)) — Clé de signature dédiée aux jetons de suppression : dérivée du secret de refresh, jamais acceptée comme access token.
-- `mailLanguage` ([l.39](../../backend/src/gdpr/gdpr.service.ts#L39)) — Langue des emails de l'utilisateur, avec repli sur l'anglais.
-- `exportData` ([l.46](../../backend/src/gdpr/gdpr.service.ts#L46)) — Droit d'accès / portabilité : toutes les données de l'utilisateur, en JSON (indenté) ou en CSV, plus un email d'information.
-- `assertDeletable` ([l.69](../../backend/src/gdpr/gdpr.service.ts#L69)) — Lève une 409 si un tournoi ouvert (créé ou rejoint) ou une partie en cours empêche de supprimer le compte.
-- `requestDeletion` ([l.94](../../backend/src/gdpr/gdpr.service.ts#L94)) — Étape 1 de la suppression : refuse si quelque chose bloque, puis envoie un lien de confirmation valable une heure.
-- `confirmDeletion` ([l.122](../../backend/src/gdpr/gdpr.service.ts#L122)) — Étape 2 : vérifie le jeton reçu par email, anonymise le compte et efface ses données personnelles (avatar compris) et envoie l'email de confirmation.
-- `eraseAccount` ([l.141](../../backend/src/gdpr/gdpr.service.ts#L141)) — Supprime définitivement un compte : refuse si un tournoi ou une partie l'en empêche, anonymise le compte, efface son avatar et envoie l'email de conf…
+- `GdprService` ([l.22](../../backend/src/gdprs/gdpr.service.ts#L22)) — Service métier RGPD (export des données et suppression du compte).
+- `constructor` ([l.27](../../backend/src/gdprs/gdpr.service.ts#L27)) — Injecte les dépendances : GdprRepository, MailService, JwtService.
+- `deletionSecret` ([l.34](../../backend/src/gdprs/gdpr.service.ts#L34)) — Clé de signature dédiée aux jetons de suppression : dérivée du secret de refresh, jamais acceptée comme access token.
+- `mailLanguage` ([l.39](../../backend/src/gdprs/gdpr.service.ts#L39)) — Langue des emails de l'utilisateur, avec repli sur l'anglais.
+- `exportData` ([l.46](../../backend/src/gdprs/gdpr.service.ts#L46)) — Droit d'accès / portabilité : toutes les données de l'utilisateur, en JSON (indenté) ou en CSV, plus un email d'information.
+- `assertDeletable` ([l.69](../../backend/src/gdprs/gdpr.service.ts#L69)) — Lève une 409 si un tournoi ouvert (créé ou rejoint) ou une partie en cours empêche de supprimer le compte.
+- `requestDeletion` ([l.94](../../backend/src/gdprs/gdpr.service.ts#L94)) — Étape 1 de la suppression : refuse si quelque chose bloque, puis envoie un lien de confirmation valable une heure.
+- `confirmDeletion` ([l.122](../../backend/src/gdprs/gdpr.service.ts#L122)) — Étape 2 : vérifie le jeton reçu par email, anonymise le compte et efface ses données personnelles (avatar compris) et envoie l'email de confirmation.
+- `eraseAccount` ([l.141](../../backend/src/gdprs/gdpr.service.ts#L141)) — Supprime définitivement un compte : refuse si un tournoi ou une partie l'en empêche, anonymise le compte, efface son avatar et envoie l'email de conf…
 
 ### Frontend (React)
 
@@ -99,7 +99,7 @@
 
 ### Autres fichiers liés
 
-- `backend/src/gdpr/gdpr.messages.ts` — Textes des emails RGPD (export, demande et confirmation de suppression) dans les trois langues.
+- `backend/src/gdprs/gdpr.messages.ts` — Textes des emails RGPD (export, demande et confirmation de suppression) dans les trois langues.
 - `backend/src/mail/mail.service.ts` — Envoi des emails (nodemailer/SMTP, Mailpit en dev).
 
 ## Comment le démontrer

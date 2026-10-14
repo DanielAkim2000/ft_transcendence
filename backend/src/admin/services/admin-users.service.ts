@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { GdprService } from '../../gdpr/gdpr.service';
+import { GdprService } from '../../gdprs/gdpr.service';
 import { Role } from '../../users/entities/users.entity';
 import { Paginated, toPaginated } from '../../common/pagination/paginated';
 import {

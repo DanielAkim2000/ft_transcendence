@@ -23,7 +23,7 @@ import { verify, generateSecret, generateURI } from 'otplib';
 import { hashRefreshToken, hashToken } from './utils/utils';
 import { MailService } from '../mail/mail.service';
 import { authMails } from './auth.messages';
-import type { MailLanguage } from '../gdpr/gdpr.messages';
+import type { MailLanguage } from '../gdprs/gdpr.messages';
 
 const PASSWORD_RESET_TTL_MINUTES = 60;
 const PASSWORD_RESET_COOLDOWN_MS = 60_000;

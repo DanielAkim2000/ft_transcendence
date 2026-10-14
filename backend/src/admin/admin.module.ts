@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
-import { GdprModule } from '../gdpr/gdpr.module';
+import { GdprModule } from '../gdprs/gdpr.module';
 import { AdminUsersController } from './admin-users.controller';
 import { AdminUsersService } from './services/admin-users.service';
 import { AdminUsersRepository } from './repositories/admin-users.repository';

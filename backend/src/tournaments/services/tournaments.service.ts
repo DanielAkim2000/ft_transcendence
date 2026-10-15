@@ -231,6 +231,12 @@ export class TournamentsService {
    */
   async launch(tournamentId: string): Promise<TournamentEntity> {
     const tournament = await this.getById(tournamentId);
+    if ((await this.tablesService.list()).length == 0) {
+      throw new BadRequestException({
+        message: 'A table needs to exist before launching a tournament',
+        code: 'NO_TABLE_EXIST',
+      });
+    }
     if (tournament.status === TournamentStatus.QUEUED) {
       throw new ConflictException({
         message: 'Tournament is already waiting in the queue',

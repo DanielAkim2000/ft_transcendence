@@ -12,6 +12,7 @@ import {
   AdminUsersRepository,
   type AdminUserView,
 } from '../repositories/admin-users.repository';
+import { BanService } from "../../ban/services/ban.service"
 import { AdminUsersQueryDto } from '../dtos/admin-users-query.dto';
 import { CreateAdminUserDto } from '../dtos/create-admin-user.dto';
 import { UpdateAdminUserDto } from '../dtos/update-admin-user.dto';
@@ -22,6 +23,7 @@ export class AdminUsersService {
   /** [Major · Permissions avancées] Injecte les dépendances : AdminUsersRepository, GdprService. */
   constructor(
     private readonly adminUsersRepository: AdminUsersRepository,
+    private readonly banService: BanService,
     private readonly gdprService: GdprService,
   ) {}
 
@@ -77,6 +79,10 @@ export class AdminUsersService {
       }
       if (target.role === Role.ADMIN) {
         await this.assertAnotherAdminRemains();
+      } else {
+        try {
+          await this.banService.unbanUser(id);
+        } catch {}
       }
     }
     return this.adminUsersRepository.update(id, {
